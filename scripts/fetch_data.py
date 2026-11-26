@@ -450,6 +450,7 @@ EXCHANGE_SUFFIX = [
     ("mexic", ".MX"), ("saudi", ".SR"), ("tel aviv", ".TA"), ("warsaw", ".WA"), ("new zealand", ".NZ"), ("indonesia", ".JK"),
     ("thailand", ".BK"), ("malaysia", ".KL"), ("bursa", ".KL"), ("istanbul", ".IS"), ("santiago", ".SN"), ("qatar", ".QA"),
     ("athens", ".AT"), ("prague", ".PR"), ("budapest", ".BD"), ("philippine", ".PS"),
+    ("kosdaq", ".KQ"), ("taipei exchange", ".TWO"), ("sao paulo", ".SA"),
     ("nasdaq", ""), ("new york", ""), ("nyse", ""), ("cboe", ""), ("bats", ""),
 ]
 US_FIX = {"BRKB": "BRK-B", "BFB": "BF-B", "LENB": "LEN-B", "HEIA": "HEI-A", "MOGA": "MOG-A", "UHALB": "UHAL-B"}
@@ -539,8 +540,12 @@ def wiki_list(url: str, label: str, suffix: str = "", country: str | None = None
         out = []
         for _, r in t.iterrows():
             raw = re.sub(r"\[.*?\]", "", str(r[sc])).strip().upper()
+            if ":" in raw:  # z. B. "SEHK: 5"
+                raw = raw.split(":")[-1].strip()
             if not raw or raw == "NAN":
                 continue
+            if suffix == ".HK" and raw.isdigit():
+                raw = raw.zfill(4)
             if raw.endswith(YAHOO_SUFFIXES):
                 sym = raw
             elif suffix:
@@ -585,6 +590,8 @@ def build_universe_list(old: list[dict]) -> list[dict]:
     for src in uc.get("wikipedia", []):
         add(with_fallback(lambda: wiki_list(src["url"], src["name"], src.get("suffix", ""), src.get("country")),
                           src["name"]))
+    if uc.get("em_korea_taiwan", True):
+        add(with_fallback(em_korea_taiwan, "MSCI EM (Korea/Taiwan)"))
     add([{"s": s, "n": None, "sec": None, "c": None, "src": ["Zusatz"]} for s in uc.get("extra", [])])
     add([{"s": s, "n": None, "sec": None, "c": None, "src": ["Watchlist"]} for s in CFG.get("watchlist", [])])
     if len(found) < 100 and old:  # noqa: SIM102
@@ -986,6 +993,11 @@ def name_key(n: str) -> str:
 
 def read_holdings(e: dict) -> list[tuple[str, float]]:
     """(Name, Gewicht in %) aus der Anbieterdatei."""
+    return [(r["name"], r["w"]) for r in read_holdings_full(e)]
+
+
+def read_holdings_full(e: dict) -> list[dict]:
+    """Alle Positionen mit Name, ISIN, Börse und Gewicht in %."""
     import openpyxl
     src = e.get("holdings") or {}
     if src.get("anbieter") == "xtrackers":
@@ -1011,7 +1023,32 @@ def read_holdings(e: dict) -> list[tuple[str, float]]:
             w = float(row[wi])
         except Exception:
             continue
-        out.append((str(row[ni]), w * 100 if src.get("anbieter") == "xtrackers" else w))
+        gi = head.get("ISIN")
+        xi = head.get("Exchange", head.get("Trade Country Name"))
+        out.append({"name": str(row[ni]), "w": w * 100 if src.get("anbieter") == "xtrackers" else w,
+                    "isin": str(row[gi]) if gi is not None and gi < len(row) and row[gi] else "",
+                    "ex": str(row[xi]) if xi is not None and xi < len(row) and row[xi] else ""})
+    return out
+
+
+def em_korea_taiwan(min_weight=0.02) -> list[dict]:
+    """Korea- und Taiwan-Titel aus der MSCI-EM-Positionsliste (Börsencode steckt in der ISIN)."""
+    e = {"isin": "IE00BTJRMP35", "ticker": "XMME.DE", "holdings": {"anbieter": "xtrackers"}}
+    out = []
+    for r in read_holdings_full(e):
+        isin, ex = r["isin"].upper(), r["ex"].upper()
+        if r["w"] < min_weight:
+            continue
+        if isin.startswith("KR7") and len(isin) == 12:
+            sym = isin[3:9] + (".KQ" if "KOSDAQ" in ex else ".KS")
+            c = "South Korea"
+        elif isin.startswith("TW000") and len(isin) == 12 and isin[5:9].isdigit():
+            sym = isin[5:9] + (".TWO" if ("GRETAI" in ex or "TAIPEI EXCHANGE" in ex or "TPEX" in ex) else ".TW")
+            c = "Taiwan"
+        else:
+            continue
+        out.append({"s": sym, "n": r["name"].title(), "sec": None, "c": c, "src": ["MSCI EM (Korea/Taiwan)"]})
+    log(f"  MSCI EM (Korea/Taiwan): {len(out)} Titel")
     return out
 
 

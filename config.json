@@ -89,6 +89,24 @@
         "url": "https://en.wikipedia.org/wiki/OMX_Stockholm_30",
         "suffix": ".ST",
         "country": "Sweden"
+      },
+      {
+        "name": "Hang Seng",
+        "url": "https://en.wikipedia.org/wiki/Hang_Seng_Index",
+        "suffix": ".HK",
+        "country": "Hong Kong"
+      },
+      {
+        "name": "NIFTY 50",
+        "url": "https://en.wikipedia.org/wiki/NIFTY_50",
+        "suffix": ".NS",
+        "country": "India"
+      },
+      {
+        "name": "Ibovespa",
+        "url": "https://en.wikipedia.org/wiki/List_of_companies_listed_on_B3",
+        "suffix": ".SA",
+        "country": "Brazil"
       }
     ],
     "extra": [
@@ -122,7 +140,8 @@
       "FLU.VI",
       "KTCG.VI",
       "AMAG.VI"
-    ]
+    ],
+    "em_korea_taiwan": true
   },
   "indices": {
     "^GSPC": "S&P 500",

@@ -852,7 +852,8 @@ V.GOVT.after = el => {
 const median = arr => { const a = arr.filter(v=>v!=null && isFinite(v)).sort((x,y)=>x-y); if(!a.length) return null; const m=a.length>>1; return a.length%2 ? a[m] : (a[m-1]+a[m])/2; };
 const RMEAN = v => v==null ? "–" : v<=1.5 ? "Starker Kauf" : v<=2.5 ? "Kaufen" : v<=3.5 ? "Halten" : v<=4.5 ? "Verkaufen" : "Starker Verkauf";
 const REGION = {"United States":"USA","Austria":"Österreich","Japan":"Japan"};
-const regionOf = c => REGION[c] || (["Germany","France","Netherlands","Italy","Spain","Switzerland","United Kingdom","Sweden","Belgium","Finland","Denmark","Norway","Ireland","Portugal","Luxembourg"].includes(c) ? "Europa" : c ? "Andere" : "–");
+const EM = ["China","Hong Kong","India","Brazil","South Korea","Korea","Taiwan","Mexico","South Africa","Indonesia","Thailand","Malaysia","Saudi Arabia","United Arab Emirates","Qatar","Chile","Poland","Turkey","Philippines","Macau"];
+const regionOf = c => REGION[c] || (["Germany","France","Netherlands","Italy","Spain","Switzerland","United Kingdom","Sweden","Belgium","Finland","Denmark","Norway","Ireland","Portugal","Luxembourg"].includes(c) ? "Europa" : EM.includes(c) ? "Schwellenländer" : c ? "Andere" : "–");
 function peerGroup(sym){
   const u = D.universe; if(!u) return null;
   const me = u.rows.find(r=>r.s===sym); if(!me) return null;
@@ -899,7 +900,7 @@ V.BRA = async () => {
     if (braOpen===sec) { const bi={}; list.forEach(r=>{ if(r.ind) (bi[r.ind]=bi[r.ind]||[]).push(r); });
       Object.entries(bi).sort((a,b)=>b[1].length-a[1].length).forEach(([ind,l])=>{ body += line(ind, agg(l), `class="click" data-ind="${esc(ind)}"`, true); }); }
   });
-  const regs = ["Alle","USA","Europa","Österreich","Japan"];
+  const regs = ["Alle","USA","Europa","Österreich","Schwellenländer"];
   return panel("Branchenvergleich", `<div class="btns" id="br" style="margin-bottom:8px">${regs.map(r=>`<button data-r="${r}" class="${r===braReg?"on":""}">${r}</button>`).join("")}</div>
     <div class="scroll"><table id="bt"><thead><tr><th class="l">Sektor / Branche</th><th>Titel</th><th>Gewinn € (Summe)</th><th>Gewinnwachst. J/J</th><th>erw. EPS-Wachst.</th><th>KGV</th><th>KGV erw.</th><th>Div.-Rendite</th><th>Kursziel-Pot.</th><th>YTD</th></tr></thead><tbody>${body}</tbody></table></div>
     <p class="dim" style="font-size:11px;margin-top:8px">Mediane je Sektor bzw. Branche (KGV nur zwischen 0 und 200). Sektor anklicken = Branchen aufklappen, Branche anklicken = alle Titel im Screener. Die Kennzahlen füllen sich mit jedem Nachtlauf.</p>`, `<small>${fmt(rows.length,0)} Titel</small>`);
