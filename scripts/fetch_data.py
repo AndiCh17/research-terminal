@@ -673,7 +673,7 @@ def build_universe_list(old: list[dict]) -> list[dict]:
                           src["name"]))
     if uc.get("em_korea_taiwan", True):
         add(with_fallback(em_korea_taiwan, "MSCI EM (Korea/Taiwan)"))
-    add([{"s": s, "n": None, "sec": None, "c": None, "src": ["Zusatz"]} for s in uc.get("extra", [])])
+    add([{"s": s, "n": None, "sec": None, "c": None, "src": ["ATX"]} for s in uc.get("extra", [])])
     add([{"s": s, "n": None, "sec": None, "c": None, "src": ["Watchlist"]} for s in CFG.get("watchlist", [])])
     if len(found) < 100 and old:  # noqa: SIM102
         log("Indexlisten lieferten zu wenig Titel – vorherige Liste wird weiterverwendet")
@@ -1077,17 +1077,23 @@ def read_holdings(e: dict) -> list[tuple[str, float]]:
     return [(r["name"], r["w"]) for r in read_holdings_full(e)]
 
 
+_HOLD_CACHE: dict[str, bytes] = {}
+
+
 def read_holdings_full(e: dict) -> list[dict]:
     """Alle Positionen mit Name, ISIN, Börse und Gewicht in %."""
     import openpyxl
     src = e.get("holdings") or {}
+    # Bei Näherungen ("isin"/"ticker" in holdings) die Positionsliste eines Fonds auf denselben/ähnlichen Index lesen
     if src.get("anbieter") == "xtrackers":
-        url = f"https://etf.dws.com/etfdata/export/DEU/DEU/excel/product/constituent/{e['isin']}/"
+        url = f"https://etf.dws.com/etfdata/export/DEU/DEU/excel/product/constituent/{src.get('isin') or e['isin']}/"
     elif src.get("anbieter") == "spdr":
-        url = f"https://www.ssga.com/library-content/products/fund-data/etfs/emea/holdings-daily-emea-en-{e['ticker'].split('.')[0].lower()}-gy.xlsx"
+        url = f"https://www.ssga.com/library-content/products/fund-data/etfs/emea/holdings-daily-emea-en-{(src.get('ticker') or e['ticker']).split('.')[0].lower()}-gy.xlsx"
     else:
         return []
-    wb = openpyxl.load_workbook(io.BytesIO(HTTP.get(url, timeout=60).content), read_only=True, data_only=True)
+    if url not in _HOLD_CACHE:
+        _HOLD_CACHE[url] = HTTP.get(url, timeout=60).content
+    wb = openpyxl.load_workbook(io.BytesIO(_HOLD_CACHE[url]), read_only=True, data_only=True)
     ws = wb.worksheets[0]
     head, out = None, []
     for row in ws.iter_rows(values_only=True):
@@ -1157,12 +1163,18 @@ def build_holdings(uni_rows: list[dict], fund: dict):
             first.setdefault(k.split()[0], []).append(r["s"])
     by_sym: dict[str, list] = {}
     tops = {}
+    meta: dict[str, dict] = {}
     for e in cfg.get("etfs", []):
         src = e.get("holdings") or {}
         if src.get("index"):
+            n = 0
             for r in uni_rows:
-                if src["index"] in (r.get("src") or []):
+                sec = (fund.get(r["s"]) or {}).get("sec") or r.get("sec")
+                if (src["index"] in (r.get("src") or []) or (src["index"] == "ATX" and "Zusatz" in (r.get("src") or []))) and (not src.get("sektor") or sec == src["sektor"]):
                     by_sym.setdefault(r["s"], []).append([e["isin"], None])
+                    n += 1
+            meta[e["isin"]] = {"art": "index", "quelle": src["index"] + (f" · {src['sektor']}" if src.get("sektor") else ""),
+                               "naeherung": bool(src.get("naeherung")), "n": n}
             continue
         if not src.get("anbieter"):
             continue
@@ -1183,8 +1195,11 @@ def build_holdings(uni_rows: list[dict], fund: dict):
                 hit += 1
         for sym, w in agg.items():
             by_sym.setdefault(sym, []).append([e["isin"], rnd(w, 3)])
+        meta[e["isin"]] = {"art": "liste", "quelle": src.get("quelle") or "Positionsliste des Anbieters",
+                           "naeherung": bool(src.get("isin") or src.get("ticker")), "n": len(rows), "hit": hit,
+                           "wsum": rnd(sum(agg.values()), 1), "wall": rnd(sum(w for _, w in rows), 1)}
         log(f"  Positionen {e['ticker']}: {len(rows)} Titel, {hit} im Universum zugeordnet")
-    save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops})
+    save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta})
 
 
 # ----------------------------------------------------------------- Langfrist-Historie (Beratung)
@@ -1246,8 +1261,7 @@ def build_ticker(sym: str, edgar: "Edgar", closes_1y: pd.Series | None, sent: "S
     info = t.info or {}
     if not info or (info.get("regularMarketPrice") is None and info.get("currentPrice") is None and not info.get("longName")):
         raise ValueError("keine Daten bei Yahoo")
-    hist10 = safe(lambda: t.history(period="10y", interval="1wk", auto_adjust=False)["Close"].dropna(), None, f"10y {sym}")
-    hist5 = hist10[hist10.index >= hist10.index[-1] - pd.Timedelta(days=5 * 365 + 2)] if hist10 is not None and len(hist10) else None
+    hist5 = safe(lambda: t.history(period="5y", interval="1wk", auto_adjust=False)["Close"].dropna(), None, f"5y {sym}")
     hist1 = closes_1y if closes_1y is not None and len(closes_1y) > 5 else \
         safe(lambda: t.history(period="1y", auto_adjust=False)["Close"].dropna(), None, f"1y {sym}")
 
@@ -1323,50 +1337,7 @@ def build_ticker(sym: str, edgar: "Edgar", closes_1y: pd.Series | None, sent: "S
             "rmean": g("recommendationMean"), "nan": g("numberOfAnalystOpinions"),
             "up": (g("targetMeanPrice") / price - 1) if (g("targetMeanPrice") and price) else None,
             "sent": agg["score"], "f": file_safe(sym), "upd": NOW.isoformat()}
-    peh = safe(lambda: pe_history(fin, hist10, t.splits, g("trailingPE")), None, f"KGV-Historie {sym}")
-    if peh:
-        prof["peh"] = peh
-        detail["peHistory"] = peh
     return detail, prof
-
-
-def pe_history(fin: dict | None, wk: pd.Series | None, splits, pe_now) -> dict | None:
-    """KGV je Geschäftsjahr: Jahresschlusskurs ÷ verwässerter Gewinn je Aktie (split-bereinigt)."""
-    if not fin or wk is None or not len(wk) or not fin.get("eps"):
-        return None
-    idx = wk.index.tz_localize(None) if getattr(wk.index, "tz", None) is not None else wk.index
-    wk = pd.Series(wk.values, index=idx)
-    sp = []
-    if splits is not None and len(splits):
-        for d, r in splits.items():
-            if r and r > 0:
-                sp.append(((d.tz_localize(None) if getattr(d, "tzinfo", None) else d).to_pydatetime(), float(r)))
-    filed = fin.get("epsFiled") or [None] * len(fin["years"])
-    out = {}
-    for y, e, fd in zip(fin["years"], fin["eps"], filed):
-        if not e or e <= 0:
-            continue
-        px = wk[wk.index.year == int(y)]
-        if not len(px):
-            continue
-        # SEC-Werte stehen so, wie sie zuletzt eingereicht wurden: nur spätere Splits herausrechnen.
-        # Yahoo-Jahreszahlen sind bereits auf den heutigen Aktienstand umgestellt.
-        cut = datetime.fromisoformat(fd) if fd else None
-        adj = 1.0
-        if cut:
-            for d, r in sp:
-                if d > cut:
-                    adj *= r
-        pe = float(px.iloc[-1]) / (e / adj)
-        if 0 < pe <= 150:
-            out[str(y)] = round(pe, 1)
-    if not out:
-        return None
-    if pe_now and pe_now > 0:
-        last = out[max(out)]
-        if not 0.33 <= last / pe_now <= 3:  # Währungs- oder Split-Unstimmigkeit → lieber weglassen
-            return None
-    return out
 
 
 def fx_to_eur(currencies: set[str]) -> dict[str, float]:
@@ -1551,7 +1522,7 @@ def main():
             "rg": rnd((f.get("rg") or 0) * 100, 1) if f.get("rg") is not None else None,
             "feg": rnd((f.get("feg") or 0) * 100, 1) if f.get("feg") is not None else None,
             "up": rnd((f["tgt"] / px - 1) * 100, 1) if f.get("tgt") and px else None,
-            "rmean": rnd(f.get("rmean"), 2), "nan": f.get("nan"), "peh": f.get("peh"),
+            "rmean": rnd(f.get("rmean"), 2), "nan": f.get("nan"),
             "pm": rnd((f.get("pm") or 0) * 100, 1) if f.get("pm") is not None else None,
             "er": f.get("er"), "src": u.get("src", []), "det": det, "wl": s in watch,
         })
@@ -1577,7 +1548,7 @@ def main():
     safe(build_etfs, None, "ETFs")
     if MODE == "nightly" or not set(CFG.get("long_indices", {})) <= set((load(DATA / "long.json") or {}).get("series", {})):
         safe(build_long_history, None, "Langfrist-Historie")
-    if MODE == "nightly" or not (DATA / "holdings.json").exists():
+    if MODE == "nightly" or "meta" not in (load(DATA / "holdings.json") or {}):
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
 
     # --- News + Stimmung
