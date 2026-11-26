@@ -1090,7 +1090,10 @@ def main():
     save(DATA / "calendar.json", build_calendar(fund, watch, editions))
 
     # --- Makro (nachts oder wenn noch nicht vorhanden)
-    if MODE == "nightly" or not (DATA / "macro.json").exists():
+    macro_old = load(DATA / "macro.json", None)
+    fred_missing = bool(os.environ.get("FRED_API_KEY")) and macro_old is not None and \
+        not any(x.get("source") == "FRED" for x in macro_old.get("series", []))
+    if MODE == "nightly" or macro_old is None or fred_missing:
         log("Makro laden …")
         safe(build_macro, None, "Makro")
     safe(lambda: merge_manual_macro(editions), None, "PMI-Zusammenführung")
