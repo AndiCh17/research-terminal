@@ -597,17 +597,26 @@ V.GP.after = el => {
 };
 
 /* --- Screener --- */
-const SCR0 = {q:"", c:"", sec:"", ind:"", src:"", mcap:"", peMin:"", peMax:"", dyMin:"", ytdMin:"", y1Min:"", sentMin:"", det:false, sort:"mcap", dir:-1, lim:100};
+const SCR0 = {q:"", c:"", sec:"", ind:"", src:"", mcap:"", peMin:"", peMax:"", dyMin:"", ytdMin:"", y1Min:"", sentMin:"", egMin:"", fegMin:"", rgMin:"", det:false, sort:"mcap", dir:-1, lim:100};
+/* Ø-KGV je Titel aus der KGV-Historie (Jahresschlusskurs ÷ Gewinn je Aktie) */
+function enrichUni(u){
+  if(!u || u._enr) return u;
+  u.rows.forEach(r=>{ const v=Object.values(r.peh||{}).filter(x=>x>0); if(v.length>=3){ r.peAvg=v.reduce((a,b)=>a+b,0)/v.length; r.peN=v.length; if(r.pe>0) r.pePrem=(r.pe/r.peAvg-1)*100; } });
+  u._enr=true; return u;
+}
 let scr = {...SCR0};
 const PRESETS = {
   "Dividendenstark": {dyMin:4, peMax:15, peMin:0.1, mcap:"5e9"},
   "Günstig bewertet": {peMin:0.1, peMax:12, mcap:"5e9"},
+  "Gewinnwachstum": {egMin:15, fegMin:10, mcap:"5e9", sort:"feg"},
+  "Wachstum zu fairem Preis": {fegMin:10, peMin:0.1, peMax:20, mcap:"5e9", sort:"feg"},
+  "Unter eigenem Ø-KGV": {mcap:"5e9", sort:"pePrem", dir:1},
   "Momentum": {y1Min:30, mcap:"10e9", sort:"y1"},
   "Österreich": {c:"Austria", sort:"mcap"},
   "Positive News": {sentMin:0.3, sort:"sent"},
 };
 V.SCR = async () => {
-  const u = await lazy("universe");
+  const u = enrichUni(await lazy("universe"));
   if (!u || !u.rows?.length) return panel("Screener", noData("Universums-Daten"));
   const opts = (arr, v) => `<option value="">Alle</option>` + arr.map(x=>`<option${x===v?" selected":""}>${esc(x)}</option>`).join("");
   const countries = [...new Set(u.rows.map(r=>r.c).filter(Boolean))].sort();
@@ -628,17 +637,22 @@ V.SCR = async () => {
       <label>YTD ≥ % <input type="number" data-f="ytdMin" value="${scr.ytdMin}"></label>
       <label>1 J ≥ % <input type="number" data-f="y1Min" value="${scr.y1Min}"></label>
       <label>Stimmung ≥ <input type="number" step="0.1" data-f="sentMin" value="${scr.sentMin}"></label>
+    </div>
+    <div class="fbar">
+      <label>Gewinnwachst. J/J ≥ % <input type="number" data-f="egMin" value="${scr.egMin}"></label>
+      <label>erw. EPS-Wachst. ≥ % <input type="number" data-f="fegMin" value="${scr.fegMin}"></label>
+      <label>Umsatzwachst. ≥ % <input type="number" data-f="rgMin" value="${scr.rgMin}"></label>
       <label><input type="checkbox" data-f="det"${scr.det?" checked":""}> nur mit Detailseite</label>
     </div>
     ${scr.ind?`<div class="fbar"><span class="chip" style="color:var(--amber);border-color:var(--amber)">Branche: ${esc(scr.ind)} <a href="#" id="indX" style="color:var(--dn)">✕</a></span></div>`:""}
     <div id="scrT"></div>
-    <p class="dim" style="font-size:11px;margin-top:8px">Kurse: alle ${fmt(u.n,0)} Titel. Kennzahlen bisher für ${fmt(withF,0)} Titel – der Nachtlauf ergänzt jede Nacht mehrere hundert, bis alle erfasst sind. Marktkapitalisierung in EUR umgerechnet. Stimmung nur bei Titeln mit Detailseite.</p>`,
+    <p class="dim" style="font-size:11px;margin-top:8px">Kurse: alle ${fmt(u.n,0)} Titel. Kennzahlen bisher für ${fmt(withF,0)} Titel – der Nachtlauf ergänzt jede Nacht mehrere hundert, bis alle erfasst sind. Marktkapitalisierung in EUR umgerechnet. Stimmung nur bei Titeln mit Detailseite. Gewinn J/J = letztes Quartal ggü. Vorjahresquartal, erw. EPS = Konsens-Gewinn je Aktie der nächsten 12 Monate ggü. letzten 12 Monaten, Umsatz J/J = letztes Quartal. Ø KGV = Mittel der KGVs der verfügbaren Geschäftsjahre (USA bis 10 Jahre aus SEC-Daten, sonst rund 4 Jahre); „ggü. Ø“ = aktuelles KGV im Vergleich dazu.</p>`,
     `<small>Klick auf Zeile = Detail</small>`);
 };
 function scrRows(){
   const u = D.universe; if(!u) return [];
   const q = scr.q.trim().toUpperCase(), num = v => v===""||v==null ? null : +v;
-  const f = {mcap:num(scr.mcap), peMin:num(scr.peMin), peMax:num(scr.peMax), dyMin:num(scr.dyMin), ytdMin:num(scr.ytdMin), y1Min:num(scr.y1Min), sentMin:num(scr.sentMin)};
+  const f = {mcap:num(scr.mcap), peMin:num(scr.peMin), peMax:num(scr.peMax), dyMin:num(scr.dyMin), ytdMin:num(scr.ytdMin), y1Min:num(scr.y1Min), sentMin:num(scr.sentMin), egMin:num(scr.egMin), fegMin:num(scr.fegMin), rgMin:num(scr.rgMin)};
   let rows = u.rows.filter(r =>
     (!q || r.s.toUpperCase().includes(q) || (r.n||"").toUpperCase().includes(q)) &&
     (!scr.c || r.c===scr.c) && (!scr.sec || r.sec===scr.sec) && (!scr.ind || r.ind===scr.ind) && (!scr.src || (r.src||[]).includes(scr.src)) &&
@@ -646,6 +660,8 @@ function scrRows(){
     (f.peMin==null || (r.pe!=null && r.pe >= f.peMin)) && (f.peMax==null || (r.pe!=null && r.pe <= f.peMax)) &&
     (f.dyMin==null || (r.dy||0) >= f.dyMin) && (f.ytdMin==null || (r.ytd!=null && r.ytd >= f.ytdMin)) &&
     (f.y1Min==null || (r.y1!=null && r.y1 >= f.y1Min)) && (f.sentMin==null || (r.sent!=null && r.sent >= f.sentMin)) &&
+    (f.egMin==null || (r.eg!=null && r.eg >= f.egMin)) && (f.fegMin==null || (r.feg!=null && r.feg >= f.fegMin)) && (f.rgMin==null || (r.rg!=null && r.rg >= f.rgMin)) &&
+    (scr.sort!=="pePrem" || r.pePrem!=null) &&
     (!scr.det || r.det));
   const k = scr.sort, d = scr.dir;
   rows.sort((a,b)=>{ const x=a[k], y=b[k]; if(x==null&&y==null) return 0; if(x==null) return 1; if(y==null) return -1; return (typeof x==="string"?x.localeCompare(y):x-y)*d; });
@@ -655,10 +671,10 @@ function drawScr(el){
   const rows = scrRows(), box = el.querySelector("#scrT"); if(!box) return;
   const h = (k,l,c="") => `<th class="${c}" data-k="${k}">${l}${scr.sort===k?(scr.dir>0?" ▲":" ▼"):""}</th>`;
   box.innerHTML = `<div class="dim" style="margin-bottom:6px">${fmt(rows.length,0)} Treffer</div><div class="scroll"><table id="st"><thead><tr>
-    ${h("s","Symbol")}${h("n","Name","l")}${h("c","Land","l")}${h("sec","Sektor","l")}${h("px","Kurs")}<th>Whg.</th>${h("chg","Δ %")}${h("m1","1 M")}${h("ytd","YTD")}${h("y1","1 J")}${h("mcap","Marktkap. €")}${h("pe","KGV")}${h("fpe","KGV erw.")}${h("dy","Div. %")}${h("roe","EKR %")}${h("sent","Stimmung")}${h("er","Zahlen")}</tr></thead><tbody>
+    ${h("s","Symbol")}${h("n","Name","l")}${h("c","Land","l")}${h("sec","Sektor","l")}${h("px","Kurs")}<th>Whg.</th>${h("chg","Δ %")}${h("m1","1 M")}${h("ytd","YTD")}${h("y1","1 J")}${h("mcap","Marktkap. €")}${h("pe","KGV")}${h("fpe","KGV erw.")}${h("peAvg","Ø KGV")}${h("pePrem","ggü. Ø")}${h("eg","Gewinn J/J")}${h("feg","erw. EPS")}${h("rg","Umsatz J/J")}${h("dy","Div. %")}${h("roe","EKR %")}${h("sent","Stimmung")}${h("er","Zahlen")}</tr></thead><tbody>
     ${rows.slice(0, scr.lim).map(r=>`<tr class="click" data-sym="${esc(r.s)}"><td class="sym">${esc(r.s)}${r.wl?" ★":""}</td><td class="nm l">${esc(r.n)}</td><td class="l dim">${esc(r.c||"")}</td><td class="l dim">${esc(r.sec||"")}</td>
       <td>${fmt(r.px)}</td><td class="dim">${esc(r.cur||"")}</td><td class="${cls(r.chg)}">${pct(r.chg)}</td><td class="${cls(r.m1)}">${pct(r.m1,1)}</td><td class="${cls(r.ytd)}">${pct(r.ytd,1)}</td><td class="${cls(r.y1)}">${pct(r.y1,1)}</td>
-      <td>${big(r.mcap)}</td><td>${fmt(r.pe,1)}</td><td>${fmt(r.fpe,1)}</td><td>${r.dy!=null?fmt(r.dy,2):"–"}</td><td>${fmt(r.roe,1)}</td><td>${sentScore(r.sent)}</td><td class="dim">${r.er?new Date(r.er).toLocaleDateString("de-AT"):"–"}</td></tr>`).join("")}
+      <td>${big(r.mcap)}</td><td>${fmt(r.pe,1)}</td><td>${fmt(r.fpe,1)}</td><td class="dim" title="${r.peN?`Mittel aus ${r.peN} Geschäftsjahren`:""}">${fmt(r.peAvg,1)}</td><td class="${r.pePrem==null?"":r.pePrem<0?"up":"dn"}">${pct(r.pePrem,0)}</td><td class="${cls(r.eg)}">${pct(r.eg,1)}</td><td class="${cls(r.feg)}">${pct(r.feg,1)}</td><td class="${cls(r.rg)}">${pct(r.rg,1)}</td><td>${r.dy!=null?fmt(r.dy,2):"–"}</td><td>${fmt(r.roe,1)}</td><td>${sentScore(r.sent)}</td><td class="dim">${r.er?new Date(r.er).toLocaleDateString("de-AT"):"–"}</td></tr>`).join("")}
   </tbody></table></div>${rows.length>scr.lim?`<button class="more" id="more">Weitere ${fmt(Math.min(100, rows.length-scr.lim),0)} anzeigen</button>`:""}`;
   box.querySelectorAll("tr.click[data-sym]").forEach(tr=>tr.onclick=()=>go("DES", tr.dataset.sym));
   box.querySelectorAll("th[data-k]").forEach(th=>th.onclick=()=>{ const k=th.dataset.k; scr.dir = scr.sort===k ? -scr.dir : (["s","n","c","sec","er"].includes(k)?1:-1); scr.sort=k; drawScr(el); });
@@ -931,12 +947,46 @@ const THEMES = {
     info: "Yahoo/GICS führt Erneuerbare nicht unter Energie (Öl & Gas), sondern verteilt: Versorger (Erneuerbare Stromerzeugung), Technologie (Solar) und Industrie (Wind- und Netztechnik). Dieser Korb fasst sie zusammen."}
 };
 let braReg = "Alle", braOpen = null;
+/* Langfristiges KGV einer Gruppe: je Geschäftsjahr der Median der Titel-KGVs, dann Mittel über die Jahre */
+function peLong(list, minN=4){
+  const by={}; list.forEach(r=>Object.entries(r.peh||{}).forEach(([y,v])=>{ if(v>0&&v<150) (by[y]=by[y]||[]).push(v); }));
+  const yrs=Object.keys(by).filter(y=>by[y].length>=minN).sort();
+  if(yrs.length<3) return null;
+  const meds=yrs.map(y=>median(by[y]));
+  return {avg:meds.reduce((a,b)=>a+b,0)/meds.length, from:yrs[0], to:yrs[yrs.length-1], n:yrs.length, path:yrs.map((y,i)=>[y,meds[i]])};
+}
+const peLongTxt = l => l ? `${l.from}–${l.to}, ${l.n} Geschäftsjahre: ${l.path.map(([y,v])=>`${y}: ${fmt(v,1)}`).join(" · ")}` : "zu wenige Titel mit KGV-Historie";
+let braTab = "sek";
+const inReg = (r, reg) => reg==="Alle" || regionOf(r.c)===reg || (reg==="Europa" && regionOf(r.c)==="Österreich");
+function braRegionen(u){
+  enrichUni(u);
+  const regs=["USA","Europa","Österreich","Schwellenländer","Alle"];
+  const A = list => { const l=peLong(list); const pe=median(list.map(r=>r.pe>0&&r.pe<200?r.pe:null));
+    return {n:list.length, ni:list.reduce((s,r)=>s+(r.ni||0),0), eg:median(list.map(r=>r.eg)), feg:median(list.map(r=>r.feg)), rg:median(list.map(r=>r.rg)), pe, fpe:median(list.map(r=>r.fpe>0&&r.fpe<200?r.fpe:null)), l, prem: l&&pe?(pe/l.avg-1)*100:null, dy:median(list.map(r=>r.dy)), up:median(list.map(r=>r.up)), ytd:median(list.map(r=>r.ytd)), y1:median(list.map(r=>r.y1))}; };
+  const data = regs.map(g=>[g, A(u.rows.filter(r=>inReg(r,g)))]);
+  const tbl1 = `<div class="scroll"><table><thead><tr><th class="l">Region</th><th>Titel</th><th>Gewinn € (Summe)</th><th>Gewinn J/J</th><th>erw. EPS-Wachst.</th><th>Umsatz J/J</th><th>KGV</th><th>KGV erw.</th><th>Ø KGV lang</th><th>ggü. Ø</th><th>Div.-Rendite</th><th>Kursziel-Pot.</th><th>YTD</th><th>1 J</th></tr></thead><tbody>
+    ${data.map(([g,a])=>`<tr style="${g==="Alle"?"border-top:2px solid var(--line)":""}"><td class="l"${g==="Alle"?' style="color:var(--amber)"':""}>${g==="Alle"?"Gesamtes Universum":g}</td><td>${fmt(a.n,0)}</td><td>${big(a.ni)}</td><td class="${cls(a.eg)}">${pct(a.eg,1)}</td><td class="${cls(a.feg)}">${pct(a.feg,1)}</td><td class="${cls(a.rg)}">${pct(a.rg,1)}</td><td>${fmt(a.pe,1)}</td><td>${fmt(a.fpe,1)}</td><td class="dim" title="${esc(peLongTxt(a.l))}">${a.l?fmt(a.l.avg,1):"–"}</td><td class="${a.prem==null?"":a.prem<0?"up":"dn"}">${pct(a.prem,0)}</td><td>${a.dy!=null?fmt(a.dy,2)+" %":"–"}</td><td class="${cls(a.up)}">${pct(a.up,1)}</td><td class="${cls(a.ytd)}">${pct(a.ytd,1)}</td><td class="${cls(a.y1)}">${pct(a.y1,1)}</td></tr>`).join("")}
+  </tbody></table></div>`;
+  // Matrix Sektor × Region: aktuelles KGV, eingefärbt nach Abstand zum eigenen langfristigen Schnitt
+  const secs=[...new Set(u.rows.map(r=>r.sec).filter(Boolean))].sort();
+  const R4=regs.slice(0,4);
+  const cell = list => { if(list.length<3) return `<td class="dim">–</td>`; const pe=median(list.map(r=>r.pe>0&&r.pe<200?r.pe:null)); const l=peLong(list,3); const pr=l&&pe?(pe/l.avg-1)*100:null;
+    const bg = pr==null?"":pr<-10?"rgba(52,211,153,.14)":pr>10?"rgba(248,113,113,.14)":"rgba(255,255,255,.03)";
+    return `<td style="background:${bg}" title="${list.length} Titel · Ø KGV ${l?fmt(l.avg,1)+" ("+l.from+"–"+l.to+")":"–"}">${fmt(pe,1)}${pr!=null?` <span class="${pr<0?"up":"dn"}" style="font-size:10.5px">${pct(pr,0)}</span>`:""}</td>`; };
+  const tbl2 = `<div class="scroll"><table><thead><tr><th class="l" style="width:220px">Sektor</th>${R4.map(g=>`<th>${g}</th>`).join("")}</tr></thead><tbody>
+    ${secs.map(sec=>`<tr><td class="l">${esc(sec)}</td>${R4.map(g=>cell(u.rows.filter(r=>r.sec===sec&&inReg(r,g)))).join("")}</tr>`).join("")}
+  </tbody></table></div>`;
+  return `${panel("Regionen im Vergleich", tbl1+`<p class="dim" style="font-size:11px;margin-top:8px">Mediane je Region. Europa einschließlich Österreich. „Ø KGV lang“ = je Geschäftsjahr Median der Titel-KGVs (Jahresschlusskurs ÷ Gewinn je Aktie), gemittelt über die verfügbaren Jahre – Maus über den Wert zeigt den Verlauf.</p>`)}
+    <div style="margin-top:10px">${panel("KGV nach Sektor und Region", tbl2+`<p class="dim" style="font-size:11px;margin-top:8px">Aktuelles Median-KGV; dahinter Abstand zum langfristigen Schnitt derselben Gruppe. Grün = mehr als 10 % unter dem eigenen Schnitt, rot = mehr als 10 % darüber. Mindestens 3 Titel je Feld.</p>`)}</div>`;
+}
 V.BRA = async () => {
-  const u = await lazy("universe"); if(!u) return panel("Branchen", noData("Universums-Daten"));
+  const u = enrichUni(await lazy("universe")); if(!u) return panel("Branchen", noData("Universums-Daten"));
+  const tabs = `<div class="btns" id="braT" style="margin-bottom:10px">${[["sek","Sektoren & Branchen"],["reg","Regionen"]].map(([k,l])=>`<button data-t="${k}" class="${k===braTab?"on":""}" style="padding:5px 14px;font-size:12px">${l}</button>`).join("")}</div>`;
+  if (braTab==="reg") return tabs + braRegionen(u);
   const rows = u.rows.filter(r => braReg==="Alle" || regionOf(r.c)===braReg);
   const by = {}; rows.forEach(r=>{ if(r.sec) (by[r.sec]=by[r.sec]||[]).push(r); });
-  const agg = list => ({n:list.length, pe:median(list.map(r=>r.pe>0&&r.pe<200?r.pe:null)), fpe:median(list.map(r=>r.fpe>0&&r.fpe<200?r.fpe:null)), dy:median(list.map(r=>r.dy)), eg:median(list.map(r=>r.eg)), feg:median(list.map(r=>r.feg)), up:median(list.map(r=>r.up)), ytd:median(list.map(r=>r.ytd)), ni:list.reduce((s,r)=>s+(r.ni||0),0)});
-  const line = (name, a, attrs="", indent=false) => `<tr ${attrs}><td class="l${indent?" dim":""}" style="${indent?"padding-left:22px":""}">${indent?"":"▸ "}${esc(name)}</td><td>${a.n}</td><td>${big(a.ni)}</td><td class="${cls(a.eg)}">${pct(a.eg,1)}</td><td class="${cls(a.feg)}">${pct(a.feg,1)}</td><td>${fmt(a.pe,1)}</td><td>${fmt(a.fpe,1)}</td><td>${a.dy!=null?fmt(a.dy,2)+" %":"–"}</td><td class="${cls(a.up)}">${pct(a.up,1)}</td><td class="${cls(a.ytd)}">${pct(a.ytd,1)}</td></tr>`;
+  const agg = list => ({n:list.length, l:peLong(list, list.length<15?2:4), pe:median(list.map(r=>r.pe>0&&r.pe<200?r.pe:null)), fpe:median(list.map(r=>r.fpe>0&&r.fpe<200?r.fpe:null)), dy:median(list.map(r=>r.dy)), eg:median(list.map(r=>r.eg)), feg:median(list.map(r=>r.feg)), up:median(list.map(r=>r.up)), ytd:median(list.map(r=>r.ytd)), ni:list.reduce((s,r)=>s+(r.ni||0),0)});
+  const line = (name, a, attrs="", indent=false) => `<tr ${attrs}><td class="l${indent?" dim":""}" style="${indent?"padding-left:22px":""}">${indent?"":"▸ "}${esc(name)}</td><td>${a.n}</td><td>${big(a.ni)}</td><td class="${cls(a.eg)}">${pct(a.eg,1)}</td><td class="${cls(a.feg)}">${pct(a.feg,1)}</td><td>${fmt(a.pe,1)}</td><td>${fmt(a.fpe,1)}</td><td class="dim" title="${esc(peLongTxt(a.l))}">${a.l?fmt(a.l.avg,1):"–"}</td><td class="${!a.l||!a.pe?"":a.pe<a.l.avg?"up":"dn"}">${a.l&&a.pe?pct((a.pe/a.l.avg-1)*100,0):"–"}</td><td>${a.dy!=null?fmt(a.dy,2)+" %":"–"}</td><td class="${cls(a.up)}">${pct(a.up,1)}</td><td class="${cls(a.ytd)}">${pct(a.ytd,1)}</td></tr>`;
   let body = "";
   Object.entries(by).sort((a,b)=>b[1].length-a[1].length).forEach(([sec,list])=>{
     body += line(sec, agg(list), `class="click" data-sec="${esc(sec)}" style="${braOpen===sec?"background:var(--hl)":""}"`);
@@ -946,18 +996,19 @@ V.BRA = async () => {
   // Themenkörbe quer über die Sektoren
   const themes = Object.entries(THEMES).map(([name,t])=>[name, rows.filter(t.test)]).filter(([,l])=>l.length);
   if (themes.length) {
-    body += `<tr><td colspan="11" class="l" style="padding-top:14px;color:var(--amber);font-size:10.5px;font-weight:650;letter-spacing:.6px;text-transform:uppercase">Themen (sektorübergreifend)</td></tr>`;
+    body += `<tr><td colspan="13" class="l" style="padding-top:14px;color:var(--amber);font-size:10.5px;font-weight:650;letter-spacing:.6px;text-transform:uppercase">Themen (sektorübergreifend)</td></tr>`;
     themes.forEach(([name,list])=>{
       body += line(name, agg(list), `class="click" data-theme="${esc(name)}" style="${braOpen===name?"background:var(--hl)":""}"`);
       if (braOpen===name) [...list].sort((a,b)=>(b.mcap||0)-(a.mcap||0)).forEach(r=>{ body += line(`${r.n} · ${r.ind||r.sec||""}`, agg([r]), `class="click" data-sym="${esc(r.s)}"`, true); });
     });
   }
   const regs = ["Alle","USA","Europa","Österreich","Schwellenländer"];
-  return panel("Branchenvergleich", `<div class="btns" id="br" style="margin-bottom:8px">${regs.map(r=>`<button data-r="${r}" class="${r===braReg?"on":""}">${r}</button>`).join("")}</div>
-    <div class="scroll"><table id="bt"><thead><tr><th class="l">Sektor / Branche</th><th>Titel</th><th>Gewinn € (Summe)</th><th>Gewinnwachst. J/J</th><th>erw. EPS-Wachst.</th><th>KGV</th><th>KGV erw.</th><th>Div.-Rendite</th><th>Kursziel-Pot.</th><th>YTD</th></tr></thead><tbody>${body}</tbody></table></div>
-    <p class="dim" style="font-size:11px;margin-top:8px">Mediane je Sektor bzw. Branche (KGV nur zwischen 0 und 200). Sektor anklicken = Branchen aufklappen, Branche anklicken = alle Titel im Screener. <b>Erneuerbare Energien</b> stecken nicht im Sektor Energie (der umfasst Öl &amp; Gas), sondern verteilt in Versorger, Technologie (Solar) und Industrie (Wind- und Netztechnik) – deshalb gibt es sie unten als eigenen Themenkorb. Die Kennzahlen füllen sich mit jedem Nachtlauf.</p>`, `<small>${fmt(rows.length,0)} Titel</small>`);
+  return tabs + panel("Branchenvergleich", `<div class="btns" id="br" style="margin-bottom:8px">${regs.map(r=>`<button data-r="${r}" class="${r===braReg?"on":""}">${r}</button>`).join("")}</div>
+    <div class="scroll"><table id="bt"><thead><tr><th class="l">Sektor / Branche</th><th>Titel</th><th>Gewinn € (Summe)</th><th>Gewinnwachst. J/J</th><th>erw. EPS-Wachst.</th><th>KGV</th><th>KGV erw.</th><th title="Langfristiger Schnitt: je Geschäftsjahr Median der Titel-KGVs, gemittelt">Ø KGV lang</th><th>ggü. Ø</th><th>Div.-Rendite</th><th>Kursziel-Pot.</th><th>YTD</th></tr></thead><tbody>${body}</tbody></table></div>
+    <p class="dim" style="font-size:11px;margin-top:8px">Mediane je Sektor bzw. Branche (KGV nur zwischen 0 und 200). <b>Ø KGV lang</b> = je Geschäftsjahr der Median der Titel-KGVs (Jahresschlusskurs ÷ verwässerter Gewinn je Aktie, split-bereinigt), gemittelt über die verfügbaren Jahre: USA bis zu 10 Jahre aus SEC-Daten, übrige Märkte rund 4 Jahre. Maus über den Wert zeigt Zeitraum und Verlauf. Sektor anklicken = Branchen aufklappen, Branche anklicken = alle Titel im Screener. <b>Erneuerbare Energien</b> stecken nicht im Sektor Energie (der umfasst Öl &amp; Gas), sondern verteilt in Versorger, Technologie (Solar) und Industrie (Wind- und Netztechnik) – deshalb gibt es sie unten als eigenen Themenkorb. Die Kennzahlen füllen sich mit jedem Nachtlauf.</p>`, `<small>${fmt(rows.length,0)} Titel</small>`);
 };
 V.BRA.after = el => {
+  el.querySelectorAll("#braT button").forEach(b=>b.onclick=()=>{ braTab=b.dataset.t; render(); });
   el.querySelectorAll("#br button").forEach(b=>b.onclick=()=>{ braReg=b.dataset.r; render(); });
   el.querySelectorAll("[data-sec]").forEach(tr=>tr.onclick=()=>{ braOpen = braOpen===tr.dataset.sec ? null : tr.dataset.sec; render(); });
   el.querySelectorAll("[data-theme]").forEach(tr=>tr.onclick=()=>{ braOpen = braOpen===tr.dataset.theme ? null : tr.dataset.theme; render(); });
@@ -1006,8 +1057,8 @@ function etfMembership(sym){
 /* --- Renditevergleich Anleihen & Festgeld (eingebettetes Werkzeug) --- */
 V.NET = async () => {
   await lazy("bonds");
-  return `<div class="ph" style="border:1px solid var(--line)"><h2>Renditevergleich Anleihen &amp; Festgeld · Nettorendite nach Kosten und KESt</h2><a href="tools/renditevergleich.html" target="_blank" rel="noopener" class="dim" style="font-size:11px">In neuem Tab öffnen ↗</a></div>
-    <iframe id="netFrame" src="tools/renditevergleich.html" title="Renditevergleich" style="width:100%;height:calc(100vh - 175px);min-height:640px;border:1px solid var(--line);border-top:0;background:#ECEEF0;display:block"></iframe>`;
+  return `<div class="ph" style="border:1px solid var(--line);border-radius:6px 6px 0 0"><h2>Renditevergleich Anleihen &amp; Festgeld · Nettorendite nach Kosten und KESt</h2><a href="tools/renditevergleich.html" target="_blank" rel="noopener" class="dim" style="font-size:11px">In neuem Tab öffnen ↗</a></div>
+    <iframe id="netFrame" src="tools/renditevergleich.html?embed=terminal" title="Renditevergleich" style="width:100%;height:calc(100vh - 190px);min-height:640px;border:1px solid var(--line);border-top:0;border-radius:0 0 6px 6px;background:var(--bg);display:block"></iframe>`;
 };
 function sendBonds(){
   const f = document.getElementById("netFrame"); if (!f || !f.contentWindow || !D.bonds) return;

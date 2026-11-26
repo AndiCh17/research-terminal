@@ -308,6 +308,7 @@ class Edgar:
         gaap = facts.get("us-gaap", {})
         self.last_gaap = (sym, gaap)
         res: dict[str, dict[int, float]] = {}
+        eps_filed: dict[int, str] = {}
         for key, tags in SEC_TAGS.items():
             for tag in tags:
                 node = gaap.get(tag)
@@ -335,7 +336,9 @@ class Edgar:
                         series[yr] = (filed, f["val"])
                 if series:
                     merged = res.setdefault(key, {})
-                    for yr, (_, v) in series.items():
+                    for yr, (fd, v) in series.items():
+                        if yr not in merged and key == "eps":
+                            eps_filed[yr] = fd
                         merged.setdefault(yr, v)  # erster passender Tag hat Vorrang
             # nächstes Feld
         if not res:
@@ -344,6 +347,8 @@ class Edgar:
         out = {"source": "SEC EDGAR (10-K)", "currency": "USD", "years": years}
         for key, s in res.items():
             out[key] = [s.get(y) for y in years]
+        if eps_filed:
+            out["epsFiled"] = [eps_filed.get(y) for y in years]
         if "operatingCashflow" in out and "capex" in out:
             out["freeCashflow"] = [None if a is None or b is None else a - b
                                    for a, b in zip(out["operatingCashflow"], out["capex"])]
@@ -1241,7 +1246,8 @@ def build_ticker(sym: str, edgar: "Edgar", closes_1y: pd.Series | None, sent: "S
     info = t.info or {}
     if not info or (info.get("regularMarketPrice") is None and info.get("currentPrice") is None and not info.get("longName")):
         raise ValueError("keine Daten bei Yahoo")
-    hist5 = safe(lambda: t.history(period="5y", interval="1wk", auto_adjust=False)["Close"].dropna(), None, f"5y {sym}")
+    hist10 = safe(lambda: t.history(period="10y", interval="1wk", auto_adjust=False)["Close"].dropna(), None, f"10y {sym}")
+    hist5 = hist10[hist10.index >= hist10.index[-1] - pd.Timedelta(days=5 * 365 + 2)] if hist10 is not None and len(hist10) else None
     hist1 = closes_1y if closes_1y is not None and len(closes_1y) > 5 else \
         safe(lambda: t.history(period="1y", auto_adjust=False)["Close"].dropna(), None, f"1y {sym}")
 
@@ -1317,7 +1323,50 @@ def build_ticker(sym: str, edgar: "Edgar", closes_1y: pd.Series | None, sent: "S
             "rmean": g("recommendationMean"), "nan": g("numberOfAnalystOpinions"),
             "up": (g("targetMeanPrice") / price - 1) if (g("targetMeanPrice") and price) else None,
             "sent": agg["score"], "f": file_safe(sym), "upd": NOW.isoformat()}
+    peh = safe(lambda: pe_history(fin, hist10, t.splits, g("trailingPE")), None, f"KGV-Historie {sym}")
+    if peh:
+        prof["peh"] = peh
+        detail["peHistory"] = peh
     return detail, prof
+
+
+def pe_history(fin: dict | None, wk: pd.Series | None, splits, pe_now) -> dict | None:
+    """KGV je Geschäftsjahr: Jahresschlusskurs ÷ verwässerter Gewinn je Aktie (split-bereinigt)."""
+    if not fin or wk is None or not len(wk) or not fin.get("eps"):
+        return None
+    idx = wk.index.tz_localize(None) if getattr(wk.index, "tz", None) is not None else wk.index
+    wk = pd.Series(wk.values, index=idx)
+    sp = []
+    if splits is not None and len(splits):
+        for d, r in splits.items():
+            if r and r > 0:
+                sp.append(((d.tz_localize(None) if getattr(d, "tzinfo", None) else d).to_pydatetime(), float(r)))
+    filed = fin.get("epsFiled") or [None] * len(fin["years"])
+    out = {}
+    for y, e, fd in zip(fin["years"], fin["eps"], filed):
+        if not e or e <= 0:
+            continue
+        px = wk[wk.index.year == int(y)]
+        if not len(px):
+            continue
+        # SEC-Werte stehen so, wie sie zuletzt eingereicht wurden: nur spätere Splits herausrechnen.
+        # Yahoo-Jahreszahlen sind bereits auf den heutigen Aktienstand umgestellt.
+        cut = datetime.fromisoformat(fd) if fd else None
+        adj = 1.0
+        if cut:
+            for d, r in sp:
+                if d > cut:
+                    adj *= r
+        pe = float(px.iloc[-1]) / (e / adj)
+        if 0 < pe <= 150:
+            out[str(y)] = round(pe, 1)
+    if not out:
+        return None
+    if pe_now and pe_now > 0:
+        last = out[max(out)]
+        if not 0.33 <= last / pe_now <= 3:  # Währungs- oder Split-Unstimmigkeit → lieber weglassen
+            return None
+    return out
 
 
 def fx_to_eur(currencies: set[str]) -> dict[str, float]:
@@ -1502,7 +1551,7 @@ def main():
             "rg": rnd((f.get("rg") or 0) * 100, 1) if f.get("rg") is not None else None,
             "feg": rnd((f.get("feg") or 0) * 100, 1) if f.get("feg") is not None else None,
             "up": rnd((f["tgt"] / px - 1) * 100, 1) if f.get("tgt") and px else None,
-            "rmean": rnd(f.get("rmean"), 2), "nan": f.get("nan"),
+            "rmean": rnd(f.get("rmean"), 2), "nan": f.get("nan"), "peh": f.get("peh"),
             "pm": rnd((f.get("pm") or 0) * 100, 1) if f.get("pm") is not None else None,
             "er": f.get("er"), "src": u.get("src", []), "det": det, "wl": s in watch,
         })
