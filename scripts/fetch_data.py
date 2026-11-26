@@ -969,6 +969,93 @@ def build_etfs():
     log(f"ETFs: {len(out)}, mit Kurs {sum(1 for r in out if r.get('px'))}")
 
 
+
+# ----------------------------------------------------------------- ETF-Positionen
+NAME_STOP = {"INC", "INCORPORATED", "CORP", "CORPORATION", "CO", "COMPANY", "LTD", "LIMITED", "PLC", "AG", "SE", "SA", "NV",
+             "AB", "ASA", "OYJ", "SPA", "HOLDINGS", "HOLDING", "GROUP", "GRUPPE", "CLASS", "A", "B", "C", "THE", "REG", "REGISTERED",
+             "SHS", "ORD", "ADR", "COM", "KGAA", "AKTIENGESELLSCHAFT", "PREF", "VZ", "ST", "N", "V", "S", "P", "DE", "LA", "PLC.",
+             "CL", "SHARES", "NPV", "BHD", "TBK", "PCL", "AS", "A/S", "SAB", "CV", "OY", "BV", "LP", "ETF"}
+
+
+def name_key(n: str) -> str:
+    import unicodedata
+    n = unicodedata.normalize("NFKD", str(n or "")).encode("ascii", "ignore").decode()
+    w = re.sub(r"[^A-Z0-9 ]", " ", n.upper().replace("&", " AND "))
+    return " ".join(t for t in w.split() if t not in NAME_STOP)
+
+
+def read_holdings(e: dict) -> list[tuple[str, float]]:
+    """(Name, Gewicht in %) aus der Anbieterdatei."""
+    import openpyxl
+    src = e.get("holdings") or {}
+    if src.get("anbieter") == "xtrackers":
+        url = f"https://etf.dws.com/etfdata/export/DEU/DEU/excel/product/constituent/{e['isin']}/"
+    elif src.get("anbieter") == "spdr":
+        url = f"https://www.ssga.com/library-content/products/fund-data/etfs/emea/holdings-daily-emea-en-{e['ticker'].split('.')[0].lower()}-gy.xlsx"
+    else:
+        return []
+    wb = openpyxl.load_workbook(io.BytesIO(HTTP.get(url, timeout=60).content), read_only=True, data_only=True)
+    ws = wb.worksheets[0]
+    head, out = None, []
+    for row in ws.iter_rows(values_only=True):
+        cells = [str(c).strip() if c is not None else "" for c in row]
+        if head is None:
+            if "ISIN" in cells and any(c in cells for c in ("Name", "Security Name")):
+                head = {c: i for i, c in enumerate(cells)}
+            continue
+        ni = head.get("Name", head.get("Security Name"))
+        wi = head.get("Weighting", head.get("Percent of Fund"))
+        if ni is None or wi is None or ni >= len(row) or not row[ni]:
+            continue
+        try:
+            w = float(row[wi])
+        except Exception:
+            continue
+        out.append((str(row[ni]), w * 100 if src.get("anbieter") == "xtrackers" else w))
+    return out
+
+
+def build_holdings(uni_rows: list[dict], fund: dict):
+    cfg = json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8"))
+    keys: dict[str, str] = {}
+    first: dict[str, list[str]] = {}
+    for r in uni_rows:
+        n = (fund.get(r["s"]) or {}).get("n") or r.get("n")
+        k = name_key(n)
+        if k:
+            keys.setdefault(k, r["s"])
+            first.setdefault(k.split()[0], []).append(r["s"])
+    by_sym: dict[str, list] = {}
+    tops = {}
+    for e in cfg.get("etfs", []):
+        src = e.get("holdings") or {}
+        if src.get("index"):
+            for r in uni_rows:
+                if src["index"] in (r.get("src") or []):
+                    by_sym.setdefault(r["s"], []).append([e["isin"], None])
+            continue
+        if not src.get("anbieter"):
+            continue
+        rows = safe(lambda: read_holdings(e), [], f"Positionen {e['ticker']}")
+        if not rows:
+            continue
+        tops[e["isin"]] = [[n, rnd(w, 2)] for n, w in sorted(rows, key=lambda x: -x[1])[:10]]
+        agg: dict[str, float] = {}
+        hit = 0
+        for n, w in rows:
+            k = name_key(n)
+            sym = keys.get(k)
+            if not sym and k:
+                cand = first.get(k.split()[0], [])
+                sym = cand[0] if len(cand) == 1 else None
+            if sym:
+                agg[sym] = agg.get(sym, 0) + w
+                hit += 1
+        for sym, w in agg.items():
+            by_sym.setdefault(sym, []).append([e["isin"], rnd(w, 3)])
+        log(f"  Positionen {e['ticker']}: {len(rows)} Titel, {hit} im Universum zugeordnet")
+    save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops})
+
 # ----------------------------------------------------------------- Marktupdate
 def build_marktupdate() -> list[dict]:
     """Entschlüsselt manual/marktupdate/*.enc (Secret MKT_PRIVATE_KEY) und veröffentlicht sie verschlüsselt."""
@@ -1286,6 +1373,8 @@ def main():
 
     safe(build_bonds, None, "Bundesanleihen")
     safe(build_etfs, None, "ETFs")
+    if MODE == "nightly" or not (DATA / "holdings.json").exists():
+        safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
 
     # --- News + Stimmung
     log("News + Stimmung …")

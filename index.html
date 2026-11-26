@@ -190,7 +190,7 @@ Kurse verzögert, keine Anlageberatung. Für Kundenunterlagen offizielle Bankque
 <script>
 "use strict";
 /* ============================================================ Daten */
-const D = {market:null, macro:null, news:null, meta:null, universe:null, history:null, calendar:null, marktupdate:null, bonds:null, etfs:null, tick:{}};
+const D = {market:null, macro:null, news:null, meta:null, universe:null, history:null, calendar:null, marktupdate:null, bonds:null, etfs:null, holdings:null, tick:{}};
 let DEMO = false;
 
 /* --- Entschlüsselung (AES-256-GCM, Schlüssel per PBKDF2 aus dem Passwort) --- */
@@ -462,7 +462,7 @@ V.TOP.after = el => el.querySelectorAll("#nf button").forEach(b=>b.onclick=()=>{
 /* --- Aktie im Detail --- */
 let desRange="1J";
 V.DES = async () => {
-  await lazy("universe");
+  await lazy("universe"); await lazy("etfs"); await lazy("holdings");
   const wl=(D.market&&D.market.watchlist)||[];
   if(!state.sym) state.sym = wl[0]?.sym;
   if(!state.sym) return panel("Aktie", noData("Watchlist-Titel"));
@@ -510,10 +510,12 @@ V.DES = async () => {
       ${panel("Unternehmen", `<div class="desc">${esc(t.description||"Keine Beschreibung.")}</div><div class="kv" style="margin-top:8px"><div><span>Branche</span>${esc(t.industry||"–")}</div><div><span>Mitarbeiter</span>${fmt(t.employees,0)}</div><div><span>Web</span>${t.website?`<a href="${safeUrl(t.website)}" target="_blank" rel="noopener">${esc(t.website.replace(/^https?:\/\/(www\.)?/,""))}</a>`:"–"}</div></div>`)}
     </div>
     <div style="margin-top:10px">${panel("Branchenvergleich", peerCompare(t.symbol))}</div>
+    <div style="margin-top:10px">${panel("In diesen ETFs enthalten", etfMembership(t.symbol))}</div>
     <div style="margin-top:10px">${panel("Finanzen (Jahresabschlüsse)", finHtml)}</div>
     <div style="margin-top:10px">${panel("News", newsList(t.news, 25, false))}</div>`;
 };
 V.DES.after = el => {
+  el.querySelectorAll("[data-cmp]").forEach(a=>a.onclick=ev=>{ ev.preventDefault(); if(!cmpSel.includes(a.dataset.cmp)) cmpSel.push(a.dataset.cmp); try{localStorage.setItem("rt_cmp",JSON.stringify(cmpSel));}catch(e){} go("CMP"); });
   const t=D.tick[state.sym]; if(!t) return;
   const draw=()=>{ const m={"1M":1,"3M":3,"6M":6,"1J":12,"3J":36,"5J":60}[desRange]; const src = m>12 ? t.history5y : t.history1y;
     const cut=new Date(); cut.setMonth(cut.getMonth()-m); lineChart(el.querySelector("#pxChart"), (src||[]).filter(d=>new Date(d[0])>=cut), {base:true, h:290, unit:t.currency}); };
@@ -910,8 +912,9 @@ V.BRA.after = el => {
 
 /* --- ETFs --- */
 let etfCat = "", etfSort = {k:"kategorie", d:1};
+let etfTopOpen = null;
 V.ETF = async () => {
-  const e = await lazy("etfs"); if(!e || !e.etfs?.length) return panel("ETFs", noData("ETF-Daten"));
+  const e = await lazy("etfs"); await lazy("holdings"); if(!e || !e.etfs?.length) return panel("ETFs", noData("ETF-Daten"));
   const cats = [...new Set(e.etfs.map(x=>x.kategorie))];
   let rows = e.etfs.filter(x=>!etfCat || x.kategorie===etfCat);
   rows.sort((a,b)=>{ const x=a[etfSort.k], y=b[etfSort.k]; if(x==null) return 1; if(y==null) return -1; return (typeof x==="string"?x.localeCompare(y):x-y)*etfSort.d; });
@@ -921,16 +924,30 @@ V.ETF = async () => {
     ${rows.map(x=>`<tr><td class="l nm" style="max-width:300px" title="${esc(x.isin)}">${esc(x.name)}<br><span class="dim" style="font-size:11px">${esc(x.isin)} · ${esc(x.ticker||"")}</span></td><td class="l dim">${esc(x.kategorie)}</td>
       <td class="l">${x.meldefonds?`<span class="sent positive" title="Steuerlicher Vertreter: ${esc(x.vertreter)} · ${esc(x.letzteMeldung||"")}">JA</span>`:`<span class="sent negative">NEIN</span>`}</td><td class="l dim">${esc(x.ertrag||"")}</td>
       <td>${fmt(x.ter,2)}</td><td>${big(x.aum)}</td><td>${fmt(x.px)} <span class="dim">${esc(x.cur||"")}</span></td><td class="${cls(x.m1)}">${pct(x.m1,1)}</td><td class="${cls(x.ytd)}">${pct(x.ytd,1)}</td><td class="${cls(x.y1)}">${pct(x.y1,1)}</td><td class="${cls(x.y3)}">${pct(x.y3,1)}</td><td class="${cls(x.y5)}">${pct(x.y5,1)}</td><td>${fmt(x.vola,1)}</td><td class="dn">${pct(x.mdd,1,false)}</td>
-      <td><a href="#" data-cmp="${esc(x.ticker)}" title="in den Vergleichschart">⊕ CMP</a></td></tr>`).join("")}
+      <td style="white-space:nowrap">${D.holdings&&D.holdings.top&&D.holdings.top[x.isin]?`<a href="#" data-top="${esc(x.isin)}">Top 10</a> · `:""}<a href="#" data-cmp="${esc(x.ticker)}" title="in den Vergleichschart">⊕ CMP</a></td></tr>
+      ${etfTopOpen===x.isin?`<tr><td colspan="15" style="background:#0d0d0d;text-align:left;white-space:normal">${D.holdings.top[x.isin].map(([n,w],i)=>`<span class="chip" style="margin:2px">${i+1}. ${esc(n)} <b>${fmt(w,2)} %</b></span>`).join("")}</td></tr>`:""}`).join("")}
     </tbody></table></div>
     <p class="dim" style="font-size:11px;margin-top:8px">${esc(e.hinweis||"")} Kurse in Handelswährung (Xetra), Performance ohne Kosten der Bank. TER und Volumen laut Yahoo Finance, können vom Factsheet abweichen. Keine Anlageempfehlung.</p>`,
     `<small>Meldefonds geprüft am ${e.geprueft?new Date(e.geprueft).toLocaleDateString("de-AT"):"–"}</small>`);
 };
 V.ETF.after = el => {
   el.querySelectorAll("#ec button").forEach(b=>b.onclick=()=>{ etfCat=b.dataset.c; render(); });
+  el.querySelectorAll("[data-top]").forEach(a=>a.onclick=ev=>{ ev.preventDefault(); etfTopOpen = etfTopOpen===a.dataset.top ? null : a.dataset.top; render(); });
   el.querySelectorAll("#et th[data-k]").forEach(th=>th.onclick=()=>{ const k=th.dataset.k; etfSort={k, d: etfSort.k===k?-etfSort.d:(["name","kategorie","ertrag"].includes(k)?1:-1)}; render(); });
   el.querySelectorAll("[data-cmp]").forEach(a=>a.onclick=ev=>{ ev.preventDefault(); if(!cmpSel.includes(a.dataset.cmp)) cmpSel.push(a.dataset.cmp); try{localStorage.setItem("rt_cmp",JSON.stringify(cmpSel));}catch(e){} go("CMP"); });
 };
+
+/* --- In welchen ETFs steckt die Aktie --- */
+function etfMembership(sym){
+  const h = D.holdings, e = D.etfs; if(!h || !e) return `<div class="dim">ETF-Positionsdaten werden im Nachtlauf geladen.</div>`;
+  const list = (h.bySymbol && h.bySymbol[sym]) || [];
+  const meta = Object.fromEntries((e.etfs||[]).map(x=>[x.isin,x]));
+  if(!list.length) return `<div class="dim">In keinem der ausgewerteten ETFs gefunden. Ausgewertet werden Xtrackers- und SPDR-ETFs (Positionslisten) sowie S&P-500-, DAX- und Euro-Stoxx-50-ETFs (Indexzusammensetzung).</div>`;
+  const rows = list.map(([isin,w])=>({e:meta[isin], w})).filter(x=>x.e).sort((a,b)=>(b.w??-1)-(a.w??-1));
+  return `<table><thead><tr><th class="l">ETF</th><th class="l">Kategorie</th><th>Gewicht</th><th>TER</th><th class="l">Meldefonds AT</th><th></th></tr></thead><tbody>
+    ${rows.map(({e:x,w})=>`<tr><td class="l nm" style="max-width:320px">${esc(x.name)}<br><span class="dim" style="font-size:11px">${esc(x.isin)}</span></td><td class="l dim">${esc(x.kategorie)}</td><td>${w!=null?fmt(w,2)+" %":'<span class="dim" title="über die Indexzusammensetzung">Index</span>'}</td><td>${fmt(x.ter,2)}</td><td class="l">${x.meldefonds?'<span class="sent positive">JA</span>':'<span class="sent negative">NEIN</span>'}</td><td><a href="#" data-cmp="${esc(x.ticker)}">⊕ CMP</a></td></tr>`).join("")}
+  </tbody></table><p class="dim" style="font-size:11px;margin-top:6px">Gewicht laut tagesaktueller Positionsliste des Anbieters (Xtrackers, SPDR). Bei Index-ETFs (iShares, Vanguard) folgt die Mitgliedschaft aus dem Index; deren Positionslisten sind nicht automatisiert abrufbar. Zuordnung über den Firmennamen, vereinzelte Lücken möglich.</p>`;
+}
 
 V.HELP = () => panel("Befehle", `<table class="help"><tbody>
   <tr><td>AAPL · VOE.VI · Apple</td><td>Ticker oder Name eingeben + GO → Detailseite. Funktioniert für alle Titel im Universum (MSCI ACWI, S&amp;P 500, Nasdaq 100, STOXX 600, ATX).</td></tr>
@@ -1058,7 +1075,7 @@ document.getElementById("logout").onclick = () => { store.clear(); location.relo
   document.getElementById("stamp").textContent = "Daten: " + (up ? dt(up) : "keine");
   tape(); fromHash(); render();
   lazy("universe");  // im Hintergrund für Suche & Screener
-  setInterval(async()=>{ D.tick={}; D.universe=D.history=D.calendar=D.marktupdate=D.bonds=D.etfs=null; await loadAll(); tape(); if(!["DES","SCR"].includes(state.view)) render(); }, 15*60*1000);
+  setInterval(async()=>{ D.tick={}; D.universe=D.history=D.calendar=D.marktupdate=D.bonds=D.etfs=D.holdings=null; await loadAll(); tape(); if(!["DES","SCR"].includes(state.view)) render(); }, 15*60*1000);
 })();
 </script>
 </body>

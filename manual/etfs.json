@@ -20,7 +20,10 @@
    "meldefonds": true,
    "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
    "ertrag": "thesaurierend",
-   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026"
+   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
+   "holdings": {
+    "anbieter": "xtrackers"
+   }
   },
   {
    "isin": "IE00B3RBWM25",
@@ -60,7 +63,10 @@
    "meldefonds": true,
    "vertreter": "PwC PricewaterhouseCoopers Wirtschaftsprüfung und Steuerberatung GmbH",
    "ertrag": "thesaurierend",
-   "letzteMeldung": "Jahresdatenmeldung vom 29.10.2026"
+   "letzteMeldung": "Jahresdatenmeldung vom 29.10.2026",
+   "holdings": {
+    "anbieter": "spdr"
+   }
   },
   {
    "isin": "IE00BKX55T58",
@@ -80,7 +86,10 @@
    "meldefonds": true,
    "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
    "ertrag": "thesaurierend",
-   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026"
+   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
+   "holdings": {
+    "anbieter": "xtrackers"
+   }
   },
   {
    "isin": "IE00B8FHGS14",
@@ -140,7 +149,10 @@
    "meldefonds": true,
    "vertreter": "PwC PricewaterhouseCoopers Wirtschaftsprüfung und Steuerberatung GmbH",
    "ertrag": "ausschüttend",
-   "letzteMeldung": "Jahresdatenmeldung vom 29.10.2026"
+   "letzteMeldung": "Jahresdatenmeldung vom 29.10.2026",
+   "holdings": {
+    "anbieter": "spdr"
+   }
   },
   {
    "isin": "DE000A0F5UH1",
@@ -160,7 +172,10 @@
    "meldefonds": true,
    "vertreter": "PwC PricewaterhouseCoopers Wirtschaftsprüfung und Steuerberatung GmbH",
    "ertrag": "ausschüttend",
-   "letzteMeldung": "Jahresdatenmeldung vom 29.10.2026"
+   "letzteMeldung": "Jahresdatenmeldung vom 29.10.2026",
+   "holdings": {
+    "anbieter": "spdr"
+   }
   },
   {
    "isin": "IE00B5BMR087",
@@ -170,7 +185,10 @@
    "meldefonds": true,
    "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
    "ertrag": "thesaurierend",
-   "letzteMeldung": "Jahresdatenmeldung vom 12.01.2026"
+   "letzteMeldung": "Jahresdatenmeldung vom 12.01.2026",
+   "holdings": {
+    "index": "S&P 500"
+   }
   },
   {
    "isin": "IE00B3XXRP09",
@@ -180,7 +198,10 @@
    "meldefonds": true,
    "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
    "ertrag": "ausschüttend",
-   "letzteMeldung": "Ausschüttungsmeldung vom 23.09.2026"
+   "letzteMeldung": "Ausschüttungsmeldung vom 23.09.2026",
+   "holdings": {
+    "index": "S&P 500"
+   }
   },
   {
    "isin": "IE00BLNMYC90",
@@ -190,7 +211,10 @@
    "meldefonds": true,
    "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
    "ertrag": "thesaurierend",
-   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026"
+   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
+   "holdings": {
+    "anbieter": "xtrackers"
+   }
   },
   {
    "isin": "IE00B53SZB19",
@@ -250,7 +274,10 @@
    "meldefonds": true,
    "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
    "ertrag": "ausschüttend",
-   "letzteMeldung": "Ausschüttungsmeldung vom 27.08.2026"
+   "letzteMeldung": "Ausschüttungsmeldung vom 27.08.2026",
+   "holdings": {
+    "index": "Euro Stoxx 50"
+   }
   },
   {
    "isin": "DE0005933931",
@@ -260,7 +287,10 @@
    "meldefonds": true,
    "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
    "ertrag": "thesaurierend",
-   "letzteMeldung": "Jahresdatenmeldung vom 20.10.2026"
+   "letzteMeldung": "Jahresdatenmeldung vom 20.10.2026",
+   "holdings": {
+    "index": "DAX"
+   }
   },
   {
    "isin": "LU0274211480",
@@ -270,7 +300,10 @@
    "meldefonds": true,
    "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
    "ertrag": "thesaurierend",
-   "letzteMeldung": "Jahresdatenmeldung vom 21.07.2026"
+   "letzteMeldung": "Jahresdatenmeldung vom 21.07.2026",
+   "holdings": {
+    "anbieter": "xtrackers"
+   }
   },
   {
    "isin": "DE000A0D8Q23",
@@ -300,7 +333,10 @@
    "meldefonds": true,
    "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
    "ertrag": "thesaurierend",
-   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026"
+   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
+   "holdings": {
+    "anbieter": "xtrackers"
+   }
   },
   {
    "isin": "IE00B3VVMM84",
@@ -350,7 +386,10 @@
    "meldefonds": true,
    "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
    "ertrag": "thesaurierend",
-   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026"
+   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
+   "holdings": {
+    "anbieter": "xtrackers"
+   }
   },
   {
    "isin": "IE00BM67HK77",
@@ -360,7 +399,10 @@
    "meldefonds": true,
    "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
    "ertrag": "thesaurierend",
-   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026"
+   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
+   "holdings": {
+    "anbieter": "xtrackers"
+   }
   },
   {
    "isin": "DE000A0Q4R36",
@@ -512,5 +554,6 @@
    "ertrag": "thesaurierend",
    "letzteMeldung": "Jahresdatenmeldung vom 30.07.2026"
   }
- ]
+ ],
+ "_holdings_hinweis": "Positionslisten: Xtrackers und SPDR direkt vom Anbieter (täglich), S&P-500-, DAX- und Euro-Stoxx-50-ETFs über die Indexzusammensetzung. iShares und Vanguard geben ihre Listen nicht automatisiert heraus."
 }
