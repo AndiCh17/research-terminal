@@ -570,12 +570,24 @@ def build_universe_list(old: list[dict]) -> list[dict]:
 
     for src in uc.get("ishares", []):
         add(safe(lambda: ishares_holdings(src["url"], src["name"]), [], f"Indexliste {src['name']}"))
+    def with_fallback(fn, label):
+        """Zweiter Versuch nach kurzer Pause; schlägt beides fehl, gilt die Liste vom letzten Lauf."""
+        res = safe(fn, None, f"Indexliste {label}")
+        if not res:
+            time.sleep(4)
+            res = safe(fn, None, f"Indexliste {label} (2. Versuch)")
+        if not res:
+            res = [dict(r, src=[label]) for r in old if label in (r.get("src") or [])]
+            if res:
+                log(f"  {label}: {len(res)} Titel aus dem letzten Lauf übernommen")
+        return res or []
+
     for src in uc.get("wikipedia", []):
-        add(safe(lambda: wiki_list(src["url"], src["name"], src.get("suffix", ""), src.get("country")), [],
-                 f"Indexliste {src['name']}"))
+        add(with_fallback(lambda: wiki_list(src["url"], src["name"], src.get("suffix", ""), src.get("country")),
+                          src["name"]))
     add([{"s": s, "n": None, "sec": None, "c": None, "src": ["Zusatz"]} for s in uc.get("extra", [])])
     add([{"s": s, "n": None, "sec": None, "c": None, "src": ["Watchlist"]} for s in CFG.get("watchlist", [])])
-    if len(found) < 100 and old:
+    if len(found) < 100 and old:  # noqa: SIM102
         log("Indexlisten lieferten zu wenig Titel – vorherige Liste wird weiterverwendet")
         add(old)
     return sorted(found.values(), key=lambda x: x["s"])

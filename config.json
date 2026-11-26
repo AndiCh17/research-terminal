@@ -89,12 +89,6 @@
         "url": "https://en.wikipedia.org/wiki/OMX_Stockholm_30",
         "suffix": ".ST",
         "country": "Sweden"
-      },
-      {
-        "name": "Nikkei 225",
-        "url": "https://en.wikipedia.org/wiki/Nikkei_225",
-        "suffix": ".T",
-        "country": "Japan"
       }
     ],
     "extra": [
