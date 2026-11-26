@@ -1,0 +1,47 @@
+{
+  "_hinweis": "Hier pflegst du dein Terminal. Ticker im Yahoo-Format (z. B. VOE.VI = voestalpine Wien, SAP.DE = SAP Xetra). Nach dem Speichern holt der nächste Lauf die Daten.",
+  "sec_user_agent": "Private Research Terminal kontakt@example.com",
+
+  "watchlist": [
+    "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "JPM", "BRK-B",
+    "SAP.DE", "SIE.DE", "ALV.DE", "ASML.AS", "MC.PA", "NESN.SW", "NOVO-B.CO",
+    "EBS.VI", "VER.VI", "OMV.VI", "VOE.VI", "RBI.VI"
+  ],
+
+  "indices": {
+    "^GSPC": "S&P 500",
+    "^NDX": "Nasdaq 100",
+    "^DJI": "Dow Jones",
+    "^STOXX50E": "Euro Stoxx 50",
+    "^GDAXI": "DAX",
+    "^ATX": "ATX",
+    "^SSMI": "SMI",
+    "^FTSE": "FTSE 100",
+    "^N225": "Nikkei 225",
+    "^HSI": "Hang Seng",
+    "^VIX": "VIX"
+  },
+
+  "markets": {
+    "EURUSD=X": "EUR/USD",
+    "EURCHF=X": "EUR/CHF",
+    "EURGBP=X": "EUR/GBP",
+    "USDJPY=X": "USD/JPY",
+    "GC=F": "Gold",
+    "SI=F": "Silber",
+    "BZ=F": "Brent",
+    "CL=F": "WTI",
+    "HG=F": "Kupfer",
+    "BTC-USD": "Bitcoin"
+  },
+
+  "news_queries": [
+    "stock market",
+    "ECB interest rates",
+    "Federal Reserve",
+    "European stocks"
+  ],
+
+  "news_per_ticker": 8,
+  "sentiment_model": "ProsusAI/finbert"
+}

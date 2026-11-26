@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Research Terminal</title>
+<style>
+:root{
+  --bg:#000;--panel:#0a0a0a;--line:#262626;--line2:#1a1a1a;
+  --amber:#ff9f1a;--amber2:#ffb84d;--txt:#e6e6e6;--dim:#8a8a8a;--dim2:#5a5a5a;
+  --up:#3ddc84;--dn:#ff4d4d;--blue:#4da3ff;--hl:#1a1206;
+  --mono:"JetBrains Mono","SF Mono","Cascadia Mono",Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.45 var(--mono)}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font:inherit;cursor:pointer}
+
+/* --- Kopfzeile --- */
+header{position:sticky;top:0;z-index:20;background:#000;border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:10px;padding:6px 10px}
+.logo{background:var(--amber);color:#000;font-weight:800;padding:2px 7px;letter-spacing:.5px}
+.cmd{flex:1;display:flex;align-items:center;background:#111;border:1px solid var(--line);position:relative}
+.cmd span{color:var(--amber);padding:0 8px;font-weight:700}
+.cmd input{flex:1;background:transparent;border:0;color:var(--amber2);font:inherit;padding:7px 4px;outline:none;text-transform:uppercase}
+.cmd input::placeholder{color:var(--dim2);text-transform:none}
+.go{background:#163b17;color:#7dff8a;border:0;padding:7px 12px;font-weight:700}
+.sugg{position:absolute;top:100%;left:0;right:0;background:#0d0d0d;border:1px solid var(--line);display:none;max-height:300px;overflow:auto}
+.sugg div{padding:5px 10px;cursor:pointer;display:flex;gap:12px}
+.sugg div:hover,.sugg div.on{background:var(--hl)}
+.sugg b{color:var(--amber);min-width:90px}
+.clock{color:var(--dim);white-space:nowrap;font-size:12px;text-align:right}
+.clock b{color:var(--amber)}
+.fkeys{display:flex;gap:2px;padding:0 10px 6px;overflow-x:auto}
+.fkeys button{background:#141414;border:1px solid var(--line);color:var(--txt);padding:4px 10px;white-space:nowrap}
+.fkeys button b{color:var(--amber);margin-right:6px}
+.fkeys button.on{background:var(--amber);color:#000}
+.fkeys button.on b{color:#000}
+.ticker-tape{border-top:1px solid var(--line2);white-space:nowrap;overflow:hidden;font-size:12px;color:var(--dim)}
+.ticker-tape div{display:inline-block;padding:4px 0;animation:tape 90s linear infinite}
+.ticker-tape span{margin-right:28px}
+@keyframes tape{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* --- Layout --- */
+main{padding:10px}
+.grid{display:grid;gap:10px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g32{grid-template-columns:2fr 1fr}
+@media(max-width:1000px){.g2,.g3,.g32{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);min-width:0}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 9px;border-bottom:1px solid var(--line);background:#111}
+.ph h2{margin:0;font-size:12px;color:var(--amber);letter-spacing:.6px;text-transform:uppercase}
+.ph small{color:var(--dim2)}
+.pb{padding:8px 9px}
+.scroll{overflow:auto}
+
+table{width:100%;border-collapse:collapse}
+th{color:var(--dim);font-weight:400;text-align:right;padding:4px 6px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none;font-size:11px;text-transform:uppercase}
+th:first-child,td:first-child,th.l,td.l{text-align:left}
+td{padding:4px 6px;text-align:right;border-bottom:1px solid var(--line2);white-space:nowrap}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--hl)}
+.sym{color:var(--amber);font-weight:700}
+.nm{color:var(--txt);max-width:230px;overflow:hidden;text-overflow:ellipsis}
+.up{color:var(--up)}.dn{color:var(--dn)}.dim{color:var(--dim)}.amb{color:var(--amber)}
+.chip{display:inline-block;padding:0 6px;border:1px solid var(--line);font-size:11px;color:var(--dim)}
+.sent{display:inline-block;min-width:44px;text-align:center;font-size:11px;padding:0 4px}
+.sent.positive{background:#0e2e18;color:var(--up)}.sent.negative{background:#3a1010;color:var(--dn)}.sent.neutral{background:#1c1c1c;color:var(--dim)}
+
+/* Kacheln */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.tile{background:#0d0d0d;border:1px solid var(--line);padding:8px 10px;cursor:pointer}
+.tile:hover{border-color:var(--amber)}
+.tile.on{border-color:var(--amber);background:var(--hl)}
+.tile .t{color:var(--dim);font-size:11px;display:flex;justify-content:space-between;gap:6px}
+.tile .v{font-size:20px;color:var(--txt);margin:2px 0}
+.tile .s{font-size:11px;color:var(--dim)}
+
+/* News */
+.news{list-style:none;margin:0;padding:0}
+.news li{padding:6px 0;border-bottom:1px solid var(--line2);display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start}
+.news .meta{color:var(--dim2);font-size:11px}
+.news a{color:var(--txt)}
+.news a:hover{color:var(--amber2)}
+
+/* Detailansicht */
+.dhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;padding:8px 10px;border:1px solid var(--line);background:#0d0d0d;margin-bottom:10px}
+.dhead .s{font-size:22px;color:var(--amber);font-weight:800}
+.dhead .n{font-size:15px}
+.dhead .p{font-size:22px}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:0 14px}
+.kv div{display:flex;justify-content:space-between;border-bottom:1px solid var(--line2);padding:3px 0;gap:8px}
+.kv span{color:var(--dim)}
+.btns{display:flex;gap:2px}
+.btns button{background:#141414;border:1px solid var(--line);color:var(--dim);padding:1px 8px;font-size:11px}
+.btns button.on{color:#000;background:var(--amber);border-color:var(--amber)}
+.desc{color:#bdbdbd;font-size:12px;max-height:180px;overflow:auto}
+.bar{height:8px;background:#1c1c1c;position:relative}
+.bar i{position:absolute;top:0;bottom:0}
+
+/* Charts */
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%}
+.chart .tip{position:absolute;pointer-events:none;background:#000;border:1px solid var(--amber);padding:3px 7px;font-size:11px;white-space:nowrap;display:none;z-index:2}
+.axis{fill:var(--dim2);font-size:10px;font-family:var(--mono)}
+
+.empty{color:var(--dim);padding:30px;text-align:center}
+.help td{text-align:left;white-space:normal}
+@media(max-width:600px){.clock{display:none}.dhead .s,.dhead .p{font-size:19px}}
+.help td:first-child{color:var(--amber);width:170px}
+footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px solid var(--line2)}
+/* Passwort-Sperre */
+#gate{position:fixed;inset:0;z-index:100;background:#000;display:none;align-items:center;justify-content:center;padding:20px}
+#gate form{width:100%;max-width:360px;border:1px solid var(--line);background:var(--panel);padding:22px}
+#gate h1{margin:0 0 4px;font-size:15px;color:var(--amber);letter-spacing:.5px}
+#gate p{margin:0 0 16px;color:var(--dim);font-size:12px}
+#gate input[type=password]{width:100%;background:#111;border:1px solid var(--line);color:var(--amber2);font:16px var(--mono);padding:10px;outline:none}
+#gate input[type=password]:focus{border-color:var(--amber)}
+#gate label{display:flex;gap:8px;align-items:center;color:var(--dim);font-size:12px;margin:12px 0}
+#gate button{width:100%;background:var(--amber);color:#000;border:0;padding:10px;font-weight:800}
+#gate .err{color:var(--dn);font-size:12px;min-height:18px;margin-top:8px}
+#logout{background:none;border:1px solid var(--line);color:var(--dim);padding:6px 8px;display:none}
+.banner{background:#2a1d05;color:var(--amber2);border:1px solid #5a3d08;padding:6px 10px;margin-bottom:10px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="logo">RT</div>
+    <form class="cmd" id="cmdForm" autocomplete="off">
+      <span>&gt;</span>
+      <input id="cmd" placeholder="Befehl oder Ticker … z. B. AAPL, VOE.VI DES, ECO, TOP, HELP" spellcheck="false">
+      <button class="go" type="submit">GO</button>
+      <div class="sugg" id="sugg"></div>
+    </form>
+    <button id="logout" title="Abmelden">⏻</button>
+    <div class="clock"><b id="clk">--:--:--</b><br><span id="stamp">Daten: –</span></div>
+  </div>
+  <nav class="fkeys" id="fkeys">
+    <button data-v="HOME"><b>F1</b>Übersicht</button>
+    <button data-v="WEI"><b>F2</b>WEI Märkte</button>
+    <button data-v="W"><b>F3</b>W Watchlist</button>
+    <button data-v="ECO"><b>F4</b>ECO Makro</button>
+    <button data-v="TOP"><b>F5</b>TOP News</button>
+    <button data-v="DES"><b>F6</b>DES Aktie</button>
+    <button data-v="HELP"><b>F7</b>Hilfe</button>
+  </nav>
+  <div class="ticker-tape"><div id="tape"></div></div>
+</header>
+<div id="gate"><form id="gateForm" autocomplete="on">
+  <h1>RT · RESEARCH TERMINAL</h1><p>Geschützter Bereich. Bitte Passwort eingeben.</p>
+  <input type="text" name="username" value="terminal" autocomplete="username" hidden>
+  <input type="password" id="pw" autocomplete="current-password" placeholder="Passwort" required>
+  <label><input type="checkbox" id="remember"> Auf diesem Gerät angemeldet bleiben</label>
+  <button type="submit" id="gateBtn">ANMELDEN</button><div class="err" id="gateErr"></div>
+</form></div>
+<main id="view"><div class="empty">Lade Daten …</div></main>
+<footer>Quellen: Kurse &amp; Kennzahlen Yahoo Finance (yfinance) · Bilanzen US: SEC EDGAR, sonst Yahoo · Makro: FRED, EZB · News: Yahoo Finance, Google News · Stimmung: FinBERT.
+Kurse verzögert, keine Anlageberatung. Für Kundenunterlagen offizielle Bankquellen verwenden.</footer>
+
+<script>
+"use strict";
+/* ============================================================ Daten */
+const D = {market:null, macro:null, news:null, meta:null, tick:{}};
+let DEMO = false;
+
+/* --- Entschlüsselung (AES-256-GCM, Schlüssel per PBKDF2 aus dem Passwort) --- */
+let PW = null; const keyCache = {};
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const store = { get(){ try { return sessionStorage.getItem("rt_pw") || localStorage.getItem("rt_pw"); } catch(e){ return null; } },
+  set(pw, keep){ try { sessionStorage.setItem("rt_pw", pw); if (keep) localStorage.setItem("rt_pw", pw); } catch(e){} },
+  clear(){ try { sessionStorage.removeItem("rt_pw"); localStorage.removeItem("rt_pw"); } catch(e){} } };
+async function deriveKey(pw, salt, iter){
+  const id = salt + ":" + iter + ":" + pw;
+  if (!keyCache[id]) {
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+    keyCache[id] = crypto.subtle.deriveKey({name:"PBKDF2", salt:b64(salt), iterations:iter, hash:"SHA-256"}, base, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+  }
+  return keyCache[id];
+}
+async function decrypt(obj, pw){
+  if (!obj || !obj.enc) return obj;
+  if (!pw) throw Object.assign(new Error("locked"), {locked:true});
+  const key = await deriveKey(pw, obj.salt, obj.iter);
+  try {
+    const plain = await crypto.subtle.decrypt({name:"AES-GCM", iv:b64(obj.iv)}, key, b64(obj.data));
+    return JSON.parse(new TextDecoder().decode(plain));
+  } catch(e) { throw Object.assign(new Error("badpw"), {badpw:true}); }
+}
+async function getRaw(path){
+  if (window.__DEMO__) { const k = path.replace(/^data\//,""); if (window.__DEMO__[k]) return window.__DEMO__[k]; }
+  const r = await fetch(path + "?t=" + Math.floor(Date.now()/60000), {cache:"no-store"});
+  if (!r.ok) throw new Error(path + " " + r.status);
+  return r.json();
+}
+async function getJSON(path){ return decrypt(await getRaw(path), PW); }
+async function loadAll(){
+  const [m, ma, n, me] = await Promise.allSettled(["market","macro","news","meta"].map(k => getJSON(`data/${k}.json`)));
+  D.market = m.value || null; D.macro = ma.value || null; D.news = n.value || null; D.meta = me.value || null;
+  DEMO = !!(D.meta && D.meta.demo);
+}
+async function loadTicker(sym){
+  if (D.tick[sym]) return D.tick[sym];
+  const f = (D.meta && D.meta.tickers && D.meta.tickers[sym]) || sym.replace(/[^A-Za-z0-9._-]/g,"_");
+  D.tick[sym] = await getJSON(`data/tickers/${f}.json`);
+  return D.tick[sym];
+}
+
+/* ============================================================ Format */
+const nf = (d=2) => new Intl.NumberFormat("de-AT",{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmt = (v,d=2) => v==null||isNaN(v) ? "–" : nf(d).format(v);
+const pct = (v,d=2,sign=true) => v==null||isNaN(v) ? "–" : (sign&&v>0?"+":"") + nf(d).format(v) + " %";
+const cls = v => v==null ? "dim" : v>0 ? "up" : v<0 ? "dn" : "dim";
+function big(v){
+  if (v==null||isNaN(v)) return "–";
+  const a=Math.abs(v), s=v<0?"-":"";
+  if (a>=1e12) return s+nf(2).format(a/1e12)+" Bio.";
+  if (a>=1e9) return s+nf(2).format(a/1e9)+" Mrd.";
+  if (a>=1e6) return s+nf(1).format(a/1e6)+" Mio.";
+  if (a>=1e3) return s+nf(1).format(a/1e3)+" Tsd.";
+  return s+nf(2).format(a);
+}
+const esc = s => String(s??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const safeUrl = u => /^https?:\/\//i.test(u||"") ? esc(u) : "#";
+function ago(iso){
+  if(!iso) return "";
+  const t = new Date(iso); if (isNaN(t)) return "";
+  const m = (Date.now()-t)/60000;
+  if (m<60) return Math.max(1,Math.round(m))+" Min.";
+  if (m<1440) return Math.round(m/60)+" Std.";
+  return Math.round(m/1440)+" T.";
+}
+const dt = iso => iso ? new Date(iso).toLocaleString("de-AT",{dateStyle:"short",timeStyle:"short",timeZone:"Europe/Vienna"}) : "–";
+function sentTag(s){
+  if(!s||!s.label||s.label==="n/a") return `<span class="sent neutral">–</span>`;
+  const t = {positive:"POS",negative:"NEG",neutral:"NEU"}[s.label]||s.label;
+  return `<span class="sent ${s.label}" title="FinBERT ${s.label} ${fmt((s.score||0)*100,0)} %">${t}</span>`;
+}
+function sentScore(v){
+  if(v==null) return `<span class="dim">–</span>`;
+  const c = v>0.15?"up":v<-0.15?"dn":"dim";
+  return `<span class="${c}">${v>0?"+":""}${fmt(v,2)}</span>`;
+}
+
+/* ============================================================ Charts (SVG) */
+function spark(vals, w=90, h=22){
+  const v = (vals||[]).filter(x=>x!=null); if (v.length<2) return "";
+  const mn=Math.min(...v), mx=Math.max(...v), r=mx-mn||1;
+  const pts = v.map((y,i)=>`${(i/(v.length-1)*w).toFixed(1)},${(h-2-(y-mn)/r*(h-4)).toFixed(1)}`).join(" ");
+  const c = v[v.length-1]>=v[0] ? "var(--up)" : "var(--dn)";
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline fill="none" stroke="${c}" stroke-width="1.3" points="${pts}"/></svg>`;
+}
+
+/* Linien-Chart mit Fadenkreuz. data: [[date,value],...] */
+function lineChart(el, data, opt={}){
+  data = (data||[]).filter(d=>d[1]!=null);
+  if (data.length<2){ el.innerHTML = `<div class="empty">Keine Daten</div>`; return; }
+  const W = el.clientWidth || 600, H = opt.h || 260, pl=8, pr=58, pt=10, pb=22;
+  const xs = data.map(d=>new Date(d[0]).getTime()), ys = data.map(d=>d[1]);
+  let mn=Math.min(...ys), mx=Math.max(...ys); if (opt.zero) { mn=Math.min(0,mn); mx=Math.max(0,mx); }
+  const pad=(mx-mn)*0.06||1; mn-=pad; mx+=pad;
+  const x0=xs[0], x1=xs[xs.length-1];
+  const X = t => pl + (t-x0)/(x1-x0||1)*(W-pl-pr), Y = v => pt + (1-(v-mn)/(mx-mn))*(H-pt-pb);
+  const up = ys[ys.length-1] >= ys[0];
+  const col = opt.color || (up ? "var(--up)" : "var(--dn)");
+  const path = data.map((d,i)=>`${i?"L":"M"}${X(xs[i]).toFixed(1)},${Y(d[1]).toFixed(1)}`).join("");
+  const area = path + `L${X(x1).toFixed(1)},${H-pb}L${X(x0).toFixed(1)},${H-pb}Z`;
+  let grid="";
+  for (let i=0;i<=4;i++){ const v=mn+(mx-mn)*i/4, y=Y(v);
+    grid+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="#1c1c1c"/><text class="axis" x="${W-pr+6}" y="${y+3}">${fmt(v, Math.abs(mx)<10?2:Math.abs(mx)<1000?1:0)}</text>`; }
+  const span=(x1-x0)/864e5, tf = span>800 ? {year:"numeric"} : span>120 ? {month:"short",year:"2-digit"} : {day:"2-digit",month:"2-digit"};
+  const nt = W<520 ? 3 : 5;
+  for (let i=0;i<=nt;i++){ const t=x0+(x1-x0)*i/nt;
+    grid+=`<text class="axis" x="${X(t)}" y="${H-6}" text-anchor="${i==0?"start":i==nt?"end":"middle"}">${new Date(t).toLocaleDateString("de-AT",tf)}</text>`; }
+  const zero = (mn<0&&mx>0) ? `<line x1="${pl}" x2="${W-pr}" y1="${Y(0)}" y2="${Y(0)}" stroke="#555" stroke-dasharray="3 3"/>` : "";
+  const gid = "g"+Math.random().toString(36).slice(2,8);
+  el.innerHTML = `<div class="chart"><svg viewBox="0 0 ${W} ${H}" height="${H}">
+    <defs><linearGradient id="${gid}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".22"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    ${grid}${zero}<path d="${area}" fill="url(#${gid})"/><path d="${path}" fill="none" stroke="${col}" stroke-width="1.5"/>
+    <line class="vx" y1="${pt}" y2="${H-pb}" stroke="#666" stroke-dasharray="2 2" style="display:none"/>
+    <circle class="pt" r="3.5" fill="${col}" style="display:none"/>
+    <rect x="${pl}" y="${pt}" width="${W-pl-pr}" height="${H-pt-pb}" fill="transparent" class="hit"/></svg><div class="tip"></div></div>`;
+  const svg=el.querySelector("svg"), tip=el.querySelector(".tip"), vx=el.querySelector(".vx"), pc=el.querySelector(".pt");
+  const move = ev => {
+    const r=svg.getBoundingClientRect(), cx=(ev.touches?ev.touches[0].clientX:ev.clientX);
+    const px=(cx-r.left)/r.width*W, t=x0+(px-pl)/(W-pl-pr)*(x1-x0);
+    let lo=0,hi=xs.length-1; while(hi-lo>1){const m=(lo+hi)>>1; xs[m]<t?lo=m:hi=m;}
+    const i = Math.abs(xs[lo]-t)<Math.abs(xs[hi]-t)?lo:hi, x=X(xs[i]), y=Y(ys[i]);
+    vx.setAttribute("x1",x); vx.setAttribute("x2",x); vx.style.display=""; pc.setAttribute("cx",x); pc.setAttribute("cy",y); pc.style.display="";
+    const chg = opt.base==null ? "" : ` <span class="${cls(ys[i]-ys[0])}">${pct((ys[i]/ys[0]-1)*100)}</span>`;
+    tip.innerHTML = `${new Date(xs[i]).toLocaleDateString("de-AT")} · <b>${fmt(ys[i], opt.dec??2)}</b>${opt.unit?" "+esc(opt.unit):""}${chg}`;
+    tip.style.display="block"; const tx = x/W*r.width; tip.style.left = Math.min(Math.max(tx-60,0), r.width-tip.offsetWidth)+"px"; tip.style.top="0px";
+  };
+  const hit=el.querySelector(".hit");
+  hit.addEventListener("mousemove",move); hit.addEventListener("touchmove",move,{passive:true});
+  hit.addEventListener("mouseleave",()=>{tip.style.display="none";vx.style.display="none";pc.style.display="none";});
+}
+
+/* Balken-Chart für Bilanzen: series [{name, vals, color}], labels [...] */
+function barChart(el, labels, series, h=200){
+  const W=el.clientWidth||500, H=h, pl=8, pr=62, pt=10, pb=34;
+  const all = series.flatMap(s=>s.vals).filter(v=>v!=null);
+  if(!all.length){ el.innerHTML=`<div class="empty">Keine Bilanzdaten</div>`; return; }
+  let mn=Math.min(0,...all), mx=Math.max(0,...all); const r=(mx-mn)||1;
+  const Y=v=>pt+(1-(v-mn)/r)*(H-pt-pb), gw=(W-pl-pr)/labels.length, bw=Math.min(26,gw*0.8/series.length);
+  let s=`<line x1="${pl}" x2="${W-pr}" y1="${Y(0)}" y2="${Y(0)}" stroke="#444"/>`;
+  for(let i=0;i<=3;i++){const v=mn+r*i/3; s+=`<text class="axis" x="${W-pr+6}" y="${Y(v)+3}">${big(v)}</text><line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="#161616"/>`;}
+  labels.forEach((l,i)=>{
+    const gx=pl+gw*i+(gw-bw*series.length)/2;
+    series.forEach((se,j)=>{const v=se.vals[i]; if(v==null) return; const y1=Y(Math.max(0,v)), y2=Y(Math.min(0,v));
+      s+=`<rect x="${gx+j*bw}" y="${y1}" width="${bw-2}" height="${Math.max(1,y2-y1)}" fill="${v<0?"var(--dn)":se.color}"><title>${esc(se.name)} ${l}: ${big(v)}</title></rect>`;});
+    s+=`<text class="axis" x="${pl+gw*i+gw/2}" y="${H-pb+14}" text-anchor="middle">${l}</text>`;
+  });
+  let lg=""; series.forEach((se,j)=>{lg+=`<rect x="${pl+j*130}" y="${H-12}" width="9" height="9" fill="${se.color}"/><text class="axis" x="${pl+j*130+13}" y="${H-4}">${esc(se.name)}</text>`;});
+  el.innerHTML=`<div class="chart"><svg viewBox="0 0 ${W} ${H}" height="${H}">${s}${lg}</svg></div>`;
+}
+
+/* ============================================================ Views */
+const V = {};
+let state = {view:"HOME", sym:null};
+const panel = (title, body, extra="") => `<section class="panel"><div class="ph"><h2>${title}</h2>${extra}</div><div class="pb">${body}</div></section>`;
+const noData = what => `<div class="empty">Noch keine ${what}. Läuft der GitHub-Workflow?</div>`;
+
+function quoteTable(rows, opt={}){
+  if(!rows||!rows.length) return noData("Kurse");
+  return `<div class="scroll"><table><thead><tr><th>${opt.first||"Name"}</th><th>Kurs</th><th>Δ %</th>${opt.ytd!==false?"<th>YTD</th>":""}<th class="l">60T</th></tr></thead><tbody>
+  ${rows.map(r=>`<tr${opt.click?` class="click" data-sym="${esc(r.sym)}"`:""}><td class="nm">${opt.sym?`<span class="sym">${esc(r.sym)}</span> `:""}${esc(r.name)}</td>
+    <td>${fmt(r.price, r.price<10?4:2)}</td><td class="${cls(r.chgPct)}">${pct(r.chgPct)}</td>${opt.ytd!==false?`<td class="${cls(r.ytd)}">${pct(r.ytd,1)}</td>`:""}<td class="l">${spark(r.spark,80,18)}</td></tr>`).join("")}
+  </tbody></table></div>`;
+}
+function newsList(items, n=20, showTicker=true){
+  if(!items||!items.length) return noData("Schlagzeilen");
+  return `<ul class="news">${items.slice(0,n).map(it=>`<li>${sentTag(it.sentiment)}<div>
+    <a href="${safeUrl(it.link)}" target="_blank" rel="noopener noreferrer">${esc(it.title)}</a>
+    <div class="meta">${showTicker&&it.ticker?`<span class="amb">${esc(it.ticker)}</span> · `:""}${esc(it.source||"")} · ${ago(it.published)} · ${esc(it.via||"")}</div></div></li>`).join("")}</ul>`;
+}
+
+V.HOME = () => {
+  const m=D.market||{}, n=D.news||{}, wl=(m.watchlist||[]).filter(r=>r.chgPct!=null);
+  const movers=[...wl].sort((a,b)=>Math.abs(b.chgPct)-Math.abs(a.chgPct)).slice(0,8);
+  const keyIds=["FM/D.U2.EUR.4F.KR.DFR.LEV","ICP/M.U2.N.000000.4.ANR","ICP/M.AT.N.000000.4.ANR","YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y","FEDFUNDS","DGS10","CPIAUCSL","UNRATE"];
+  const ser=(D.macro&&D.macro.series)||[], keys=keyIds.map(id=>ser.find(s=>s.id===id)).filter(Boolean);
+  return `<div class="grid g3">
+    ${panel("Indizes", quoteTable(m.indices), `<small>F2 für mehr</small>`)}
+    ${panel("Watchlist – größte Bewegungen", quoteTable(movers,{sym:true,click:true,ytd:false}), `<small>F3</small>`)}
+    ${panel("Devisen & Rohstoffe", quoteTable(m.markets))}
+  </div><div class="grid g32" style="margin-top:10px">
+    ${panel("Top-Schlagzeilen", newsList([...(n.general||[]),...(n.tickers||[])].sort((a,b)=>(b.published||"").localeCompare(a.published||"")),14), `<small>FinBERT-Stimmung</small>`)}
+    ${panel("Makro-Kompass", keys.length?`<div class="tiles" style="grid-template-columns:1fr 1fr">${keys.map(macroTile).join("")}</div>`:noData("Makrodaten"), `<small>F4</small>`)}
+  </div>`;
+};
+V.HOME.after = el => { el.querySelectorAll(".tile").forEach(t=>t.onclick=()=>go("ECO", null, t.dataset.id)); };
+
+V.WEI = () => {
+  const m=D.market||{};
+  const t = rows => !rows?.length ? noData("Kurse") : `<div class="scroll"><table><thead><tr><th>Name</th><th>Symbol</th><th>Kurs</th><th>Δ</th><th>Δ %</th><th>YTD</th><th>1 Jahr</th><th>Stand</th><th class="l">60 Tage</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr><td class="nm">${esc(r.name)}</td><td class="dim">${esc(r.sym)}</td><td>${fmt(r.price,r.price<10?4:2)}</td><td class="${cls(r.chg)}">${fmt(r.chg,r.price<10?4:2)}</td><td class="${cls(r.chgPct)}">${pct(r.chgPct)}</td><td class="${cls(r.ytd)}">${pct(r.ytd,1)}</td><td class="${cls(r.y1)}">${pct(r.y1,1)}</td><td class="dim">${r.date?new Date(r.date).toLocaleDateString("de-AT"):"–"}</td><td class="l">${spark(r.spark,120,22)}</td></tr>`).join("")}</tbody></table></div>`;
+  return `<div class="grid">${panel("World Equity Indices", t(m.indices))}${panel("Devisen, Rohstoffe, Krypto", t(m.markets))}</div>`;
+};
+
+let wSort = {k:"chgPct", d:-1};
+V.W = () => {
+  const rows=[...((D.market||{}).watchlist||[])];
+  rows.sort((a,b)=>{const x=a[wSort.k], y=b[wSort.k]; if(x==null) return 1; if(y==null) return -1; return (typeof x==="string"?x.localeCompare(y):x-y)*wSort.d;});
+  const h=(k,l,c="")=>`<th class="${c}" data-k="${k}">${l}${wSort.k===k?(wSort.d>0?" ▲":" ▼"):""}</th>`;
+  if(!rows.length) return panel("Watchlist", noData("Watchlist-Daten"));
+  return panel("Watchlist", `<div class="scroll"><table id="wt"><thead><tr>${h("sym","Symbol")}${h("name","Name","l")}${h("price","Kurs")}<th>Whg.</th>${h("chgPct","Δ %")}${h("ytd","YTD")}${h("y1","1 J")}${h("pe","KGV")}${h("mcap","Marktkap.")}${h("sentiment","Stimmung")}<th class="l">Sektor</th><th class="l">60 T</th></tr></thead><tbody>
+  ${rows.map(r=>`<tr class="click" data-sym="${esc(r.sym)}"><td class="sym">${esc(r.sym)}</td><td class="nm l">${esc(r.name)}</td><td>${fmt(r.price)}</td><td class="dim">${esc(r.currency||"")}</td><td class="${cls(r.chgPct)}">${pct(r.chgPct)}</td><td class="${cls(r.ytd)}">${pct(r.ytd,1)}</td><td class="${cls(r.y1)}">${pct(r.y1,1)}</td><td>${fmt(r.pe,1)}</td><td>${big(r.mcap)}</td><td>${sentScore(r.sentiment)}</td><td class="l dim">${esc(r.sector||"")}</td><td class="l">${spark(r.spark,90,18)}</td></tr>`).join("")}
+  </tbody></table></div>`, `<small>Klick = Detail · Spaltenkopf = sortieren</small>`);
+};
+V.W.after = el => el.querySelectorAll("#wt th[data-k]").forEach(th=>th.onclick=()=>{const k=th.dataset.k; wSort = {k, d: wSort.k===k ? -wSort.d : -1}; render();});
+
+/* --- Makro --- */
+let ecoRegion="Alle", ecoSel=null;
+function macroTile(s){
+  const d = s.last!=null&&s.prev!=null ? s.last-s.prev : null;
+  return `<div class="tile${ecoSel===s.id?" on":""}" data-id="${esc(s.id)}"><div class="t"><span>${esc(s.name)}</span><span>${esc(s.source)}</span></div>
+    <div class="v">${fmt(s.last, Math.abs(s.last)>=1000?0:2)} <small class="dim" style="font-size:11px">${esc(s.unit)}</small></div>
+    <div class="s">Vorher <span class="${cls(d)}">${fmt(s.prev,2)}</span> · Vorjahr ${fmt(s.yearAgo,2)} · ${s.date?new Date(s.date).toLocaleDateString("de-AT",{month:"short",year:"numeric",day:s.unit==="%"&&s.id.includes("D.")?"2-digit":undefined}):""}</div></div>`;
+}
+V.ECO = () => {
+  const all=(D.macro&&D.macro.series)||[]; if(!all.length) return panel("Makro", noData("Makrodaten"));
+  const regions=["Alle",...new Set(all.map(s=>s.region))];
+  const ser = all.filter(s=>ecoRegion==="Alle"||s.region===ecoRegion);
+  if(!ecoSel || !all.find(s=>s.id===ecoSel)) ecoSel = ser[0]?.id;
+  const sel = all.find(s=>s.id===ecoSel);
+  const groups=[...new Set(ser.map(s=>s.group))];
+  return `${panel(sel?`${esc(sel.name)} <span class="dim">· ${esc(sel.region)} · ${esc(sel.source)}</span>`:"Chart", `<div id="ecoChart"></div>`, `<div class="btns" id="ecoRange">${["2J","5J","10J","Max"].map(r=>`<button data-r="${r}" class="${r===ecoRange?"on":""}">${r}</button>`).join("")}</div>`)}
+    <div style="margin:10px 0" class="btns" id="ecoReg">${regions.map(r=>`<button data-r="${esc(r)}" class="${r===ecoRegion?"on":""}">${esc(r)}</button>`).join("")}</div>
+    ${groups.map(g=>`<div class="ph" style="margin-top:8px;border:1px solid var(--line)"><h2>${esc(g)}</h2></div><div class="tiles" style="margin-top:8px">${ser.filter(s=>s.group===g).map(macroTile).join("")}</div>`).join("")}`;
+};
+let ecoRange="5J";
+V.ECO.after = el => {
+  const sel=((D.macro&&D.macro.series)||[]).find(s=>s.id===ecoSel);
+  if(sel){ const yrs={"2J":2,"5J":5,"10J":10,"Max":99}[ecoRange]; const cut=new Date(); cut.setFullYear(cut.getFullYear()-yrs);
+    lineChart(el.querySelector("#ecoChart"), sel.history.filter(d=>new Date(d[0])>=cut), {unit:sel.unit, color:"var(--amber)", h:280}); }
+  el.querySelectorAll(".tile").forEach(t=>t.onclick=()=>{ecoSel=t.dataset.id; render(); window.scrollTo({top:0,behavior:"smooth"});});
+  el.querySelectorAll("#ecoReg button").forEach(b=>b.onclick=()=>{ecoRegion=b.dataset.r; ecoSel=null; render();});
+  el.querySelectorAll("#ecoRange button").forEach(b=>b.onclick=()=>{ecoRange=b.dataset.r; render();});
+};
+
+/* --- News --- */
+let newsFilter="Alle";
+V.TOP = () => {
+  const n=D.news||{}; let items=[...(n.general||[]).map(x=>({...x,_g:1})),...(n.tickers||[])];
+  items.sort((a,b)=>(b.published||"").localeCompare(a.published||""));
+  if(newsFilter==="Allgemein") items=items.filter(i=>i._g);
+  if(newsFilter==="Watchlist") items=items.filter(i=>!i._g);
+  if(newsFilter==="Positiv") items=items.filter(i=>i.sentiment?.label==="positive");
+  if(newsFilter==="Negativ") items=items.filter(i=>i.sentiment?.label==="negative");
+  const sum=Object.entries(n.summary||{}).filter(([,v])=>v.score!=null).sort((a,b)=>b[1].score-a[1].score);
+  const bars = sum.length ? `<table><thead><tr><th>Titel</th><th>Score</th><th class="l" style="width:45%">Verteilung</th><th>n</th></tr></thead><tbody>${sum.map(([s,v])=>{
+    const t=v.pos+v.neg+v.neu||1; return `<tr class="click" data-sym="${esc(s)}"><td class="sym">${esc(s)}</td><td>${sentScore(v.score)}</td><td class="l"><div class="bar"><i style="left:0;width:${v.pos/t*100}%;background:var(--up)"></i><i style="left:${v.pos/t*100}%;width:${v.neu/t*100}%;background:#444"></i><i style="left:${(v.pos+v.neu)/t*100}%;width:${v.neg/t*100}%;background:var(--dn)"></i></div></td><td class="dim">${v.n}</td></tr>`;}).join("")}</tbody></table>` : noData("Stimmungswerte");
+  return `<div class="grid g32">${panel("Schlagzeilen", `<div class="btns" id="nf" style="margin-bottom:8px">${["Alle","Allgemein","Watchlist","Positiv","Negativ"].map(f=>`<button data-f="${f}" class="${f===newsFilter?"on":""}">${f}</button>`).join("")}</div>${newsList(items,120)}`, `<small>${n.model?"Modell: "+esc(n.model):"Stimmung nicht verfügbar"}</small>`)}
+    ${panel("Stimmung je Titel", bars, `<small>−1 negativ … +1 positiv</small>`)}</div>`;
+};
+V.TOP.after = el => el.querySelectorAll("#nf button").forEach(b=>b.onclick=()=>{newsFilter=b.dataset.f; render();});
+
+/* --- Aktie im Detail --- */
+let desRange="1J";
+V.DES = async () => {
+  const wl=(D.market&&D.market.watchlist)||[];
+  if(!state.sym) state.sym = wl[0]?.sym;
+  if(!state.sym) return panel("Aktie", noData("Watchlist-Titel"));
+  let t; try { t = await loadTicker(state.sym); } catch(e){
+    return panel(esc(state.sym), `<div class="empty">Für <b class="amb">${esc(state.sym)}</b> liegen keine Daten vor.<br><br>Nur Titel aus der Watchlist werden automatisch geladen. Ergänze den Ticker in <b>config.json</b> – nach dem nächsten Lauf ist er da.</div>`);
+  }
+  const st=t.stats||{}, an=t.analyst||{}, f=t.financials;
+  const pctKeys=["Div.-Rendite %","Ausschüttungsquote","Bruttomarge","Op. Marge","Nettomarge","EK-Rendite"];
+  const sv=(k,v)=>{ if(v==null) return "–"; if(k==="Div.-Rendite %") return fmt(v>1?v:v*100,2)+" %"; if(pctKeys.includes(k)) return fmt(v*100,1)+" %";
+    if(["Marktkap.","Unternehmenswert","Ø Volumen","Aktien ausst."].includes(k)) return big(v); return fmt(v,2); };
+  const up = an.target&&t.price ? (an.target/t.price-1)*100 : null;
+  const ratingDe={strong_buy:"Starker Kauf",buy:"Kaufen",hold:"Halten",underperform:"Untergewichten",sell:"Verkaufen",none:"–"};
+  let finHtml = noData("Bilanzdaten");
+  if(f && f.years?.length){
+    const rows=[["Umsatz","revenue"],["Bruttogewinn","grossProfit"],["Operatives Ergebnis","operatingIncome"],["Nettogewinn","netIncome"],["EPS (verwässert)","eps"],["Bilanzsumme","totalAssets"],["Verbindlichkeiten","totalLiabilities"],["Eigenkapital","equity"],["Liquide Mittel","cash"],["Langfr. Schulden","longTermDebt"],["Operativer Cashflow","operatingCashflow"],["Investitionen (Capex)","capex"],["Free Cashflow","freeCashflow"],["Dividenden gezahlt","dividendsPaid"]].filter(([,k])=>f[k]&&f[k].some(v=>v!=null));
+    const yrs=f.years.slice(-6), off=f.years.length-yrs.length;
+    finHtml = `<div id="finChart"></div><div class="scroll"><table><thead><tr><th>${esc(f.currency||"")}</th>${yrs.map(y=>`<th>${y}</th>`).join("")}<th>Δ J/J</th></tr></thead><tbody>
+      ${rows.map(([l,k])=>{const v=f[k].slice(off); const a=v[v.length-1], b=v[v.length-2]; const g=a!=null&&b?(a/b-1)*100*(b<0?-1:1):null;
+        return `<tr><td>${l}</td>${v.map(x=>`<td class="${x<0?"dn":""}">${k==="eps"?fmt(x,2):big(x)}</td>`).join("")}<td class="${cls(g)}">${pct(g,1)}</td></tr>`;}).join("")}
+    </tbody></table></div><div class="dim" style="font-size:11px;margin-top:6px">Quelle: ${esc(f.source)}</div>`;
+  }
+  return `<div class="dhead"><span class="s">${esc(t.symbol)}</span><span class="n">${esc(t.name)}</span>
+      <span class="p">${fmt(t.price)} <small class="dim">${esc(t.currency||"")}</small></span>
+      <span class="${cls(t.chgPct)}">${fmt(t.chg)} (${pct(t.chgPct)})</span>
+      <span class="chip">${esc(t.exchange||"")}</span><span class="chip">${esc(t.sector||"–")}</span><span class="chip">${esc(t.country||"")}</span>
+      <span class="dim" style="margin-left:auto;font-size:11px">Stand ${dt(t.updated)}</span></div>
+    <div class="grid g32">
+      ${panel("Kursverlauf", `<div id="pxChart"></div>`, `<div class="btns" id="dr">${["1M","3M","6M","1J","3J","5J"].map(r=>`<button data-r="${r}" class="${r===desRange?"on":""}">${r}</button>`).join("")}</div>`)}
+      ${panel("Analysten & Stimmung", `<div class="kv" style="grid-template-columns:1fr">
+          <div><span>Konsens</span><b class="amb">${esc(ratingDe[an.rating]||an.rating||"–")}</b></div>
+          <div><span>Anzahl Analysten</span>${fmt(an.n,0)}</div>
+          <div><span>Kursziel Ø</span><span>${fmt(an.target)} <span class="${cls(up)}">${up!=null?"("+pct(up,1)+")":""}</span></span></div>
+          <div><span>Spanne</span>${fmt(an.low)} – ${fmt(an.high)}</div>
+          <div><span>52W Spanne</span>${fmt(st["52W Tief"])} – ${fmt(st["52W Hoch"])}</div>
+          <div><span>News-Stimmung (FinBERT)</span>${sentScore(t.sentiment?.score)}</div>
+          <div><span>Pos / Neu / Neg</span><span><span class="up">${t.sentiment?.pos??"–"}</span> / ${t.sentiment?.neu??"–"} / <span class="dn">${t.sentiment?.neg??"–"}</span></span></div>
+        </div>`)}
+    </div>
+    <div class="grid g2" style="margin-top:10px">
+      ${panel("Kennzahlen", `<div class="kv">${Object.entries(st).map(([k,v])=>`<div><span>${esc(k)}</span>${sv(k,v)}</div>`).join("")}</div>`)}
+      ${panel("Unternehmen", `<div class="desc">${esc(t.description||"Keine Beschreibung.")}</div><div class="kv" style="margin-top:8px"><div><span>Branche</span>${esc(t.industry||"–")}</div><div><span>Mitarbeiter</span>${fmt(t.employees,0)}</div><div><span>Web</span>${t.website?`<a href="${safeUrl(t.website)}" target="_blank" rel="noopener">${esc(t.website.replace(/^https?:\/\/(www\.)?/,""))}</a>`:"–"}</div></div>`)}
+    </div>
+    <div style="margin-top:10px">${panel("Finanzen (Jahresabschlüsse)", finHtml)}</div>
+    <div style="margin-top:10px">${panel("News", newsList(t.news, 25, false))}</div>`;
+};
+V.DES.after = el => {
+  const t=D.tick[state.sym]; if(!t) return;
+  const draw=()=>{ const m={"1M":1,"3M":3,"6M":6,"1J":12,"3J":36,"5J":60}[desRange]; const src = m>12 ? t.history5y : t.history1y;
+    const cut=new Date(); cut.setMonth(cut.getMonth()-m); lineChart(el.querySelector("#pxChart"), (src||[]).filter(d=>new Date(d[0])>=cut), {base:true, h:290, unit:t.currency}); };
+  draw();
+  el.querySelectorAll("#dr button").forEach(b=>b.onclick=()=>{desRange=b.dataset.r; el.querySelectorAll("#dr button").forEach(x=>x.classList.toggle("on",x===b)); draw();});
+  const f=t.financials, fc=el.querySelector("#finChart");
+  if(f&&fc){ const yrs=f.years.slice(-6), off=f.years.length-yrs.length; const sl=k=>(f[k]||[]).slice(off);
+    barChart(fc, yrs, [{name:"Umsatz",vals:sl("revenue"),color:"#ff9f1a"},{name:"Nettogewinn",vals:sl("netIncome"),color:"#4da3ff"},{name:"Free Cashflow",vals:sl("freeCashflow"),color:"#3ddc84"}]); }
+};
+
+V.HELP = () => panel("Befehle", `<table class="help"><tbody>
+  <tr><td>AAPL · VOE.VI</td><td>Ticker eingeben + GO → Detailseite (DES). Gilt für alle Titel aus der Watchlist.</td></tr>
+  <tr><td>&lt;TICKER&gt; DES</td><td>Beschreibung, Kennzahlen, Chart, Bilanzen, News</td></tr>
+  <tr><td>WEI</td><td>Weltindizes, Devisen, Rohstoffe</td></tr>
+  <tr><td>W</td><td>Watchlist (sortierbar)</td></tr>
+  <tr><td>ECO</td><td>Makro-Dashboard USA/Euroraum/Österreich (FRED + EZB)</td></tr>
+  <tr><td>TOP · N</td><td>Schlagzeilen mit FinBERT-Stimmung</td></tr>
+  <tr><td>HOME</td><td>Übersicht</td></tr>
+  <tr><td>F1 … F7</td><td>Tastenkürzel für die Funktionsleiste</td></tr>
+  <tr><td>/ oder Strg+K</td><td>Befehlszeile fokussieren</td></tr>
+  <tr><td>Watchlist ändern</td><td>config.json im GitHub-Repository bearbeiten → der Workflow startet automatisch.</td></tr>
+  <tr><td>Daten sofort holen</td><td>GitHub → Actions → „Daten aktualisieren“ → Run workflow.</td></tr>
+</tbody></table>`);
+
+/* ============================================================ Router */
+async function render(){
+  document.querySelectorAll("#fkeys button").forEach(b=>b.classList.toggle("on", b.dataset.v===state.view));
+  const el=document.getElementById("view"), fn=V[state.view]||V.HOME;
+  const html = await fn();
+  el.innerHTML = (DEMO?`<div class="banner">Vorschau mit Beispieldaten – echte Kurse erscheinen, sobald der GitHub-Workflow gelaufen ist.</div>`:"") + html;
+  el.querySelectorAll("tr.click[data-sym]").forEach(tr=>tr.onclick=()=>go("DES", tr.dataset.sym));
+  if(fn.after) fn.after(el);
+}
+function go(view, sym, eco){
+  state.view=view; if(sym) state.sym=sym; if(eco) ecoSel=eco;
+  const h = "#"+view+(view==="DES"&&state.sym?"/"+encodeURIComponent(state.sym):"");
+  if(location.hash!==h) history.pushState(null,"",h);
+  render(); window.scrollTo(0,0);
+}
+function fromHash(){
+  const [v,s]=location.hash.slice(1).split("/");
+  state.view = V[v] ? v : "HOME"; if(s) state.sym=decodeURIComponent(s);
+}
+window.addEventListener("popstate",()=>{fromHash();render();});
+
+/* ============================================================ Befehlszeile */
+const ALIAS={HOME:"HOME",WEI:"WEI",W:"W",WL:"W",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",DES:"DES",HELP:"HELP",HILFE:"HELP"};
+function runCmd(raw){
+  const p=raw.trim().toUpperCase().split(/\s+/).filter(Boolean); if(!p.length) return;
+  if(p.length===1 && ALIAS[p[0]]) return go(ALIAS[p[0]]);
+  const last=p[p.length-1]; const sym = ALIAS[last] ? p.slice(0,-1).join(" ") : p.join(" ");
+  if(!sym) return go(ALIAS[last]);
+  const wl=(D.market&&D.market.watchlist)||[];
+  const hit = wl.find(r=>r.sym.toUpperCase()===sym) || wl.find(r=>(r.name||"").toUpperCase().includes(sym));
+  go("DES", hit?hit.sym:sym);
+}
+const inp=document.getElementById("cmd"), sg=document.getElementById("sugg"); let sIdx=-1;
+function suggest(){
+  const q=inp.value.trim().toUpperCase(); if(!q){sg.style.display="none";return;}
+  const cmds=[["HOME","Übersicht"],["WEI","Weltindizes"],["W","Watchlist"],["ECO","Makro"],["TOP","News & Stimmung"],["HELP","Hilfe"]];
+  const wl=((D.market&&D.market.watchlist)||[]).map(r=>[r.sym,r.name]);
+  const list=[...cmds,...wl].filter(([a,b])=>a.toUpperCase().startsWith(q)||(b||"").toUpperCase().includes(q)).slice(0,8);
+  sIdx=-1; sg.innerHTML=list.map(([a,b])=>`<div data-v="${esc(a)}"><b>${esc(a)}</b><span>${esc(b||"")}</span></div>`).join("");
+  sg.style.display=list.length?"block":"none";
+  sg.querySelectorAll("div").forEach(d=>d.onmousedown=e=>{e.preventDefault(); inp.value=""; sg.style.display="none"; runCmd(d.dataset.v);});
+}
+inp.addEventListener("input",suggest);
+inp.addEventListener("blur",()=>setTimeout(()=>sg.style.display="none",100));
+inp.addEventListener("keydown",e=>{
+  const it=[...sg.querySelectorAll("div")]; if(!it.length||sg.style.display==="none") return;
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){ e.preventDefault(); sIdx=(sIdx+(e.key==="ArrowDown"?1:-1)+it.length)%it.length; it.forEach((d,i)=>d.classList.toggle("on",i===sIdx)); }
+  if(e.key==="Enter"&&sIdx>=0){ e.preventDefault(); const v=it[sIdx].dataset.v; inp.value=""; sg.style.display="none"; runCmd(v); }
+});
+document.getElementById("cmdForm").onsubmit=e=>{e.preventDefault(); const v=inp.value; inp.value=""; sg.style.display="none"; inp.blur(); runCmd(v);};
+document.querySelectorAll("#fkeys button").forEach(b=>b.onclick=()=>go(b.dataset.v));
+document.addEventListener("keydown",e=>{
+  const m=e.key.match(/^F([1-7])$/); if(m){ e.preventDefault(); go(["HOME","WEI","W","ECO","TOP","DES","HELP"][+m[1]-1]); return; }
+  if((e.key==="/"&&document.activeElement!==inp)||(e.key.toLowerCase()==="k"&&(e.ctrlKey||e.metaKey))){ e.preventDefault(); inp.focus(); }
+  if(e.key==="Escape") inp.blur();
+});
+
+/* ============================================================ Start */
+function tick(){ document.getElementById("clk").textContent = new Date().toLocaleTimeString("de-AT",{timeZone:"Europe/Vienna"}) + " Wien"; }
+function tape(){
+  const r=[...((D.market||{}).indices||[]),...((D.market||{}).markets||[])].filter(x=>x.price!=null);
+  const s=r.map(x=>`<span>${esc(x.name)} <b style="color:var(--txt)">${fmt(x.price,x.price<10?4:2)}</b> <span class="${cls(x.chgPct)}">${pct(x.chgPct)}</span></span>`).join("");
+  document.getElementById("tape").innerHTML = s + s;
+}
+let rT; window.addEventListener("resize",()=>{clearTimeout(rT); rT=setTimeout(render,250);});
+/* Anmeldung: nur nötig, wenn die Daten verschlüsselt sind */
+async function unlock(){
+  let meta; try { meta = await getRaw("data/meta.json"); } catch(e) { return; }
+  if (!meta || !meta.enc) return;
+  document.getElementById("logout").style.display = "inline-block";
+  const saved = store.get();
+  if (saved) { try { await decrypt(meta, saved); PW = saved; return; } catch(e) { store.clear(); } }
+  const gate = document.getElementById("gate"), pw = document.getElementById("pw"), err = document.getElementById("gateErr"), btn = document.getElementById("gateBtn");
+  gate.style.display = "flex"; pw.focus();
+  await new Promise(done => {
+    document.getElementById("gateForm").onsubmit = async e => {
+      e.preventDefault(); err.textContent = ""; btn.disabled = true; btn.textContent = "PRÜFE …";
+      try { await decrypt(meta, pw.value); PW = pw.value; store.set(PW, document.getElementById("remember").checked); gate.style.display = "none"; done(); }
+      catch(x) { err.textContent = "Falsches Passwort."; pw.select(); }
+      btn.disabled = false; btn.textContent = "ANMELDEN";
+    };
+  });
+}
+document.getElementById("logout").onclick = () => { store.clear(); location.reload(); };
+
+(async()=>{
+  tick(); setInterval(tick,1000);
+  await unlock();
+  try { await loadAll(); } catch(e) { console.error(e); }
+  const up = D.market?.updated || D.meta?.updated;
+  document.getElementById("stamp").textContent = "Daten: " + (up ? dt(up) : "keine");
+  tape(); fromHash(); render();
+  setInterval(async()=>{ D.tick={}; await loadAll(); tape(); if(state.view!=="DES") render(); }, 10*60*1000);
+})();
+</script>
+</body>
+</html>
