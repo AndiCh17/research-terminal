@@ -1,0 +1,54 @@
+name: Daten aktualisieren
+
+on:
+  schedule:
+    - cron: "*/30 6-22 * * 1-5"
+    - cron: "0 9 * * 0,6"
+  workflow_dispatch: {}
+  push:
+    paths: ["config.json", "scripts/**"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: FinBERT-Modell zwischenspeichern
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-finbert-v1
+
+      - name: Pakete installieren
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+
+      - name: Daten holen
+        env:
+          TERMINAL_PASSWORD: ${{ secrets.TERMINAL_PASSWORD }}
+        run: python scripts/fetch_data.py
+
+      - name: Daten speichern
+        run: |
+          git config user.name "terminal-bot"
+          git config user.email "terminal-bot@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet && echo "Keine Änderungen" && exit 0
+          git commit -m "Daten $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git pull --rebase --autostash
+          git push
