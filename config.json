@@ -270,5 +270,16 @@
       "note": "Zinsentscheid + Projektionen"
     }
   ],
-  "_central_banks_quelle": "Fed: Pressemitteilung 12.11.2026 (revidierter Kalender 2027). EZB: EZB-Kalender. Termine können sich ändern – bei Bedarf hier anpassen."
+  "_central_banks_quelle": "Fed: Pressemitteilung 12.11.2026 (revidierter Kalender 2027). EZB: EZB-Kalender. Termine können sich ändern – bei Bedarf hier anpassen.",
+  "long_indices": {
+    "^SP500TR": "S&P 500 inkl. Dividenden (USD)",
+    "^GSPC": "S&P 500 (USD)",
+    "^GDAXI": "DAX (inkl. Dividenden)",
+    "^ATX": "ATX",
+    "^STOXX50E": "Euro Stoxx 50",
+    "^NDX": "Nasdaq 100 (USD)",
+    "^N225": "Nikkei 225 (JPY)",
+    "^FTSE": "FTSE 100 (GBP)",
+    "GC=F": "Gold (USD)"
+  }
 }

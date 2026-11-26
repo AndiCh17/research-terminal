@@ -168,6 +168,7 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
     <button data-v="ECO"><b>F8</b>ECO Makro</button>
     <button data-v="GOVT"><b>F9</b>GOVT Anleihen AT</button>
     <button data-v="MKT"><b>F10</b>MKT Marktupdate</button>
+    <button data-v="BER"><b>·</b>BER Beratung</button>
     <button data-v="NET"><b>·</b>NET Renditevergleich</button>
     <button data-v="TOP"><b>·</b>TOP News</button>
     <button data-v="CAL"><b>·</b>CAL Kalender</button>
@@ -191,7 +192,7 @@ Kurse verzögert, keine Anlageberatung. Für Kundenunterlagen offizielle Bankque
 <script>
 "use strict";
 /* ============================================================ Daten */
-const D = {market:null, macro:null, news:null, meta:null, universe:null, history:null, calendar:null, marktupdate:null, bonds:null, etfs:null, holdings:null, tick:{}};
+const D = {market:null, macro:null, news:null, meta:null, universe:null, history:null, calendar:null, marktupdate:null, bonds:null, etfs:null, holdings:null, long:null, tick:{}};
 let DEMO = false;
 
 /* --- Entschlüsselung (AES-256-GCM, Schlüssel per PBKDF2 aus dem Passwort) --- */
@@ -302,7 +303,7 @@ function lineChart(el, data, opt={}){
   const area = path + `L${X(x1).toFixed(1)},${H-pb}L${X(x0).toFixed(1)},${H-pb}Z`;
   let grid="";
   for (let i=0;i<=4;i++){ const v=mn+(mx-mn)*i/4, y=Y(v);
-    grid+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="#1c1c1c"/><text class="axis" x="${W-pr+6}" y="${y+3}">${fmt(v, Math.abs(mx)<10?2:Math.abs(mx)<1000?1:0)}</text>`; }
+    grid+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="#1c1c1c"/><text class="axis" x="${W-pr+6}" y="${y+3}">${opt.yfmt?opt.yfmt(v):fmt(v, Math.abs(mx)<10?2:Math.abs(mx)<1000?1:0)}</text>`; }
   const span=(x1-x0)/864e5, tf = span>800 ? {year:"numeric"} : span>120 ? {month:"short",year:"2-digit"} : {day:"2-digit",month:"2-digit"};
   const nt = W<520 ? 3 : 5;
   for (let i=0;i<=nt;i++){ const t=x0+(x1-x0)*i/nt;
@@ -324,7 +325,7 @@ function lineChart(el, data, opt={}){
     const i = Math.abs(xs[lo]-t)<Math.abs(xs[hi]-t)?lo:hi, x=X(xs[i]), y=Y(ys[i]);
     vx.setAttribute("x1",x); vx.setAttribute("x2",x); vx.style.display=""; pc.setAttribute("cx",x); pc.setAttribute("cy",y); pc.style.display="";
     const chg = opt.base==null ? "" : ` <span class="${cls(ys[i]-ys[0])}">${pct((ys[i]/ys[0]-1)*100)}</span>`;
-    tip.innerHTML = `${new Date(xs[i]).toLocaleDateString("de-AT")} · <b>${fmt(ys[i], opt.dec??2)}</b>${opt.unit?" "+esc(opt.unit):""}${chg}`;
+    tip.innerHTML = `${new Date(xs[i]).toLocaleDateString("de-AT")} · <b>${opt.yfmt?opt.yfmt(ys[i]):fmt(ys[i], opt.dec??2)}</b>${opt.unit?" "+esc(opt.unit):""}${chg}`;
     tip.style.display="block"; const tx = x/W*r.width; tip.style.left = Math.min(Math.max(tx-60,0), r.width-tip.offsetWidth)+"px"; tip.style.top="0px";
   };
   const hit=el.querySelector(".hit");
@@ -1000,6 +1001,171 @@ function quarterlyHtml(t){
   return h;
 }
 
+/* ===================== BERATUNG ===================== */
+let berTab = "zins";
+/* ---- Anleihemathematik ---- */
+function bondFlows(cpn, mat, settle){
+  const flows=[]; let d=new Date(mat);
+  while(d>settle){ flows.unshift(new Date(d)); d=new Date(d); d.setFullYear(d.getFullYear()-1); }
+  const prev=d, first=flows[0]||mat;
+  const accrued = cpn*(settle-prev)/Math.max(1,(first-prev));
+  return {t:flows.map(f=>(f-settle)/(365.25*864e5)), amt:flows.map((f,i)=>cpn+(i===flows.length-1?100:0)), accrued};
+}
+const dirtyAt = (bf,y) => bf.t.reduce((s,t,i)=>s+bf.amt[i]/Math.pow(1+y,t),0);
+function yieldFrom(bf, clean){ const target=clean+bf.accrued; let lo=-0.05, hi=0.5; for(let k=0;k<120;k++){const m=(lo+hi)/2; dirtyAt(bf,m)>target?lo=m:hi=m;} return (lo+hi)/2; }
+function posModel(p){
+  // liefert f(dy) -> relative Wertänderung, plus Kennzahlen
+  if (p.kind==="dur") { const D=+p.dur||0, y=(+p.yld||0)/100; return {y, D, f:dy=>-D*dy, linear:true}; }
+  const settle=new Date(), mat=new Date(p.mat); if(!(mat>settle)||!(+p.price>0)) return null;
+  const bf=bondFlows(+p.cpn||0, mat, settle); const y=yieldFrom(bf,+p.price); const P0=dirtyAt(bf,y);
+  const h=0.0001, D=(dirtyAt(bf,y-h)-dirtyAt(bf,y+h))/(2*h)/P0;
+  return {y, D, f:dy=>dirtyAt(bf,y+dy)/P0-1, rlz:(mat-settle)/(365.25*864e5)};
+}
+let berPos = null, berAmt = 100000, berDy = 1.0;
+function berDefaults(){
+  const rows=((D.bonds&&D.bonds.rows)||[]).filter(r=>r.kurs&&r.faellig&&r.rlz>0.5);
+  const pick = t => rows.reduce((b,r)=>!b||Math.abs(r.rlz-t)<Math.abs(b.rlz-t)?r:b,null);
+  const sel=[pick(3),pick(8),pick(20)].filter(Boolean);
+  const uniq=[...new Map(sel.map(r=>[r.isin,r])).values()];
+  return [...uniq.map(r=>({kind:"bond",name:r.name.replace("Bundesanleihe","Bund"),cpn:r.kupon||0,mat:r.faellig,price:r.kurs,isin:r.isin})),
+          {kind:"dur",name:"Anleihefonds (Beispiel)",dur:6,yld:3.2}];
+}
+function scenarioChart(el, models){
+  const W=el.clientWidth||700, H=280, pl=8, pr=60, pt=12, pb=26, xs=[]; for(let x=-2;x<=3.0001;x+=0.125) xs.push(+x.toFixed(3));
+  const ser=models.map((m,i)=>({name:m.name,color:PAL[i%PAL.length],pts:xs.map(x=>[x,m.f(x/100)*100])}));
+  const all=ser.flatMap(s=>s.pts.map(p=>p[1])); let mn=Math.min(...all,0), mx=Math.max(...all,0); const pad=(mx-mn)*0.06; mn-=pad; mx+=pad;
+  const X=x=>pl+(x+2)/5*(W-pl-pr), Y=v=>pt+(1-(v-mn)/(mx-mn))*(H-pt-pb);
+  let g=""; for(let i=0;i<=5;i++){const v=mn+(mx-mn)*i/5; g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="#1c1c1c"/><text class="axis" x="${W-pr+6}" y="${Y(v)+3}">${fmt(v,0)} %</text>`;}
+  for(let x=-2;x<=3;x++) g+=`<text class="axis" x="${X(x)}" y="${H-8}" text-anchor="${x===-2?"start":x===3?"end":"middle"}">${x>0?"+":""}${x} %-Pkt.</text><line x1="${X(x)}" x2="${X(x)}" y1="${pt}" y2="${H-pb}" stroke="#161616"/>`;
+  g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(0)}" y2="${Y(0)}" stroke="#666"/><line x1="${X(berDy)}" x2="${X(berDy)}" y1="${pt}" y2="${H-pb}" stroke="var(--amber)" stroke-dasharray="4 3"/>`;
+  const lines=ser.map(s=>`<path d="${s.pts.map((p,i)=>`${i?"L":"M"}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join("")}" fill="none" stroke="${s.color}" stroke-width="1.8"/>`).join("");
+  el.innerHTML=`<div class="chart"><svg viewBox="0 0 ${W} ${H}" height="${H}">${g}${lines}</svg></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:4px;font-size:11px">${ser.map(s=>`<span><i style="display:inline-block;width:10px;height:10px;background:${s.color};margin-right:5px"></i>${esc(s.name)}</span>`).join("")}</div>`;
+}
+function berZins(){
+  if(!berPos) berPos = berDefaults();
+  const rows=((D.bonds&&D.bonds.rows)||[]).filter(r=>r.kurs&&r.faellig&&r.rlz>0.05);
+  const models = berPos.map(p=>({...p, m:posModel(p)})).filter(x=>x.m).map(x=>({...x, ...x.m}));
+  const ser=(D.macro&&D.macro.series)||[], at10=ser.find(s=>s.id==="IRS/M.AT.L.L40.CI.0000.EUR.N.Z");
+  let hist="", histT="Echtes Beispiel: der Zinsanstieg";
+  if (at10 && at10.history?.length){
+    const h=at10.history.filter(d=>d[0]>="2019-01-01"); let lo=h[0], hi=h[0];
+    h.forEach(d=>{ if(d[1]<lo[1]) lo=d; }); h.filter(d=>d[0]>lo[0]).forEach(d=>{ if(d[1]>hi[1]) hi=d; });
+    const dy=hi[1]-lo[1]; histT=`Echtes Beispiel: der Zinsanstieg ${lo[0].slice(0,4)}–${hi[0].slice(0,4)}`;
+    hist = `<p style="margin:0 0 8px">Die Rendite 10-jähriger österreichischer Staatsanleihen stieg von <b>${fmt(lo[1],2)} %</b> (${new Date(lo[0]).toLocaleDateString("de-AT",{month:"short",year:"numeric"})}) auf <b>${fmt(hi[1],2)} %</b> (${new Date(hi[0]).toLocaleDateString("de-AT",{month:"short",year:"numeric"})}), also um <b class="amb">${fmt(dy,2)} Prozentpunkte</b>. Mit dem heutigen Kurs und der heutigen Laufzeit gerechnet entspräche das ungefähr:</p>
+      <div class="fbar">${models.map((m,i)=>`<span class="chip" style="border-color:${PAL[i%PAL.length]};color:var(--txt)">${esc(m.name)}: <b class="dn">${pct(m.f(dy/100)*100,1)}</b></span>`).join("")}</div>
+      <div id="at10Chart"></div><div class="dim" style="font-size:11px">Quelle: EZB, Rendite 10-jähriger Staatsanleihen Österreichs (Monatswerte). Rückrechnung als Veranschaulichung: tatsächliche Verluste hingen von Kupon, Laufzeit und Kurs zum damaligen Zeitpunkt ab.</div>`;
+  }
+  const scen=[-1,-0.5,0.5,1,2];
+  return `<div class="grid g32">
+    ${panel("Wie stark reagiert der Kurs auf Zinsänderungen?", `<div class="fbar"><label>Zinsänderung <input type="range" id="dy" min="-2" max="3" step="0.25" value="${berDy}" style="width:200px"></label><b class="amb" id="dyv">${berDy>0?"+":""}${fmt(berDy,2)} %-Pkt.</b>
+        <label>Anlagebetrag je Position <input type="number" id="amt" value="${berAmt}" step="10000" style="width:110px"> €</label></div>
+      <div id="scen"></div>
+      <div class="scroll" style="margin-top:8px"><table><thead><tr><th class="l">Position</th><th>Rendite</th><th>Mod. Duration</th><th>Kursänderung</th><th>in €</th><th title="Zinsanstieg, den ein Jahr Rendite ausgleicht">Zinspolster</th><th title="Jahre, bis der Kursverlust durch die laufende Rendite aufgeholt ist">Ausgleich nach</th><th></th></tr></thead><tbody>
+      ${models.map((m,i)=>{ const ch=m.f(berDy/100); const yrs = ch<0 && m.y>0 ? -ch/m.y : null;
+        return `<tr><td class="l"><span style="color:${PAL[i%PAL.length]}">■</span> ${esc(m.name)}${m.linear?' <span class="dim" style="font-size:10px">(Duration-Näherung)</span>':""}</td><td>${fmt(m.y*100,2)} %</td><td>${fmt(m.D,1)}</td><td class="${cls(ch)}">${pct(ch*100,1)}</td><td class="${cls(ch)}">${fmt(ch*berAmt,0)} €</td><td>${m.D?fmt(m.y*100/m.D,2)+" %-Pkt.":"–"}</td><td>${yrs!=null?fmt(yrs,1)+" J.":"–"}</td><td><a href="#" data-rm="${i}" style="color:var(--dn)">✕</a></td></tr>`; }).join("")}
+      </tbody></table></div>
+      <div class="scroll" style="margin-top:10px"><table><thead><tr><th class="l">Kursänderung bei …</th>${scen.map(x=>`<th>${x>0?"+":""}${fmt(x,1)} %-Pkt.</th>`).join("")}</tr></thead><tbody>
+      ${models.map((m,i)=>`<tr><td class="l"><span style="color:${PAL[i%PAL.length]}">■</span> ${esc(m.name)}</td>${scen.map(x=>{const v=m.f(x/100)*100; return `<td class="${cls(v)}">${pct(v,1)}</td>`;}).join("")}</tr>`).join("")}
+      </tbody></table></div>`)}
+    <div class="grid">
+      ${panel("Position hinzufügen", `<div class="fbar"><select id="addBondSel" style="flex:1">${rows.map((r,i)=>`<option value="${i}">${esc(r.name)} · ${fmt(r.kurs,2)}</option>`).join("")}</select><button class="info" id="addBond">+ Bundesanleihe</button></div>
+        <div class="dim" style="font-size:11px;margin:8px 0 4px">Eigene Anleihe</div>
+        <div class="fbar"><input id="cN" placeholder="Name" style="width:120px"><input id="cC" type="number" step="0.01" placeholder="Kupon %" style="width:80px"><input id="cM" type="date"><input id="cP" type="number" step="0.01" placeholder="Kurs" style="width:70px"><button class="info" id="addCustom">+</button></div>
+        <div class="dim" style="font-size:11px;margin:8px 0 4px">Nur Duration (z. B. Anleihefonds laut Factsheet)</div>
+        <div class="fbar"><input id="dN" placeholder="Name" style="width:120px"><input id="dD" type="number" step="0.1" placeholder="Duration" style="width:80px"><input id="dY" type="number" step="0.01" placeholder="Rendite %" style="width:80px"><button class="info" id="addDur">+</button></div>
+        <button class="info" id="berReset" style="margin-top:6px">Beispiel wiederherstellen</button>`)}
+      ${panel("So liest man es", `<p style="margin:0 0 6px"><b>Modifizierte Duration</b> = ungefähre Kursänderung in %, wenn die Rendite um 1 Prozentpunkt steigt oder fällt. Duration 8 heißt: +1 %-Pkt. Rendite ≈ −8 % Kurs.</p>
+        <p style="margin:0 0 6px"><b>Zinspolster</b> = um wie viel die Rendite steigen darf, bis ein Jahr Ertrag aufgezehrt ist (Rendite ÷ Duration).</p>
+        <p style="margin:0 0 6px"><b>Ausgleich nach</b> = grobe Zeit, bis der Kursverlust durch die laufende Rendite wieder aufgeholt ist.</p>
+        <p style="margin:0" class="dim">Bei Halten bis zur Fälligkeit wird eine Anleihe zu 100 % zurückgezahlt – Kursverluste sind dann vorübergehend (Emittentenrisiko ausgenommen). Für Anleihen wird exakt neu bewertet (Kupon, Fälligkeit, Kurs), für „Nur Duration“ linear genähert.</p>`)}
+    </div></div>
+    ${hist?`<div style="margin-top:10px">${panel(histT, hist)}</div>`:""}`;
+}
+function berZinsAfter(el){
+  const models = berPos.map(p=>({...p, m:posModel(p)})).filter(x=>x.m).map(x=>({...x, ...x.m}));
+  scenarioChart(el.querySelector("#scen"), models);
+  const s=el.querySelector("#dy"); s.oninput=()=>{ berDy=+s.value; el.querySelector("#dyv").textContent=(berDy>0?"+":"")+fmt(berDy,2)+" %-Pkt."; }; s.onchange=()=>render();
+  el.querySelector("#amt").onchange=e=>{ berAmt=+e.target.value||0; render(); };
+  el.querySelectorAll("[data-rm]").forEach(a=>a.onclick=ev=>{ ev.preventDefault(); berPos.splice(+a.dataset.rm,1); render(); });
+  const rows=((D.bonds&&D.bonds.rows)||[]).filter(r=>r.kurs&&r.faellig&&r.rlz>0.05);
+  el.querySelector("#addBond").onclick=()=>{ const r=rows[+el.querySelector("#addBondSel").value]; if(r) berPos.push({kind:"bond",name:r.name.replace("Bundesanleihe","Bund"),cpn:r.kupon||0,mat:r.faellig,price:r.kurs}); render(); };
+  el.querySelector("#addCustom").onclick=()=>{ const v=id=>el.querySelector(id).value; if(!v("#cM")||!v("#cP")) return; berPos.push({kind:"bond",name:v("#cN")||"Eigene Anleihe",cpn:+v("#cC")||0,mat:v("#cM"),price:+v("#cP")}); render(); };
+  el.querySelector("#addDur").onclick=()=>{ const v=id=>el.querySelector(id).value; if(!v("#dD")) return; berPos.push({kind:"dur",name:v("#dN")||"Position",dur:+v("#dD"),yld:+v("#dY")||0}); render(); };
+  el.querySelector("#berReset").onclick=()=>{ berPos=null; render(); };
+  const at10=((D.macro&&D.macro.series)||[]).find(s=>s.id==="IRS/M.AT.L.L40.CI.0000.EUR.N.Z"), c=el.querySelector("#at10Chart");
+  if(at10&&c) lineChart(c, at10.history.filter(d=>d[0]>="2015-01-01"), {color:"var(--amber)", h:200, unit:"%"});
+}
+
+/* ---- Langfrist-Chart ---- */
+let lgSym="^SP500TR", lgRange="Max", lgLog=true;
+function drawdowns(pts){
+  const eps=[]; let peak=pts[0], cur=null;
+  for(const p of pts){
+    if(p[1]>=peak[1]){ if(cur){ cur.rec=p[0]; eps.push(cur); cur=null; } peak=p; continue; }
+    const dd=p[1]/peak[1]-1;
+    if(!cur) cur={peak:peak[0], pv:peak[1], trough:p[0], dd, rec:null};
+    if(dd<cur.dd){ cur.dd=dd; cur.trough=p[0]; }
+  }
+  if(cur) eps.push(cur);
+  const mo=(a,b)=>Math.round((new Date(b)-new Date(a))/(30.44*864e5));
+  return eps.filter(e=>e.dd<=-0.1).map(e=>({...e, toTrough:mo(e.peak,e.trough), toRec:e.rec?mo(e.trough,e.rec):null})).sort((a,b)=>a.dd-b.dd);
+}
+function berLang(){
+  const L=D.long&&D.long.series; if(!L) return panel("Langfrist-Chart", noData("Langfrist-Daten"));
+  const s=L[lgSym]||Object.values(L)[0]; if(!s) return panel("Langfrist-Chart", noData("Langfrist-Daten"));
+  const yrs={"Max":999,"30 J.":30,"20 J.":20,"10 J.":10}[lgRange]; const cut=new Date(); cut.setFullYear(cut.getFullYear()-yrs);
+  const pts=s.m.filter(d=>new Date(d[0])>=cut);
+  const n=(new Date(pts[pts.length-1][0])-new Date(pts[0][0]))/(365.25*864e5);
+  const cagr=Math.pow(pts[pts.length-1][1]/pts[0][1],1/n)-1, tot=pts[pts.length-1][1]/pts[0][1]-1;
+  const eps=drawdowns(pts), maxdd=eps.length?eps[0].dd:0;
+  const hold=[1,3,5,10,15,20].map(y=>{ const k=y*12, r=[]; for(let i=0;i+k<pts.length;i++) r.push(Math.pow(pts[i+k][1]/pts[i][1],1/y)-1); if(!r.length) return null; r.sort((a,b)=>a-b);
+    return {y, n:r.length, pos:r.filter(v=>v>0).length/r.length, worst:r[0], med:r[r.length>>1], best:r[r.length-1]}; }).filter(Boolean);
+  const ds = d => new Date(d).toLocaleDateString("de-AT",{month:"short",year:"numeric"});
+  return `<div class="fbar"><div class="btns" id="lgS">${Object.entries(L).map(([k,v])=>`<button data-s="${esc(k)}" class="${k===lgSym?"on":""}">${esc(v.name)}</button>`).join("")}</div></div>
+    <div class="grid g32">
+      ${panel(esc(s.name)+` <span class="dim">· seit ${ds(pts[0][0])}</span>`, `<div id="lgChart"></div><div class="ph" style="margin:8px -9px 6px;border-top:1px solid var(--line)"><h2>Rücksetzer vom jeweiligen Höchststand</h2></div><div id="ddChart"></div>`,
+        `<div style="display:flex;gap:8px;align-items:center"><div class="btns" id="lgR">${["Max","30 J.","20 J.","10 J."].map(r=>`<button data-r="${r}" class="${r===lgRange?"on":""}">${r}</button>`).join("")}</div><label class="dim" style="font-size:11px"><input type="checkbox" id="lgLog"${lgLog?" checked":""}> log.</label></div>`)}
+      <div class="grid">
+        ${panel("Kennzahlen", `<div class="tiles" style="grid-template-columns:1fr 1fr">
+          <div class="tile" style="cursor:default"><div class="t"><span>Rendite p.a.</span></div><div class="v ${cls(cagr)}">${pct(cagr*100,1)}</div><div class="s">über ${fmt(n,0)} Jahre</div></div>
+          <div class="tile" style="cursor:default"><div class="t"><span>Gesamt</span></div><div class="v">${fmt(tot+1,1)}×</div><div class="s">aus 10.000 wurden ${fmt(10000*(1+tot),0)}</div></div>
+          <div class="tile" style="cursor:default"><div class="t"><span>Größter Rücksetzer</span></div><div class="v dn">${pct(maxdd*100,1)}</div><div class="s">${eps[0]?ds(eps[0].peak)+" – "+ds(eps[0].trough):""}</div></div>
+          <div class="tile" style="cursor:default"><div class="t"><span>Rücksetzer ≥ 10 %</span></div><div class="v">${eps.length}</div><div class="s">davon ≥ 20 %: ${eps.filter(e=>e.dd<=-0.2).length}</div></div></div>`)}
+        ${panel("Haltedauer: wie oft im Plus?", `<table><thead><tr><th class="l">Haltedauer</th><th>im Plus</th><th>schlechteste p.a.</th><th>Median p.a.</th><th>beste p.a.</th></tr></thead><tbody>
+          ${hold.map(h=>`<tr><td class="l">${h.y} ${h.y===1?"Jahr":"Jahre"}</td><td class="amb">${fmt(h.pos*100,0)} %</td><td class="${cls(h.worst)}">${pct(h.worst*100,1)}</td><td class="${cls(h.med)}">${pct(h.med*100,1)}</td><td class="${cls(h.best)}">${pct(h.best*100,1)}</td></tr>`).join("")}
+          </tbody></table><div class="dim" style="font-size:11px;margin-top:6px">Alle Einstiegsmonate im gewählten Zeitraum, jeweils rollierend ausgewertet.</div>`)}
+      </div></div>
+    <div style="margin-top:10px">${panel("Die größten Rücksetzer", `<div class="scroll"><table><thead><tr><th class="l">Höchststand</th><th class="l">Tiefpunkt</th><th>Verlust</th><th>Dauer bis Tief</th><th class="l">Wieder auf Höchststand</th><th>Dauer der Erholung</th></tr></thead><tbody>
+      ${eps.slice(0,12).map(e=>`<tr><td class="l">${ds(e.peak)}</td><td class="l">${ds(e.trough)}</td><td class="dn">${pct(e.dd*100,1)}</td><td>${e.toTrough} Mon.</td><td class="l">${e.rec?ds(e.rec):'<span class="amb">noch nicht</span>'}</td><td>${e.toRec!=null?(e.toRec>=24?fmt(e.toRec/12,1)+" J.":e.toRec+" Mon."):"–"}</td></tr>`).join("")}
+      </tbody></table></div><p class="dim" style="font-size:11px;margin-top:8px">Monatsschlusskurse laut Yahoo Finance, in Indexwährung, ohne Kosten und Steuern. ${lgSym==="^GSPC"||lgSym==="^STOXX50E"||lgSym==="^ATX"||lgSym==="^NDX"||lgSym==="^N225"||lgSym==="^FTSE"?"Kursindex – ohne Dividenden, die Gesamtrendite lag höher.":lgSym==="GC=F"?"Gold-Terminkontrakt.":"Inklusive wiederangelegter Dividenden."} Vergangene Entwicklungen sind kein verlässlicher Indikator für künftige Ergebnisse.</p>`)}</div>`;
+}
+function berLangAfter(el){
+  const L=D.long&&D.long.series; if(!L) return; const s=L[lgSym]||Object.values(L)[0];
+  const yrs={"Max":999,"30 J.":30,"20 J.":20,"10 J.":10}[lgRange]; const cut=new Date(); cut.setFullYear(cut.getFullYear()-yrs);
+  const pts=s.m.filter(d=>new Date(d[0])>=cut);
+  const c=el.querySelector("#lgChart");
+  if(lgLog) lineChart(c, pts.map(d=>[d[0],Math.log10(d[1])]), {h:300, color:"var(--up)", yfmt:v=>fmt(Math.pow(10,v), Math.pow(10,v)<100?1:0)});
+  else lineChart(c, pts, {h:300, color:"var(--up)"});
+  let peak=0; const dd=pts.map(d=>{ peak=Math.max(peak,d[1]); return [d[0], (d[1]/peak-1)*100]; });
+  lineChart(el.querySelector("#ddChart"), dd, {h:150, color:"var(--dn)", yfmt:v=>fmt(v,0)+" %"});
+  el.querySelectorAll("#lgS button").forEach(b=>b.onclick=()=>{ lgSym=b.dataset.s; render(); });
+  el.querySelectorAll("#lgR button").forEach(b=>b.onclick=()=>{ lgRange=b.dataset.r; render(); });
+  el.querySelector("#lgLog").onchange=e=>{ lgLog=e.target.checked; render(); };
+}
+
+V.BER = async () => {
+  await lazy("bonds"); await lazy("long");
+  const tabs=[["zins","Zinsänderungsrisiko"],["lang","Langfrist-Chart & Rücksetzer"],["netto","Renditevergleich"]];
+  if (berTab==="netto") { berTab="zins"; setTimeout(()=>go("NET"),0); }
+  return `<div class="btns" id="berT" style="margin-bottom:10px">${tabs.map(([k,l])=>`<button data-t="${k}" class="${k===berTab?"on":""}" style="padding:5px 14px;font-size:12px">${l}</button>`).join("")}</div>`
+    + (berTab==="lang" ? berLang() : berZins());
+};
+V.BER.after = el => {
+  el.querySelectorAll("#berT button").forEach(b=>b.onclick=()=>{ if(b.dataset.t==="netto") return go("NET"); berTab=b.dataset.t; render(); });
+  (berTab==="lang" ? berLangAfter : berZinsAfter)(el);
+};
+
 V.HELP = () => panel("Befehle", `<table class="help"><tbody>
   <tr><td>AAPL · VOE.VI · Apple</td><td>Ticker oder Name eingeben + GO → Detailseite. Funktioniert für alle Titel im Universum (MSCI ACWI, S&amp;P 500, Nasdaq 100, STOXX 600, ATX).</td></tr>
   <tr><td>DAX · Gold · ^GSPC</td><td>Index oder Markt eingeben → großer Chart (GP)</td></tr>
@@ -1012,6 +1178,7 @@ V.HELP = () => panel("Befehle", `<table class="help"><tbody>
   <tr><td>ETF</td><td>Ausgewählte ETFs mit OeKB-Meldefonds-Status, Kosten, Performance, Risiko</td></tr>
   <tr><td>CMP</td><td>Vergleichschart: mehrere Titel, Indizes und Rohstoffe auf 100 indexiert, wahlweise in EUR</td></tr>
   <tr><td>GOVT</td><td>Alle österreichischen Bundesanleihen mit Kurs, Rendite, Duration und Zinskurve</td></tr>
+  <tr><td>BER</td><td>Beratung: Zinsänderungsrisiko mit Duration (Bundesanleihen live, eigene Anleihen, Fonds) und Langfrist-Chart mit Rendite, Rücksetzern und Haltedauer-Auswertung</td></tr>
   <tr><td>NET</td><td>Renditevergleich Anleihen &amp; Festgeld: Nettorendite nach Kosten und KESt, Bundesanleihen live übernehmbar, PDF-Export</td></tr>
   <tr><td>MKT</td><td>Dein wöchentliches Marktupdate mit Archiv; PMI-Werte fließen automatisch in ECO</td></tr>
   <tr><td>CAL</td><td>Kalender: Notenbanken, Quartalszahlen, Dividendentermine</td></tr>
@@ -1046,7 +1213,7 @@ function fromHash(){
 window.addEventListener("popstate",()=>{fromHash();render();});
 
 /* ============================================================ Befehlszeile */
-const ALIAS={HOME:"HOME",WEI:"WEI",W:"W",WL:"W",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",CMP:"CMP",COMP:"CMP",BRA:"BRA",BRANCHEN:"BRA",IND:"BRA",ETF:"ETF",ETFS:"ETF",FONDS:"ETF",VERGLEICH:"CMP",GOVT:"GOVT",BOND:"GOVT",NET:"NET",NETTO:"NET",RENDITE:"NET",FESTGELD:"NET",ANLEIHEN:"GOVT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP"};
+const ALIAS={HOME:"HOME",WEI:"WEI",W:"W",WL:"W",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",CMP:"CMP",COMP:"CMP",BRA:"BRA",BRANCHEN:"BRA",IND:"BRA",ETF:"ETF",ETFS:"ETF",FONDS:"ETF",VERGLEICH:"CMP",GOVT:"GOVT",BOND:"GOVT",BER:"BER",BERATUNG:"BER",ZINS:"BER",DURATION:"BER",NET:"NET",NETTO:"NET",RENDITE:"NET",FESTGELD:"NET",ANLEIHEN:"GOVT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP"};
 function runCmd(raw){
   const p=raw.trim().toUpperCase().split(/\s+/).filter(Boolean); if(!p.length) return;
   if(p.length===1 && ALIAS[p[0]]) return go(ALIAS[p[0]]);
@@ -1062,7 +1229,7 @@ function runCmd(raw){
 const inp=document.getElementById("cmd"), sg=document.getElementById("sugg"); let sIdx=-1;
 function suggest(){
   const q=inp.value.trim().toUpperCase(); if(!q){sg.style.display="none";return;}
-  const cmds=[["HOME","Übersicht"],["WEI","Weltindizes"],["W","Watchlist"],["SCR","Screener"],["ECO","Makro"],["TOP","News & Stimmung"],["BRA","Branchenvergleich"],["ETF","ETFs & Meldefonds"],["CMP","Vergleichschart"],["GOVT","Bundesanleihen Österreich"],["NET","Renditevergleich Anleihen & Festgeld"],["MKT","Marktupdate"],["CAL","Kalender"],["HELP","Hilfe"]];
+  const cmds=[["HOME","Übersicht"],["WEI","Weltindizes"],["W","Watchlist"],["SCR","Screener"],["ECO","Makro"],["TOP","News & Stimmung"],["BRA","Branchenvergleich"],["ETF","ETFs & Meldefonds"],["CMP","Vergleichschart"],["GOVT","Bundesanleihen Österreich"],["BER","Beratung: Zinsänderungsrisiko, Langfrist-Chart"],["NET","Renditevergleich Anleihen & Festgeld"],["MKT","Marktupdate"],["CAL","Kalender"],["HELP","Hilfe"]];
   const mk=[...((D.market||{}).indices||[]),...((D.market||{}).markets||[])].map(r=>[r.name,r.sym+" · Chart"]);
   const wl=((D.market&&D.market.watchlist)||[]).map(r=>[r.sym,r.name]);
   const un=((D.universe&&D.universe.rows)||[]).map(r=>[r.s,r.n]);
@@ -1127,7 +1294,7 @@ document.getElementById("logout").onclick = () => { store.clear(); location.relo
   document.getElementById("stamp").textContent = "Daten: " + (up ? dt(up) : "keine");
   tape(); fromHash(); render();
   lazy("universe");  // im Hintergrund für Suche & Screener
-  setInterval(async()=>{ D.tick={}; D.universe=D.history=D.calendar=D.marktupdate=D.bonds=D.etfs=D.holdings=null; await loadAll(); tape(); if(!["DES","SCR"].includes(state.view)) render(); }, 15*60*1000);
+  setInterval(async()=>{ D.tick={}; D.universe=D.history=D.calendar=D.marktupdate=D.bonds=D.etfs=D.holdings=D.long=null; await loadAll(); tape(); if(!["DES","SCR"].includes(state.view)) render(); }, 15*60*1000);
 })();
 </script>
 </body>

@@ -1169,6 +1169,20 @@ def build_holdings(uni_rows: list[dict], fund: dict):
         log(f"  Positionen {e['ticker']}: {len(rows)} Titel, {hit} im Universum zugeordnet")
     save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops})
 
+
+# ----------------------------------------------------------------- Langfrist-Historie (Beratung)
+def build_long_history():
+    idx = CFG.get("long_indices", {})
+    data = history_block(list(idx), period="max", interval="1mo", chunk=20)
+    out = {}
+    for sym, name in idx.items():
+        c = data.get(sym)
+        if c is None or len(c) < 24:
+            continue
+        out[sym] = {"name": name, "m": series_pairs(c, 2)}
+    save(DATA / "long.json", {"updated": NOW.isoformat(), "series": out})
+    log(f"Langfrist-Historie: {len(out)} Reihen")
+
 # ----------------------------------------------------------------- Marktupdate
 def build_marktupdate() -> list[dict]:
     """Entschlüsselt manual/marktupdate/*.enc (Secret MKT_PRIVATE_KEY) und veröffentlicht sie verschlüsselt."""
@@ -1494,6 +1508,8 @@ def main():
 
     safe(build_bonds, None, "Bundesanleihen")
     safe(build_etfs, None, "ETFs")
+    if MODE == "nightly" or not (DATA / "long.json").exists():
+        safe(build_long_history, None, "Langfrist-Historie")
     if MODE == "nightly" or not (DATA / "holdings.json").exists():
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
 
