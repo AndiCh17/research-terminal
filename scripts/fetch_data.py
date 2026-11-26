@@ -908,6 +908,55 @@ def build_bonds():
     log(f"Bundesanleihen: {len(rows)} Titel, {sum(1 for r in rows if r.get('kurs'))} mit Kurs")
 
 
+# ----------------------------------------------------------------- ETFs
+ETF_INDEX = {"SXR8.DE": "S&P 500", "VUSA.DE": "S&P 500", "XDEW.DE": "S&P 500", "EXS1.DE": "DAX", "DBXD.DE": "DAX",
+             "EUN2.DE": "Euro Stoxx 50", "SXRV.DE": "Nasdaq 100", "EQQQ.DE": "Nasdaq 100", "EXXX.DE": "ATX"}
+
+
+def build_etfs():
+    cfg = json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8"))
+    etfs = cfg.get("etfs", [])
+    tick = [e["ticker"] for e in etfs if e.get("ticker")]
+    d1 = history_block(tick, period="1y")
+    w5 = history_block(tick, period="5y", interval="1wk")
+    old = {e["isin"]: e for e in (load(DATA / "etfs.json", {}) or {}).get("etfs", [])}
+    out = []
+    for e in etfs:
+        t = e.get("ticker")
+        c, w = d1.get(t), w5.get(t)
+        row = {**e, "index": ETF_INDEX.get(t)}
+        if MODE == "nightly" or e["isin"] not in old or old[e["isin"]].get("ter") is None:
+            info = safe(lambda: yf.Ticker(t).info or {}, {}, f"ETF {t}") if t else {}
+            ter = info.get("netExpenseRatio") or info.get("annualReportExpenseRatio")
+            if ter is not None and ter < 0.05:  # Bruchteil (0,002) -> Prozent (0,2)
+                ter = ter * 100
+            row.update(ter=rnd(ter, 3) if ter else None,
+                       aum=info.get("totalAssets"), cur=info.get("currency"), ydiv=rnd((info.get("yield") or 0) * 100, 2) if info.get("yield") else None)
+        else:
+            row.update({k: old[e["isin"]].get(k) for k in ("ter", "aum", "cur", "ydiv")})
+        if c is not None and len(c) > 2:
+            px = float(c.iloc[-1])
+            yb = c[c.index.year < NOW.year]
+            ret = c.pct_change().dropna()
+            peak = c.cummax()
+            row.update(px=rnd(px), chg=rnd((px / float(c.iloc[-2]) - 1) * 100, 2),
+                       m1=rnd((px / float(c.iloc[-22]) - 1) * 100, 1) if len(c) > 22 else None,
+                       ytd=rnd((px / float(yb.iloc[-1]) - 1) * 100, 1) if len(yb) else None,
+                       y1=rnd((px / float(c.iloc[0]) - 1) * 100, 1),
+                       vola=rnd(float(ret.std()) * (252 ** 0.5) * 100, 1),
+                       mdd=rnd(float((c / peak - 1).min()) * 100, 1), hist1y=series_pairs(c))
+        if w is not None and len(w) > 60:
+            pxw = float(w.iloc[-1])
+            for yrs, key in ((3, "y3"), (5, "y5")):
+                base = w[w.index <= w.index[-1] - pd.DateOffset(years=yrs)]
+                if len(base):
+                    row[key] = rnd(((pxw / float(base.iloc[-1])) ** (1 / yrs) - 1) * 100, 1)
+            row["hist5y"] = series_pairs(w)
+        out.append(row)
+    save(DATA / "etfs.json", {"updated": NOW.isoformat(), "geprueft": cfg.get("geprueft"), "hinweis": cfg.get("_hinweis"), "etfs": out})
+    log(f"ETFs: {len(out)}, mit Kurs {sum(1 for r in out if r.get('px'))}")
+
+
 # ----------------------------------------------------------------- Marktupdate
 def build_marktupdate() -> list[dict]:
     """Entschlüsselt manual/marktupdate/*.enc (Secret MKT_PRIVATE_KEY) und veröffentlicht sie verschlüsselt."""
@@ -1011,6 +1060,10 @@ def build_ticker(sym: str, edgar: "Edgar", closes_1y: pd.Series | None, sent: "S
             "dy": rnd(dy, 2), "roe": g("returnOnEquity"), "pm": g("profitMargins"), "beta": g("beta"),
             "er": iso_date(earn), "exd": iso_date(g("exDividendDate")), "divd": iso_date(g("dividendDate")),
             "rating": g("recommendationKey"), "tgt": g("targetMeanPrice"),
+            "ni": g("netIncomeToCommon"), "eg": g("earningsGrowth", "earningsQuarterlyGrowth"), "rg": g("revenueGrowth"),
+            "feg": (g("forwardEps") / g("trailingEps") - 1) if (g("forwardEps") and g("trailingEps") and g("trailingEps") > 0) else None,
+            "rmean": g("recommendationMean"), "nan": g("numberOfAnalystOpinions"),
+            "up": (g("targetMeanPrice") / price - 1) if (g("targetMeanPrice") and price) else None,
             "sent": agg["score"], "f": file_safe(sym), "upd": NOW.isoformat()}
     return detail, prof
 
@@ -1192,6 +1245,13 @@ def main():
             "hi": rf.get("hi"), "mcap": f.get("mcapEUR"), "pe": rnd(f.get("pe"), 1), "fpe": rnd(f.get("fpe"), 1),
             "pb": rnd(f.get("pb"), 2), "dy": f.get("dy"), "roe": rnd((f.get("roe") or 0) * 100, 1) if f.get("roe") is not None else None,
             "beta": rnd(f.get("beta"), 2), "sent": f.get("sent"), "rating": f.get("rating"),
+            "ind": f.get("ind"), "ni": rnd(to_eur(f.get("ni"), f.get("cur"), fx), 0) if f.get("ni") is not None else None,
+            "eg": rnd((f.get("eg") or 0) * 100, 1) if f.get("eg") is not None else None,
+            "rg": rnd((f.get("rg") or 0) * 100, 1) if f.get("rg") is not None else None,
+            "feg": rnd((f.get("feg") or 0) * 100, 1) if f.get("feg") is not None else None,
+            "up": rnd((f["tgt"] / px - 1) * 100, 1) if f.get("tgt") and px else None,
+            "rmean": rnd(f.get("rmean"), 2), "nan": f.get("nan"),
+            "pm": rnd((f.get("pm") or 0) * 100, 1) if f.get("pm") is not None else None,
             "er": f.get("er"), "src": u.get("src", []), "det": det, "wl": s in watch,
         })
     for s in wl:
@@ -1213,6 +1273,7 @@ def main():
     safe(lambda: merge_manual_macro(editions), None, "PMI-Zusammenführung")
 
     safe(build_bonds, None, "Bundesanleihen")
+    safe(build_etfs, None, "ETFs")
 
     # --- News + Stimmung
     log("News + Stimmung …")
