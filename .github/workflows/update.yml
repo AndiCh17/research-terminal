@@ -17,7 +17,7 @@ on:
         default: fast
   push:
     branches: [main]
-    paths: ["config.json", "scripts/**", "index.html", "manual/**"]
+    paths: ["config.json", "scripts/**", "index.html", "manual/**", "tools/**"]
 
 permissions:
   contents: write
@@ -86,6 +86,7 @@ jobs:
         run: |
           mkdir -p _site/data
           cp index.html _site/
+          cp -r tools _site/tools
           touch _site/.nojekyll
           rsync -a --exclude .git store/ _site/data/
 

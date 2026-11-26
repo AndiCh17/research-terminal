@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Renditevergleich Anleihen & Festgeld</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ECEEF0; --surface:#FFFFFF; --surface-2:#F6F7F8; --ink:#2A2D30; --muted:#686D72; --line:#D6DADD;
+  --yellow:#FBF315; --on-yellow:#2A2D30; --net:#2A2D30; --tax:#9AA0A6; --cost:#CDD1D5; --warn:#B3261E;
+  --focus:#2A2D30;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#232629; --surface:#2E3236; --surface-2:#383C41; --ink:#ECEDEE; --muted:#A5AAAF; --line:#474C52;
+    --net:#ECEDEE; --tax:#7E858C; --cost:#545A60; --warn:#FF8A80; --focus:#FBF315; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#232629; --surface:#2E3236; --surface-2:#383C41; --ink:#ECEDEE; --muted:#A5AAAF; --line:#474C52;
+  --net:#ECEDEE; --tax:#7E858C; --cost:#545A60; --warn:#FF8A80; --focus:#FBF315; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Fira Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums}
+.wrap{max-width:1360px;margin:0 auto;padding:20px clamp(12px,3vw,32px) 48px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* Kopf */
+header.top{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:flex-end;justify-content:space-between;padding-bottom:18px;border-bottom:3px solid var(--yellow);margin-bottom:20px}
+.titlebox{flex:1 1 420px;min-width:0}
+.brandline{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin-bottom:6px}
+.brandline .sq{width:14px;height:14px;background:var(--yellow);display:inline-block;border:1px solid rgba(0,0,0,.15)}
+#title{font-size:clamp(22px,3vw,30px);font-weight:600;border:0;border-bottom:1px dashed transparent;background:transparent;width:100%;padding:2px 0;letter-spacing:-.01em}
+#title:hover{border-bottom-color:var(--line)}
+.store{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.store select{min-width:180px}
+.btn{border:1px solid var(--line);background:var(--surface);padding:7px 12px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--yellow);color:var(--on-yellow);border-color:var(--yellow);font-weight:600}
+.btn.ghost{background:transparent}
+.btn.small{padding:4px 9px;font-size:13px}
+
+/* Rahmendaten */
+.globals{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:20px}
+.field{display:flex;flex-direction:column;gap:3px;min-width:0}
+.field label{font-size:12.5px;color:var(--muted)}
+.field input,.field select{border:1px solid var(--line);background:var(--surface-2);border-radius:5px;padding:6px 8px;width:100%;min-width:0}
+.field input:focus,.field select:focus{background:var(--surface)}
+.field .unit{position:relative}
+.field .unit input{padding-right:30px}
+.field .unit span{position:absolute;right:9px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none}
+.check{flex-direction:row;align-items:center;gap:8px;padding-top:18px}
+.check input{width:18px;height:18px;accent-color:var(--ink)}
+
+/* Layout */
+.grid{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:20px;align-items:start}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+h2{font-size:17px;font-weight:600;margin:0 0 10px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
+
+/* Instrumente */
+.items{display:flex;flex-direction:column;gap:12px}
+.item{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--ink);border-radius:8px;padding:12px 14px}
+.item.deposit{border-left-color:var(--tax)}
+.item-head{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.item-head .kind{font-size:12px;color:var(--muted);white-space:nowrap}
+.item-head input.name{flex:1;min-width:0;font-weight:600;border:0;border-bottom:1px dashed var(--line);background:transparent;padding:3px 0}
+.item-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 10px}
+.item-fields .wide{grid-column:span 2}
+.iconbtn{border:1px solid transparent;background:transparent;border-radius:5px;padding:3px 7px;cursor:pointer;color:var(--muted);font-size:13px}
+.iconbtn:hover{border-color:var(--line);color:var(--ink)}
+.addrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.err{color:var(--warn);font-size:13px;margin-top:6px}
+
+/* Ergebnis: Renditeleiter */
+.ladder{display:flex;flex-direction:column;gap:14px}
+.rung{display:grid;grid-template-columns:minmax(150px,230px) 1fr 150px;gap:6px 14px;align-items:center}
+@media (max-width:640px){.rung{grid-template-columns:1fr 130px}.rung .bar{grid-column:1 / -1;grid-row:2}}
+.rung .who{min-width:0}
+.rung .who b{display:block;font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rung .who small{color:var(--muted);font-size:12.5px}
+.bar{position:relative;height:30px;background:var(--surface-2);border-radius:4px;overflow:hidden;display:flex}
+.bar .seg{height:100%}
+.seg.net{background:var(--net)}
+.rung.best .seg.net{background:var(--yellow);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.seg.tax{background:repeating-linear-gradient(135deg,var(--tax) 0 4px,transparent 4px 7px);background-color:color-mix(in srgb,var(--tax) 35%,transparent)}
+.seg.cost{background:var(--cost)}
+.rung .num{text-align:right}
+.rung .num b{font-size:24px;font-weight:600;line-height:1;display:block;letter-spacing:-.01em}
+.rung .num small{font-size:12px;color:var(--muted);display:block}
+.rung .num .eur{font-size:13.5px;color:var(--ink);font-weight:500;margin-top:5px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--muted);margin-top:16px}
+.legend i{display:inline-block;width:14px;height:10px;margin-right:6px;vertical-align:-1px;border-radius:2px}
+.metricswitch{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;font-size:13px}
+.metricswitch button{border:0;background:transparent;padding:5px 10px;cursor:pointer}
+.metricswitch button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.panelhead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.panelhead h2{margin:0}
+
+/* Tabellen */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;color:var(--muted);font-weight:400;position:sticky;left:0;background:var(--surface)}
+thead th{font-weight:600;color:var(--ink);vertical-align:bottom;white-space:normal;min-width:120px}
+tr.strong td{font-weight:600}
+tr.strong td:first-child{color:var(--ink)}
+tr.sep td{border-bottom:2px solid var(--ink)}
+td.bestcell{background:color-mix(in srgb,var(--yellow) 55%,transparent);color:var(--ink)}
+.stack{display:flex;flex-direction:column;gap:20px}
+details.cf{border-top:1px solid var(--line);padding:8px 0}
+details.cf summary{cursor:pointer;font-weight:500}
+details.cf table{font-size:13px;margin-top:8px}
+details.cf td:first-child{color:var(--ink)}
+.neg{color:var(--warn)}
+.note{font-size:12.5px;color:var(--muted);line-height:1.5}
+.note p{margin:0 0 6px}
+.hint{font-size:12.5px;color:var(--warn);margin-top:8px}
+textarea{width:100%;min-height:140px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);padding:8px;font-size:12px;font-family:ui-monospace,Consolas,monospace}
+footer{margin-top:28px}
+.hz{margin-top:16px;padding-top:12px;border-top:1px dashed var(--line)}
+.hz:empty{display:none}
+.hz-head{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin-bottom:6px}
+.hz-head b{font-size:14px;font-weight:600}
+.hz-head span{font-size:12px;color:var(--muted)}
+.hz-t{font-size:12.5px}
+.hz-t th,.hz-t td{padding:4px 8px}
+.hz-t thead th{font-weight:500;color:var(--muted);min-width:0;white-space:nowrap}
+.hz-t td:first-child{color:var(--ink)}
+/* ---------- Druckbericht ---------- */
+#report{display:none}
+@page{size:A4 landscape;margin:10mm 12mm 13mm 12mm;
+  @bottom-left{content:"Indikative Modellrechnung, keine Anlageempfehlung.";font:7pt "Fira Sans",Arial,sans-serif;color:#6B7075}
+  @bottom-right{content:"Seite " counter(page) " von " counter(pages);font:7pt "Fira Sans",Arial,sans-serif;color:#6B7075}}
+@media print{
+  :root{padding:0!important;color-scheme:light}
+  html,body{background:#fff!important}
+  .wrap{display:none!important}
+  #report{display:block}
+}
+#report{color:#2A2D30;font-family:"Fira Sans",Arial,Helvetica,sans-serif;font-size:8.4pt;line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-variant-numeric:tabular-nums}
+#report *{box-sizing:border-box}
+.rp-break{break-before:page}
+.rp-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10mm;padding-bottom:3.2mm;border-bottom:1.3mm solid #FBF315}
+.rp-kicker{font-size:7.2pt;color:#6B7075;letter-spacing:.08em;text-transform:uppercase;font-weight:500}
+.rp-head h1{font-size:19pt;font-weight:600;margin:1.2mm 0 0;letter-spacing:-.015em;line-height:1.1}
+.rp-facts{display:flex;margin:0}
+.rp-facts div{padding-left:4.5mm;margin-left:4.5mm;border-left:.25mm solid #D6DADD}
+.rp-facts div:first-child{border-left:0;margin-left:0;padding-left:0}
+.rp-facts dt{font-size:6.6pt;color:#6B7075;text-transform:uppercase;letter-spacing:.07em}
+.rp-facts dd{margin:.6mm 0 0;font-size:10.5pt;font-weight:600;white-space:nowrap}
+.rp-top{display:grid;grid-template-columns:1fr 62mm;gap:7mm;margin:4mm 0 4mm;align-items:start}
+.rp-h2{font-size:10.5pt;font-weight:600;margin:0 0 2.6mm;display:flex;align-items:baseline;gap:2.5mm}
+.rp-h2 small{font-size:7.6pt;font-weight:400;color:#6B7075}
+.rp-row{display:grid;grid-template-columns:60mm 1fr 17mm 29mm;gap:3mm;align-items:center;padding:.9mm 0;border-bottom:.2mm solid #E6E8EA;break-inside:avoid}
+.rp-row:last-of-type{border-bottom:0}
+.rp-who b{display:block;font-weight:600;font-size:8.8pt;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rp-who span{font-size:7pt;color:#6B7075}
+.rp-bar{height:4.4mm;background:#EEF0F2;display:flex;border-radius:.6mm;overflow:hidden}
+.rp-bar i{display:block;height:100%}
+.rp-bar .n{background:#2A2D30}
+.rp-row.best .rp-bar .n{background:#FBF315;box-shadow:inset 0 0 0 .25mm #C9C200}
+.rp-bar .t{background:#9AA0A6}
+.rp-bar .c{background:#CDD1D5}
+.rp-pct{text-align:right;font-size:12.5pt;font-weight:600;letter-spacing:-.01em}
+.rp-eur{text-align:right;font-size:8.6pt;font-weight:500;line-height:1.2}
+.rp-eur span{display:block;font-size:6.6pt;color:#6B7075;font-weight:400}
+.rp-legend{display:flex;gap:5mm;font-size:6.8pt;color:#6B7075;margin-top:1.6mm;padding-left:63mm}
+.rp-legend i{display:inline-block;width:3.6mm;height:2.4mm;border-radius:.4mm;margin-right:1.4mm;vertical-align:-.2mm}
+.rp-call{background:#2A2D30;color:#fff;border-radius:1.2mm;padding:3.6mm 4mm;margin-bottom:3mm}
+.rp-call:last-child{margin-bottom:0;background:#F3F4F5;color:#2A2D30}
+.rp-call dt{font-size:6.6pt;text-transform:uppercase;letter-spacing:.07em;opacity:.75}
+.rp-call .v{font-size:17pt;font-weight:600;line-height:1.1;margin-top:1.2mm;letter-spacing:-.01em}
+.rp-call:first-child .v{color:#FBF315}
+.rp-call .w{font-size:8pt;margin-top:.8mm;font-weight:500}
+.rp-call .s{font-size:6.8pt;opacity:.75;margin-top:.4mm}
+.rp-table{width:100%;border-collapse:collapse;font-size:7.9pt}
+.rp-table th,.rp-table td{padding:.72mm 2.2mm;text-align:right;white-space:nowrap;border-bottom:.2mm solid #E1E4E6}
+.rp-table thead th{background:#2A2D30;color:#fff;font-weight:600;vertical-align:bottom;white-space:normal;line-height:1.2;padding-top:1.6mm;padding-bottom:1.6mm}
+.rp-table thead th:first-child{text-align:left;font-weight:400;color:#D9DCDF}
+.rp-table td:first-child{text-align:left;color:#5C6166;width:56mm}
+.rp-table td:first-child small{display:block;font-size:6.4pt;color:#8A8F94}
+.rp-table tr.strong td{font-weight:600}
+.rp-table tr.strong td:first-child{color:#2A2D30}
+.rp-table tr.sep td{border-bottom:.45mm solid #2A2D30}
+.rp-table tr.assume td{color:#5C6166;background:#FAFAFB}
+.rp-table tr.assume.strong td{color:#2A2D30}
+.rp-table td.b{background:#FBF315!important;color:#2A2D30!important}
+.rp-table tr{break-inside:avoid}
+.rp-cf{column-count:2;column-gap:9mm;margin-top:4mm}
+.rp-card{break-inside:avoid;display:block;margin-bottom:4.5mm}
+.rp-card h3{font-size:9.2pt;font-weight:600;margin:0;display:flex;justify-content:space-between;gap:3mm;align-items:baseline;padding-bottom:1.2mm;border-bottom:.45mm solid #2A2D30}
+.rp-card h3 small{font-size:7pt;font-weight:400;color:#6B7075;white-space:nowrap}
+.rp-card table{width:100%;border-collapse:collapse;font-size:7.4pt;table-layout:fixed}
+.rp-card td,.rp-card th{padding:.55mm 1.5mm;border-bottom:.18mm solid #E6E8EA;text-align:right;white-space:nowrap}
+.rp-card th{font-weight:500;color:#6B7075;font-size:6.8pt;text-transform:uppercase;letter-spacing:.05em}
+.rp-card td:nth-child(1),.rp-card th:nth-child(1){text-align:left;width:18mm}
+.rp-card td:nth-child(3),.rp-card th:nth-child(3),.rp-card td:nth-child(4),.rp-card th:nth-child(4){width:25mm}
+.rp-card td:nth-child(2),.rp-card th:nth-child(2){text-align:left;white-space:normal}
+.rp-card td.neg{color:#B3261E}
+.rp-card tr.tot td{font-weight:600;border-bottom:0;border-top:.35mm solid #2A2D30}
+.rp-hzc{padding:3mm 4mm}
+.rp-hzc table{width:100%;border-collapse:collapse;margin-top:1.2mm;font-size:7.4pt;table-layout:fixed}
+.rp-hzc td{padding:.55mm 0;border-bottom:.18mm solid #D6DADD}
+.rp-hzc td:first-child span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rp-hzc td:last-child{width:16mm}
+.rp-hzc td:last-child{text-align:right;font-weight:600;white-space:nowrap;padding-left:2mm}
+.rp-hzc td small{display:block;font-size:6.2pt;color:#6B7075}
+.rp-hzc tr.top td:last-child{background:#FBF315;padding-right:1mm}
+.rp-hzc .s{margin-top:1.4mm;font-size:6pt;line-height:1.3}
+.rp-hz{display:none}
+.rp-hz-h{font-size:7.4pt;color:#6B7075;margin-bottom:1mm}
+.rp-hz-h b{color:#2A2D30;font-size:8.4pt;margin-right:2mm}
+.rp-hz table{width:100%;border-collapse:collapse;font-size:7.2pt}
+.rp-hz th,.rp-hz td{padding:.5mm 2mm;text-align:right;border-bottom:.18mm solid #E1E4E6;white-space:nowrap}
+.rp-hz th{font-weight:500;color:#6B7075;font-size:6.6pt;border-bottom:.35mm solid #2A2D30}
+.rp-hz th:first-child,.rp-hz td:first-child{text-align:left}
+.rp-hz td.b{background:#FBF315}
+.rp-hz-n{font-size:6.4pt;color:#8A8F94;margin-top:1mm}
+.rp-notes{margin-top:6mm;font-size:9pt;line-height:1.5;color:#3E4246;display:grid;grid-template-columns:1fr 1fr;gap:6mm 12mm}
+.rp-notes p{margin:0;break-inside:avoid;padding-left:4mm;border-left:1mm solid #FBF315}
+.rp-notes b{display:block;color:#2A2D30;font-weight:600;font-size:10pt;margin-bottom:1mm}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="titlebox">
+      <input id="title" aria-label="Titel des Vergleichs" value="">
+    </div>
+    <div class="store">
+      <select id="savedSel" aria-label="Gespeicherte Vergleiche"></select>
+      <button class="btn small" id="btnLoad">Laden</button>
+      <button class="btn small" id="btnSave">Speichern unter …</button>
+      <button class="btn small ghost" id="btnDel">Löschen</button>
+      <button class="btn small ghost" id="btnReset">Beispiel laden</button>
+      <button class="btn small primary" id="btnPdf">PDF-Export</button>
+      <span id="pdfMsg" class="note" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <section class="globals" aria-label="Rahmendaten">
+    <div class="field"><label for="g_amount">Anlagebetrag</label><div class="unit"><input id="g_amount" data-g="amount" inputmode="decimal"><span>€</span></div></div>
+    <div class="field"><label for="g_valuta">Valuta (Kauf / Beginn)</label><input id="g_valuta" data-g="valuta" type="date"></div>
+    <div class="field"><label for="g_feeVat">USt auf Depotgebühr</label><div class="unit"><input id="g_feeVat" data-g="feeVat" inputmode="decimal"><span>%</span></div></div>
+    <div class="field"><label for="g_feeBasis">Basis Depotgebühr</label><select id="g_feeBasis" data-g="feeBasis"><option value="kurswert">Kurswert</option><option value="nominale">Nominale</option></select></div>
+    <div class="field"><label for="g_horizon">Vergleichshorizont</label><input id="g_horizon" data-g="horizon" type="date"></div>
+    <div class="field check"><input id="g_taxOn" data-g="taxOn" type="checkbox"><label for="g_taxOn" style="font-size:14px;color:var(--ink)">KESt berücksichtigen</label></div>
+  </section>
+
+  <div class="grid">
+    <section aria-label="Instrumente">
+      <h2>Instrumente</h2>
+      <div class="items" id="items"></div>
+      <div class="addrow">
+        <button class="btn" id="addBond">Anleihe hinzufügen</button>
+        <button class="btn" id="addDeposit">Festgeld hinzufügen</button>
+      </div>
+      <div class="addrow" id="termRow" hidden>
+        <select id="termBond" aria-label="Bundesanleihe aus dem Terminal" style="flex:1;min-width:0;border:1px solid var(--line);border-radius:6px;padding:7px 8px;background:var(--surface)"></select>
+        <button class="btn primary" id="addTermBond">Bundesanleihe übernehmen</button>
+      </div>
+      <div class="note" id="termNote" hidden style="margin-top:6px"></div>
+    </section>
+
+    <section class="stack" aria-label="Ergebnis">
+      <div class="panel">
+        <div class="panelhead">
+          <h2>Rendite p.a. bis Fälligkeit</h2>
+          <div class="metricswitch" role="group" aria-label="Sortierung">
+            <button data-metric="net">Netto</button>
+            <button data-metric="cost">Nach Kosten</button>
+            <button data-metric="gross">Brutto</button>
+          </div>
+        </div>
+        <div class="ladder" id="ladder"></div>
+        <div class="legend">
+          <span><i style="background:var(--net)"></i>Netto-Rendite</span>
+          <span><i style="background:var(--yellow);box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)"></i>Bester Wert</span>
+          <span><i class="seg tax" style="display:inline-block"></i>KESt</span>
+          <span><i style="background:var(--cost)"></i>Kauf- und Depotkosten</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Kennzahlen</h2>
+        <div class="scroll"><table id="kpi"></table></div>
+        <div id="horizon" class="hz"></div>
+        <div id="horizonHint" class="hint" hidden></div>
+        <p class="note" style="margin-top:8px">* Annahme, nicht garantiert: Instrumente, die vor dem Vergleichshorizont fällig werden, werden mit Anlagebetrag und Ertrag bis dahin zur jeweils gleichen Netto-Rendite neu angelegt. Kupons und Zinsen werden nicht wiederveranlagt. Ob zu diesen Konditionen wieder angelegt werden kann, hängt vom künftigen Zinsniveau ab. Gesichert ist nur der Ertrag bis zur jeweiligen Fälligkeit.</p>
+      </div>
+
+      <div class="panel">
+        <h2>Zahlungsströme</h2>
+        <div id="cashflows"></div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="panel note">
+    <p><strong>Berechnungsgrundlagen.</strong> Renditen als interner Zinsfuß (XIRR, ACT/365) aller Zahlungen ab Valuta bis Fälligkeit. Kupons und Zinsen ohne Wiederveranlagung. Für die Hochrechnung auf den Vergleichshorizont wird der Rückfluss früher fälliger Instrumente zur eigenen Netto-Rendite neu angelegt (Annahme, nicht garantiert). Anleihen: Kupon jährlich zum Fälligkeitstag, Stückzinsen ACT/ACT, Kaufkosten auf den Kurswert. Depotgebühr anteilig je Kalenderjahr und bei Tilgung, auf Basis des linear zur Tilgung laufenden Kurswerts bzw. der Nominale.</p>
+    <p>KESt: Anleihen 27,5 % auf Kupons und Kursgewinn (Tilgung minus Kaufkurs; Anschaffungsnebenkosten im Privatvermögen nicht abzugsfähig), bezahlte Stückzinsen werden mit dem ersten Kupon verrechnet. Festgeld 25 % auf Zinsen. Depotgebühren sind steuerlich nicht abzugsfähig. Werte je Instrument änderbar.</p>
+    <p>Indikative Modellrechnung, keine Anlageempfehlung. Kurse, Spesen und steuerliche Behandlung im Einzelfall prüfen.</p>
+  </footer>
+
+  <details class="panel io noprint" style="margin-top:16px">
+    <summary style="cursor:pointer;font-weight:500">Vergleich exportieren oder importieren</summary>
+    <p class="note">Den Text kopieren, um den Vergleich weiterzugeben oder zu sichern. Zum Importieren einfügen und „Übernehmen“ wählen.</p>
+    <textarea id="io" spellcheck="false"></textarea>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn small" id="btnExport">Aktuellen Stand anzeigen</button>
+      <button class="btn small primary" id="btnImport">Übernehmen</button>
+    </div>
+    <div id="ioMsg" class="note" style="margin-top:6px"></div>
+  </details>
+</div>
+<div id="report"></div>
+
+<script>
+(function(){
+"use strict";
+const DAY = 864e5;
+const LS_CUR = "rv_current_v1", LS_SAVED = "rv_saved_v1";
+
+/* ---------- Hilfsfunktionen ---------- */
+const uid = () => Math.random().toString(36).slice(2,9);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function num(v){
+  if (typeof v === "number") return v;
+  let s = String(v ?? "").trim().replace(/\s|€|%/g,"");
+  if (s.includes(",")) s = s.replace(/\./g,"").replace(",",".");
+  const n = parseFloat(s); return isFinite(n) ? n : NaN;
+}
+const fIn = n => (n === "" || n == null || !isFinite(n)) ? "" : String(n).replace(".",",");
+const nf2 = new Intl.NumberFormat("de-AT",{minimumFractionDigits:2,maximumFractionDigits:2});
+const nf0 = new Intl.NumberFormat("de-AT",{maximumFractionDigits:0});
+const nf3 = new Intl.NumberFormat("de-AT",{minimumFractionDigits:3,maximumFractionDigits:3});
+const pct = (x,d=2) => isFinite(x) ? (d===3?nf3:nf2).format(x*100) + " %" : "–";
+const eur = x => isFinite(x) ? nf2.format(x) + " €" : "–";
+const eur0 = x => isFinite(x) ? nf0.format(x) + " €" : "–";
+const parseD = s => { if(!s) return null; const [y,m,d]=s.split("-").map(Number); if(!y||!m||!d) return null; return new Date(Date.UTC(y,m-1,d)); };
+const isoD = d => d.toISOString().slice(0,10);
+const fD = d => d ? d.toLocaleDateString("de-AT",{day:"2-digit",month:"2-digit",year:"numeric",timeZone:"UTC"}) : "–";
+function addYears(d,n){ const r=new Date(d); const m=r.getUTCMonth(); r.setUTCFullYear(r.getUTCFullYear()+n); if(r.getUTCMonth()!==m) r.setUTCDate(0); return r; }
+function addMonths(d,n){ const r=new Date(d); const day=r.getUTCDate(); r.setUTCDate(1); r.setUTCMonth(r.getUTCMonth()+n); const last=new Date(Date.UTC(r.getUTCFullYear(),r.getUTCMonth()+1,0)).getUTCDate(); r.setUTCDate(Math.min(day,last)); return r; }
+function plusBusinessDays(d,n){ const r=new Date(d); while(n>0){ r.setUTCDate(r.getUTCDate()+1); const w=r.getUTCDay(); if(w!==0&&w!==6) n--; } return r; }
+
+function xirr(flows){
+  if (!flows.length) return NaN;
+  const t0 = flows[0].d;
+  const f = r => flows.reduce((s,c)=> s + c.a/Math.pow(1+r,(c.d-t0)/DAY/365), 0);
+  let lo=-0.99, hi=1, flo=f(lo), fhi=f(hi);
+  if (!isFinite(flo)||!isFinite(fhi)||flo*fhi>0) return NaN;
+  for (let i=0;i<200;i++){ const mid=(lo+hi)/2, fm=f(mid); if (Math.abs(fm)<1e-9) return mid; if (flo*fm<0){hi=mid;fhi=fm;} else {lo=mid;flo=fm;} }
+  return (lo+hi)/2;
+}
+
+/* ---------- Zustand ---------- */
+function rlbBond(){ return {id:uid(),type:"bond",name:"RLB-Anleihe 3,5 % 2029",isin:"AT0000A3Y642",coupon:3.5,maturity:"2029-10-30",price:100.7,redemption:100,buyCost:1,depotFee:0.36,kest:27.5}; }
+function defaultValuta(){ const t=new Date(); return isoD(plusBusinessDays(new Date(Date.UTC(t.getFullYear(),t.getMonth(),t.getDate())),2)); }
+function example(){
+  return {
+    title:"Renditevergleich Bundesanleihen und Festgeld",
+    v2:true, amount:100000, valuta:defaultValuta(), taxOn:true, feeVat:0, feeBasis:"kurswert", reinvest:2.0, horizon:"", metric:"net",
+    items:[
+      {id:uid(),type:"bond",name:"Republik Österreich 0 % 2021–2031",isin:"AT0000A2NW83",coupon:0,maturity:"2031-02-20",price:87.5,redemption:100,buyCost:0.8,depotFee:0.36,kest:27.5},
+      {id:uid(),type:"bond",name:"Republik Österreich 2,5 % 2024–2029",isin:"AT0000A3EPP2",coupon:2.5,maturity:"2029-10-20",price:98.41,redemption:100,buyCost:0.8,depotFee:0.36,kest:27.5},
+      rlbBond(),
+      {id:uid(),type:"deposit",name:"Festgeld 12 Monate",rate:2.24,months:12,payout:"end",cost:0,kest:25},
+      {id:uid(),type:"deposit",name:"Festgeld 24 Monate",rate:2.314,months:24,payout:"annual",cost:0,kest:25}
+    ]
+  };
+}
+function loadLS(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; } }
+function saveLS(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+function valid(s){ return s && Array.isArray(s.items) && typeof s.amount !== "undefined"; }
+let S = loadLS(LS_CUR); if (!valid(S)) S = example();
+if (!S.valuta) S.valuta = defaultValuta();
+if (!S.v2){
+  S.items.forEach(it=>{ if(it.type==="bond") it.depotFee=0.36; });
+  if (!S.items.some(it=>it.isin==="AT0000A3Y642")){ const i=S.items.findIndex(it=>it.type==="deposit"); S.items.splice(i<0?S.items.length:i,0,rlbBond()); }
+  S.v2=true;
+}
+S.items.forEach(it=>{ if(it.isin==="AT0000A3Y642" && (it.coupon===""||!it.maturity)){ it.coupon=3.5; it.maturity="2029-10-30"; if(it.name==="RLB-Anleihe") it.name="RLB-Anleihe 3,5 % 2029"; } });
+
+/* ---------- Berechnung ---------- */
+function bondCalc(it, opt){
+  const t0=parseD(S.valuta), M=parseD(it.maturity);
+  const price=num(it.price), c=num(it.coupon)||0, red=isFinite(num(it.redemption))?num(it.redemption):100;
+  const costR = opt.costs ? (num(it.buyCost)||0)/100 : 0;
+  const fee = opt.costs ? (num(it.depotFee)||0)/100*(1+(num(S.feeVat)||0)/100) : 0;
+  const kest = opt.tax ? (num(it.kest)||0)/100 : 0;
+  const A = num(S.amount);
+  if (!t0||!M) return {error:"Valuta und Fälligkeit angeben."};
+  if (!(M>t0)) return {error:"Fälligkeit muss nach der Valuta liegen."};
+  if (!(price>0)||!(A>0)) return {error:"Kaufkurs und Anlagebetrag angeben."};
+  const cps=[]; let prev=null;
+  for (let k=0;k<200;k++){ const d=addYears(M,-k); if (d<=t0){prev=d;break;} cps.unshift(d); }
+  const next=cps[0];
+  const ai = c>0 ? c*(t0-prev)/(next-prev) : 0;
+  const N = A/((price+ai)/100 + price/100*costR);
+  const ev=[]; // {d,a,l}
+  ev.push({d:t0,a:-A,l:"Kauf inkl. Stückzinsen"+(costR?" und Spesen":"")});
+  let taxSum=0, feeSum=0, income=0;
+  cps.forEach((d,i)=>{
+    if (c>0){
+      const cp=N*c/100; ev.push({d,a:cp,l:"Kupon"}); income+=cp;
+      if (kest){ const taxable=cp-(i===0?N*ai/100:0); const t=taxable*kest; ev.push({d,a:-t,l:"KESt Kupon"+(i===0&&ai?" (abzgl. Stückzinsen)":"")}); taxSum+=t; }
+    }
+  });
+  ev.push({d:M,a:N*red/100,l:"Tilgung"});
+  if (kest){ const g=N*(red-price)/100*kest; if (g!==0){ ev.push({d:M,a:-g,l:g>0?"KESt Kursgewinn":"KESt-Gutschrift Kursverlust"}); taxSum+=g; } }
+  if (fee>0){
+    let a=t0;
+    while(a<M){
+      let b=new Date(Date.UTC(a.getUTCFullYear(),11,31)); if (b<=a) b=new Date(Date.UTC(a.getUTCFullYear()+1,11,31));
+      if (b>M) b=M;
+      const mid=new Date((+a + +b)/2);
+      const pMid = price + (red-price)*(mid-t0)/(M-t0);
+      const base = S.feeBasis==="nominale" ? N : N*pMid/100;
+      const f = base*fee*((b-a)/DAY/365);
+      ev.push({d:b,a:-f,l:"Depotgebühr"+(num(S.feeVat)?" inkl. USt":"")}); feeSum+=f;
+      a=b;
+    }
+  }
+  ev.sort((x,y)=>x.d-y.d);
+  const buyCost = N*price/100*costR;
+  return {ev,N,ai,aiEur:N*ai/100,buyCost,feeSum,taxSum,start:t0,end:M,
+          grossIncome: income + N*(red-price)/100 - N*ai/100};
+}
+function depositCalc(it, opt){
+  const t0=parseD(S.valuta), A=num(S.amount), r=(num(it.rate)||0)/100, months=Math.round(num(it.months)||0);
+  const costR = opt.costs ? (num(it.cost)||0)/100 : 0;
+  const kest = opt.tax ? (num(it.kest)||0)/100 : 0;
+  if (!t0) return {error:"Valuta angeben."};
+  if (!(months>0)||!(A>0)) return {error:"Laufzeit und Anlagebetrag angeben."};
+  const P = A/(1+costR); const M=addMonths(t0,months);
+  const ev=[{d:t0,a:-A,l:"Einlage"+(costR?" inkl. Spesen":"")}];
+  let taxSum=0, income=0;
+  const pay=(d,z,l)=>{ ev.push({d,a:z,l}); income+=z; if(kest){const t=z*kest; ev.push({d,a:-t,l:"KESt Zinsen"}); taxSum+=t;} };
+  if (it.payout==="annual"){
+    const full=Math.floor(months/12), rest=months-full*12;
+    for(let y=1;y<=full;y++) pay(addMonths(t0,12*y),P*r,"Zinsen");
+    if (rest>0) pay(M,P*r*rest/12,"Zinsen (anteilig)");
+  } else pay(M,P*r*months/12,"Zinsen");
+  ev.push({d:M,a:P,l:"Rückzahlung"});
+  ev.sort((x,y)=>x.d-y.d);
+  return {ev,P,buyCost:A-P,feeSum:0,taxSum,start:t0,end:M,grossIncome:income};
+}
+function merged(ev){ const m=new Map(); ev.forEach(e=>{const k=+e.d; m.set(k,(m.get(k)||0)+e.a);}); return [...m.entries()].sort((a,b)=>a[0]-b[0]).map(([d,a])=>({d:new Date(d),a})); }
+function calcItem(it){
+  const fn = it.type==="bond" ? bondCalc : depositCalc;
+  const g=fn(it,{costs:false,tax:false}); if (g.error) return {error:g.error};
+  const c=fn(it,{costs:true,tax:false});
+  const n=fn(it,{costs:true,tax:!!S.taxOn});
+  const sum = ev => ev.reduce((s,e)=>s+e.a,0);
+  return {g,c,n,
+    gross:xirr(merged(g.ev)), cost:xirr(merged(c.ev)), net:xirr(merged(n.ev)),
+    profitGross:sum(c.ev)+c.buyCost+c.feeSum, profitCost:sum(c.ev), profitNet:sum(n.ev), costsEur:c.buyCost+c.feeSum, taxEur:n.taxSum,
+    years:(n.end-n.start)/DAY/365};
+}
+function horizonValue(res, H){
+  // Hochrechnung: Kupons/Zinsen ohne Wiederveranlagung; nur der Rückfluss bei Fälligkeit
+  // (Anlagebetrag + Ertrag netto) wird bis zum Horizont zur eigenen Netto-Rendite angelegt (Annahme)
+  const r = res.net; if (!isFinite(r)) return null;
+  const A=num(S.amount), back=A+res.profitNet, t=Math.max(0,(H-res.n.end)/DAY/365);
+  const fv = back*Math.pow(1+r,t);
+  return {fv, profit: fv-A, assumed: fv-back, extended: t>0, years:t};
+}
+
+/* ---------- Darstellung: Instrumente ---------- */
+const $ = id => document.getElementById(id);
+function fieldHTML(it,key,label,unit,opts={}){
+  const v = opts.type==="date" ? (it[key]||"") : (opts.text ? (it[key]??"") : fIn(it[key]));
+  const inp = opts.type==="date"
+    ? `<input type="date" data-id="${it.id}" data-f="${key}" value="${esc(v)}" id="f_${it.id}_${key}">`
+    : `<input ${opts.text?"":'inputmode="decimal"'} data-id="${it.id}" data-f="${key}" value="${esc(v)}" id="f_${it.id}_${key}">`;
+  return `<div class="field${opts.wide?" wide":""}"><label for="f_${it.id}_${key}">${label}</label>${unit?`<div class="unit">${inp}<span>${unit}</span></div>`:inp}</div>`;
+}
+function renderItems(){
+  $("items").innerHTML = S.items.map(it=>{
+    const head = `<div class="item-head"><span class="kind">${it.type==="bond"?"Anleihe":"Festgeld"}</span>
+      <input class="name" data-id="${it.id}" data-f="name" value="${esc(it.name)}" aria-label="Bezeichnung">
+      <button class="iconbtn" data-act="dup" data-id="${it.id}" title="Duplizieren">Kopie</button>
+      <button class="iconbtn" data-act="del" data-id="${it.id}" title="Entfernen" aria-label="Entfernen">✕</button></div>`;
+    let body;
+    if (it.type==="bond"){
+      body = fieldHTML(it,"isin","ISIN","",{text:true,wide:true}) + fieldHTML(it,"coupon","Kupon p.a.","%")
+           + fieldHTML(it,"maturity","Fälligkeit","",{type:"date",wide:true}) + fieldHTML(it,"price","Kaufkurs","%")
+           + fieldHTML(it,"buyCost","Kaufkosten","%") + fieldHTML(it,"depotFee","Depotgebühr p.a.","%") + fieldHTML(it,"redemption","Tilgungskurs","%")
+           + fieldHTML(it,"kest","KESt","%");
+    } else {
+      body = fieldHTML(it,"rate","Zinssatz p.a.","%") + fieldHTML(it,"months","Laufzeit","Mon.")
+           + `<div class="field"><label for="f_${it.id}_payout">Zinszahlung</label><select id="f_${it.id}_payout" data-id="${it.id}" data-f="payout">
+               <option value="end"${it.payout==="end"?" selected":""}>am Ende</option><option value="annual"${it.payout==="annual"?" selected":""}>jährlich</option></select></div>`
+           + fieldHTML(it,"cost","Spesen einmalig","%") + fieldHTML(it,"kest","KESt","%");
+    }
+    return `<article class="item ${it.type}">${head}<div class="item-fields">${body}</div><div class="err" id="err_${it.id}" hidden></div></article>`;
+  }).join("") || `<div class="panel note">Noch keine Instrumente. Mit den Schaltflächen unten eine Anleihe oder ein Festgeld anlegen.</div>`;
+}
+function renderGlobals(){
+  $("title").value = S.title||"";
+  $("g_amount").value = fIn(S.amount); $("g_valuta").value = S.valuta||""; $("g_feeVat").value = fIn(S.feeVat);
+  $("g_feeBasis").value = S.feeBasis||"kurswert"; $("g_horizon").value = S.horizon||"";
+  $("g_taxOn").checked = !!S.taxOn;
+  document.querySelectorAll(".metricswitch button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.metric===(S.metric||"net"))));
+}
+
+/* ---------- Darstellung: Ergebnisse ---------- */
+function sub(it){
+  if (it.type==="bond") return `${esc(it.isin||"Anleihe")}, fällig ${fD(parseD(it.maturity))}`;
+  return `${fIn(num(it.months))} Monate, ${fIn(num(it.rate))} % p.a.`;
+}
+function renderResults(){
+  const rows = S.items.map(it=>({it,r:calcItem(it)}));
+  rows.forEach(({it,r})=>{ const e=$("err_"+it.id); if(e){ e.hidden=!r.error; e.textContent=r.error||""; } });
+  const ok = rows.filter(x=>!x.r.error);
+  const metric = S.metric||"net";
+
+  // Renditeleiter
+  const max = Math.max(0.0001, ...ok.map(x=>Math.max(x.r.gross,x.r.cost,x.r.net,0)));
+  const sorted = [...ok].sort((a,b)=> (b.r[metric]||-9) - (a.r[metric]||-9));
+  const bestVal = sorted.length ? sorted[0].r[metric] : NaN;
+  $("ladder").innerHTML = sorted.map(({it,r})=>{
+    const net=Math.max(0,r.net), cst=Math.max(0,r.cost), grs=Math.max(0,r.gross);
+    const wNet=net/max*100, wTax=Math.max(0,cst-net)/max*100, wCost=Math.max(0,grs-cst)/max*100;
+    const val=r[metric];
+    const lbl = metric==="net" ? (S.taxOn?"netto":"nach Kosten") : metric==="cost" ? "nach Kosten" : "brutto";
+    const best = Math.abs(val-bestVal)<1e-9;
+    const pv = metric==="net" ? r.profitNet : metric==="cost" ? r.profitCost : r.profitGross;
+    return `<div class="rung${best?" best":""}">
+      <div class="who"><b title="${esc(it.name)}">${esc(it.name)}</b><small>${sub(it)}</small></div>
+      <div class="bar" role="img" aria-label="${esc(it.name)}: netto ${pct(r.net)}, nach Kosten ${pct(r.cost)}, brutto ${pct(r.gross)}">
+        <div class="seg net" style="width:${wNet}%"></div><div class="seg tax" style="width:${wTax}%"></div><div class="seg cost" style="width:${wCost}%"></div>
+      </div>
+      <div class="num"><b>${pct(val)}</b><small>${lbl}</small><span class="eur" style="display:block">+ ${eur0(pv)}</span><small>Ertrag bis Tilgung ${fD(r.n.end)}</small></div></div>`;
+  }).join("") || `<p class="note">Sobald ein Instrument vollständig erfasst ist, erscheint hier die Rangfolge.</p>`;
+
+  // Horizont
+  let H = parseD(S.horizon);
+  const maxEnd = ok.length ? new Date(Math.max(...ok.map(x=>+x.r.n.end))) : null;
+  const hint=$("horizonHint"); hint.hidden=true;
+  if (!H && maxEnd) H = maxEnd;
+  if (H && maxEnd && H < maxEnd){ hint.hidden=false; hint.textContent=`Der Vergleichshorizont liegt vor der längsten Fälligkeit (${fD(maxEnd)}). Endwerte werden nur für Instrumente gezeigt, die bis dahin fällig sind.`; }
+
+  // Kennzahlen
+  const best = (key, hi=true) => { const v=ok.map(x=>key(x.r)).filter(isFinite); return v.length ? (hi?Math.max(...v):Math.min(...v)) : NaN; };
+  const hv = ok.map(x=> (H && x.r.n.end<=H) ? horizonValue(x.r,H) : null);
+  const line = (label, fn, cls="", bestKey=null) => {
+    const bv = bestKey ? best(bestKey) : NaN;
+    return `<tr class="${cls}"><td>${label}</td>${ok.map((x,i)=>{ const out=fn(x,i); const isB = bestKey && ok.length>1 && Math.abs(bestKey(x.r)-bv)<1e-9; return `<td class="${isB?"bestcell":""}">${out}</td>`; }).join("")}</tr>`;
+  };
+  const A=num(S.amount);
+  $("kpi").innerHTML = ok.length ? `<thead><tr><th>Anlagebetrag ${eur0(A)}</th>${ok.map(x=>`<th>${esc(x.it.name)}</th>`).join("")}</tr></thead><tbody>`
+    + line("Fälligkeit", x=>fD(x.r.n.end))
+    + line("Laufzeit", x=>nf2.format(x.r.years)+" J.")
+    + line("Kurs bzw. Zinssatz", x=> x.it.type==="bond" ? nf2.format(num(x.it.price))+" %" : fIn(num(x.it.rate))+" % p.a.")
+    + line("Nominale", x=> x.it.type==="bond" ? eur(x.r.n.N) : eur(x.r.n.P))
+    + line("Stückzinsen bezahlt", x=> x.it.type==="bond" ? eur(x.r.n.aiEur) : "–", "sep")
+    + line("Rendite brutto p.a.", x=>pct(x.r.gross,3), "", r=>r.gross)
+    + line("Rendite nach Kosten p.a.", x=>pct(x.r.cost,3), "", r=>r.cost)
+    + line(S.taxOn?"Rendite netto p.a. (nach KESt)":"Rendite netto p.a.", x=>pct(x.r.net,3), "strong sep", r=>r.net)
+    + line("Ertrag brutto bis Tilgung", x=>eur(x.r.profitGross))
+    + line("Kaufkosten", x=>eur(x.r.c.buyCost))
+    + line("Depotgebühren gesamt", x=>eur(x.r.c.feeSum))
+    + line("KESt gesamt", x=>eur(x.r.taxEur))
+    + line("Ertrag netto bis Tilgung", x=>eur(x.r.profitNet), "strong", r=>r.profitNet)
+    + line("Rückfluss gesamt bei Tilgung<br><small>Anlagebetrag + Ertrag netto</small>", x=>eur(A + x.r.profitNet), "sep")
+    + `</tbody>` : `<tbody><tr><td>Keine vollständigen Instrumente erfasst.</td></tr></tbody>`;
+
+  // Hochrechnung auf gemeinsamen Horizont (kompakt)
+  const hz = ok.map((x,i)=>({x,h:hv[i]})).filter(o=>o.h).sort((a,b)=>b.h.profit-a.h.profit);
+  $("horizon").innerHTML = (H && hz.length>1) ? `<div class="hz-head"><b>Hochrechnung auf ${fD(H)}</b><span>gleicher Zeitraum für alle Instrumente</span></div>
+    <div class="scroll"><table class="hz-t"><thead><tr><th>Instrument</th><th>fällig</th><th>Ertrag netto bis Tilgung</th><th>+ Anschluss bis Horizont*</th><th>= Ertrag bis Horizont*</th></tr></thead><tbody>
+    ${hz.map((o,k)=>`<tr><td>${esc(o.x.it.name)}</td><td>${fD(o.x.r.n.end)}</td><td>${eur(o.x.r.profitNet)}</td><td>${o.h.extended?eur(o.h.assumed):"–"}</td><td class="${k===0?"bestcell":""}"><b>${eur(o.h.profit)}</b></td></tr>`).join("")}
+    </tbody></table></div>` : "";
+
+  // Zahlungsströme
+  $("cashflows").innerHTML = ok.map(({it,r})=>{
+    let cum=0;
+    return `<details class="cf"><summary>${esc(it.name)}</summary><div class="scroll"><table>
+      <thead><tr><th>Datum</th><th style="text-align:left">Vorgang</th><th>Betrag</th><th>Kumuliert</th></tr></thead><tbody>
+      ${r.n.ev.map(e=>{cum+=e.a; return `<tr><td>${fD(e.d)}</td><td style="text-align:left">${esc(e.l)}</td><td class="${e.a<0?"neg":""}">${eur(e.a)}</td><td>${eur(cum)}</td></tr>`;}).join("")}
+      </tbody></table></div></details>`;
+  }).join("") || `<p class="note">Keine Daten.</p>`;
+  LAST = {ok, sorted, H, metric, bestVal, hv};
+}
+let LAST = null;
+
+/* ---------- Speichern ---------- */
+function persist(){ saveLS(LS_CUR,S); }
+function refreshSaved(){
+  const saved = loadLS(LS_SAVED)||{};
+  const names = Object.keys(saved).sort((a,b)=>a.localeCompare(b,"de"));
+  $("savedSel").innerHTML = `<option value="">Gespeicherte Vergleiche (${names.length})</option>` + names.map(n=>`<option>${esc(n)}</option>`).join("");
+}
+function update(){ renderResults(); persist(); }
+function fullRender(){ renderGlobals(); renderItems(); renderResults(); persist(); refreshSaved(); }
+
+/* ---------- Ereignisse ---------- */
+$("items").addEventListener("input", e=>{
+  const t=e.target, id=t.dataset.id, f=t.dataset.f; if(!id||!f) return;
+  const it=S.items.find(x=>x.id===id); if(!it) return;
+  if (["name","isin","maturity","payout"].includes(f)) it[f]=t.value; else { const n=num(t.value); it[f]= t.value.trim()===""? "" : n; }
+  update();
+});
+$("items").addEventListener("click", e=>{
+  const b=e.target.closest("[data-act]"); if(!b) return;
+  const i=S.items.findIndex(x=>x.id===b.dataset.id); if(i<0) return;
+  if (b.dataset.act==="del") S.items.splice(i,1);
+  if (b.dataset.act==="dup") S.items.splice(i+1,0,{...S.items[i],id:uid(),name:S.items[i].name+" (Kopie)"});
+  renderItems(); update();
+});
+document.querySelector(".globals").addEventListener("input", e=>{
+  const t=e.target, g=t.dataset.g; if(!g) return;
+  if (g==="taxOn") S.taxOn=t.checked;
+  else if (["valuta","horizon","feeBasis"].includes(g)) S[g]=t.value;
+  else S[g]=num(t.value);
+  update();
+});
+$("title").addEventListener("input", e=>{ S.title=e.target.value; persist(); });
+document.querySelectorAll(".metricswitch button").forEach(b=>b.addEventListener("click",()=>{ S.metric=b.dataset.metric; renderGlobals(); update(); }));
+$("addBond").addEventListener("click",()=>{ S.items.push({id:uid(),type:"bond",name:"Neue Anleihe",isin:"",coupon:0,maturity:"",price:100,redemption:100,buyCost:0.8,depotFee:0.36,kest:27.5}); renderItems(); update(); });
+$("addDeposit").addEventListener("click",()=>{ S.items.push({id:uid(),type:"deposit",name:"Neues Festgeld",rate:2,months:12,payout:"end",cost:0,kest:25}); renderItems(); update(); });
+$("btnReset").addEventListener("click",()=>{ if(confirm("Aktuellen Vergleich durch das Beispiel ersetzen? Nicht gespeicherte Änderungen gehen verloren.")){ S=example(); fullRender(); } });
+$("btnSave").addEventListener("click",()=>{
+  const name=prompt("Name für diesen Vergleich:", S.title||""); if(!name) return;
+  const saved=loadLS(LS_SAVED)||{}; saved[name]=JSON.parse(JSON.stringify(S)); saveLS(LS_SAVED,saved); refreshSaved(); $("savedSel").value=name;
+});
+$("btnLoad").addEventListener("click",()=>{ const n=$("savedSel").value; if(!n) return; const saved=loadLS(LS_SAVED)||{}; if(valid(saved[n])){ S=JSON.parse(JSON.stringify(saved[n])); fullRender(); $("savedSel").value=n; } });
+$("btnDel").addEventListener("click",()=>{ const n=$("savedSel").value; if(!n) return; if(!confirm(`„${n}“ löschen?`)) return; const saved=loadLS(LS_SAVED)||{}; delete saved[n]; saveLS(LS_SAVED,saved); refreshSaved(); });
+
+/* ---------- Druckbericht / PDF ---------- */
+function buildReport(){
+  const R = $("report");
+  if (!LAST || !LAST.ok.length){ R.innerHTML = ""; return; }
+  const {ok, sorted, H, metric, bestVal, hv} = LAST;
+  const A = num(S.amount);
+  const now = new Date(); const today = fD(new Date(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())));
+  const metricLbl = {net: S.taxOn?"netto nach Kosten und KESt":"nach Kosten", cost:"nach Kosten, vor KESt", gross:"brutto, vor Kosten und KESt"}[metric];
+  const max = Math.max(0.0001, ...ok.map(x=>Math.max(x.r.gross,x.r.cost,x.r.net,0)));
+  const pv = r => metric==="net" ? r.profitNet : metric==="cost" ? r.profitCost : r.profitGross;
+  const short = it => it.type==="bond" ? (it.isin||"Anleihe") : `${fIn(num(it.months))} Monate`;
+
+  // Kopf
+  let h = `<section><header class="rp-head"><div><div class="rp-kicker">Renditevergleich &nbsp;|&nbsp; Stand ${today}</div><h1>${esc(S.title||"Renditevergleich")}</h1></div>
+    <dl class="rp-facts"><div><dt>Anlagebetrag</dt><dd>${eur0(A)}</dd></div><div><dt>Valuta</dt><dd>${fD(parseD(S.valuta))}</dd></div>
+    <div><dt>Besteuerung</dt><dd>${S.taxOn?"inkl. KESt":"ohne KESt"}</dd></div><div><dt>Instrumente</dt><dd>${ok.length}</dd></div></dl></header>`;
+
+  // Rangfolge + Kernaussagen
+  h += `<div class="rp-top"><div><h2 class="rp-h2">Rendite p.a. bis Fälligkeit <small>${metricLbl}</small></h2>`;
+  sorted.forEach(({it,r})=>{
+    const val=r[metric], best=Math.abs(val-bestVal)<1e-9;
+    const n=Math.max(0,r.net), c=Math.max(0,r.cost), g=Math.max(0,r.gross);
+    h += `<div class="rp-row${best?" best":""}"><div class="rp-who"><b>${esc(it.name)}</b><span>${sub(it)}</span></div>
+      <div class="rp-bar"><i class="n" style="width:${n/max*100}%"></i><i class="t" style="width:${Math.max(0,c-n)/max*100}%"></i><i class="c" style="width:${Math.max(0,g-c)/max*100}%"></i></div>
+      <div class="rp-pct">${pct(val)}</div><div class="rp-eur">+ ${eur0(pv(r))}<span>bis Tilgung ${fD(r.n.end)}</span></div></div>`;
+  });
+  h += `<div class="rp-legend"><span><i style="background:#2A2D30"></i>Netto-Rendite</span><span><i style="background:#FBF315;box-shadow:inset 0 0 0 .25mm #C9C200"></i>Bester Wert</span><span><i style="background:#9AA0A6"></i>KESt</span><span><i style="background:#CDD1D5"></i>Kauf- und Depotkosten</span></div></div>`;
+  const topNet = [...ok].sort((a,b)=>b.r.net-a.r.net)[0];
+  const topEur = [...ok].sort((a,b)=>b.r.profitNet-a.r.profitNet)[0];
+  const hzr = ok.map((x,i)=>({x,h:hv[i]})).filter(o=>o.h).sort((a,b)=>b.h.profit-a.h.profit);
+  const hzHtml = (H && hzr.length>1 && hzr.some(o=>o.h.extended))
+    ? `<div class="rp-call rp-hzc"><dt>Hochrechnung auf ${fD(H)}*</dt><table>${hzr.map((o,k)=>`<tr${k===0?' class="top"':""}><td><span>${esc(o.x.it.name)}</span></td><td>${eur0(o.h.profit)}</td></tr>`).join("")}</table><div class="s">* Ertrag netto; früher Fälliges zur gleichen Rendite neu angelegt. Annahme, nicht garantiert.</div></div>`
+    : `<div class="rp-call"><dt>Höchster Netto-Ertrag bis Tilgung</dt><div class="v">${eur0(topEur.r.profitNet)}</div><div class="w">${esc(topEur.it.name)}</div><div class="s">auf ${eur0(A)} über ${nf2.format(topEur.r.years)} Jahre</div></div>`;
+  h += `<dl style="margin:0"><div class="rp-call"><dt>Höchste Netto-Rendite p.a.</dt><div class="v">${pct(topNet.r.net)}</div><div class="w">${esc(topNet.it.name)}</div><div class="s">bis ${fD(topNet.r.n.end)}, nach Kosten${S.taxOn?" und KESt":""}</div></div>
+    ${hzHtml}</dl></div>`;
+
+  // Kennzahlen
+  const cells = (vals, fmt, bestOn) => {
+    const fin = vals.filter(v=>isFinite(v)); const bv = fin.length>1 && bestOn ? Math.max(...fin) : NaN;
+    return vals.map(v=>`<td${isFinite(bv)&&Math.abs(v-bv)<1e-9?' class="b"':""}>${isFinite(v)?fmt(v):"–"}</td>`).join("");
+  };
+  const txt = arr => arr.map(t=>`<td>${t}</td>`).join("");
+  const row = (label, inner, cls="") => `<tr class="${cls}"><td>${label}</td>${inner}</tr>`;
+  const hvv = (i,k) => hv[i] ? hv[i][k] : NaN;
+  let t = `<table class="rp-table"><thead><tr><th>Kennzahlen</th>${ok.map(x=>`<th>${esc(x.it.name)}</th>`).join("")}</tr></thead><tbody>`;
+  t += row("Fälligkeit (Laufzeit)", txt(ok.map(x=>fD(x.r.n.end)+` &nbsp;(${nf2.format(x.r.years)} J.)`)));
+  t += row("Kaufkurs bzw. Zinssatz", txt(ok.map(x=>x.it.type==="bond" ? nf2.format(num(x.it.price))+" % &nbsp;(Kupon "+fIn(num(x.it.coupon)||0)+" %)" : fIn(num(x.it.rate))+" % p.a.")));
+  t += row("Nominale bzw. Einlage", txt(ok.map(x=>eur(x.it.type==="bond"?x.r.n.N:x.r.n.P))));
+  t += row("Stückzinsen bezahlt", txt(ok.map(x=>x.it.type==="bond"?eur(x.r.n.aiEur):"–")), "sep");
+  t += row("Rendite brutto p.a.", cells(ok.map(x=>x.r.gross), v=>pct(v,3), true));
+  t += row("Rendite nach Kosten p.a.", cells(ok.map(x=>x.r.cost), v=>pct(v,3), true));
+  t += row(S.taxOn?"Rendite netto p.a. (nach KESt)":"Rendite netto p.a.", cells(ok.map(x=>x.r.net), v=>pct(v,3), true), "strong sep");
+  t += row("Ertrag brutto bis Tilgung", txt(ok.map(x=>eur(x.r.profitGross))));
+  const minus = v => v>0.004 ? eur(-v) : "–";
+  t += row("Kaufkosten", txt(ok.map(x=>minus(x.r.c.buyCost))));
+  t += row("Depotgebühren gesamt", txt(ok.map(x=>minus(x.r.c.feeSum))));
+  t += row("KESt gesamt", txt(ok.map(x=>minus(x.r.taxEur))));
+  t += row("Ertrag netto bis Tilgung", cells(ok.map(x=>x.r.profitNet), eur, true), "strong");
+  t += row("Rückfluss gesamt bei Tilgung<small>Anlagebetrag + Ertrag netto</small>", txt(ok.map(x=>eur(A+x.r.profitNet))), "sep");
+  t += `</tbody></table>`;
+  t += `</section>`;
+  h += t;
+
+  // Zahlungsströme
+  h += `<section class="rp-break"><header class="rp-head"><div><div class="rp-kicker">${esc(S.title||"Renditevergleich")}</div><h1>Zahlungsströme bis Fälligkeit</h1></div>
+    <dl class="rp-facts"><div><dt>Anlagebetrag</dt><dd>${eur0(A)}</dd></div><div><dt>Valuta</dt><dd>${fD(parseD(S.valuta))}</dd></div></dl></header><div class="rp-cf">`;
+  ok.forEach(({it,r})=>{
+    let cum=0;
+    h += `<div class="rp-card"><h3><span>${esc(it.name)}</span><small>${esc(short(it))} &nbsp;|&nbsp; netto ${pct(r.net)} p.a.</small></h3><table><thead><tr><th>Datum</th><th>Vorgang</th><th>Betrag</th><th>Saldo</th></tr></thead><tbody>`;
+    r.n.ev.forEach(e=>{ cum+=e.a; h += `<tr><td>${fD(e.d)}</td><td>${esc(e.l)}</td><td class="${e.a<0?"neg":""}">${eur(e.a)}</td><td>${eur(cum)}</td></tr>`; });
+    h += `<tr class="tot"><td colspan="2">Ertrag netto bis Tilgung</td><td></td><td>${eur(r.profitNet)}</td></tr></tbody></table></div>`;
+  });
+  h += `</div></section><section class="rp-break"><header class="rp-head"><div><div class="rp-kicker">${esc(S.title||"Renditevergleich")}</div><h1>Hinweise und Berechnungsgrundlagen</h1></div>
+    <dl class="rp-facts"><div><dt>Stand</dt><dd>${today}</dd></div></dl></header><div class="rp-notes">
+    <p><b>* Hochrechnung</b> Für den gemeinsamen Vergleichshorizont werden Instrumente, die früher fällig sind, mit Anlagebetrag und Ertrag zur jeweils gleichen Netto-Rendite neu angelegt. Kupons und Zinsen werden nicht wiederveranlagt. Diese Annahme ist nicht garantiert; ob zu diesen Konditionen wieder angelegt werden kann, hängt vom künftigen Zinsniveau ab. Gesichert ist nur der Ertrag bis zur jeweiligen Fälligkeit.</p>
+    <p><b>Berechnung</b> Renditen als interner Zinsfuß (XIRR, ACT/365) aller Zahlungen ab Valuta bis Fälligkeit. Anleihen: Kupon jährlich zum Fälligkeitstag, Stückzinsen ACT/ACT, Kaufkosten auf den Kurswert, Depotgebühr anteilig je Kalenderjahr auf Basis ${S.feeBasis==="nominale"?"der Nominale":"des linear zur Tilgung laufenden Kurswerts"}.</p>
+    <p><b>Steuern</b> KESt bei Anleihen 27,5 % auf Kupons und Kursgewinn (Anschaffungsnebenkosten im Privatvermögen nicht abzugsfähig), bezahlte Stückzinsen werden mit dem ersten Kupon verrechnet. Festgeld 25 % auf Zinsen. Depotgebühren sind steuerlich nicht abzugsfähig.</p>
+    <p><b>Wichtiger Hinweis</b> Indikative Modellrechnung, keine Anlageempfehlung. Kurse, Spesen und steuerliche Behandlung im Einzelfall prüfen. Anleihen unterliegen dem Emittentenrisiko und während der Laufzeit Kursschwankungen; die Rückzahlung zu 100 % gilt nur am Laufzeitende.</p>
+  </div></section>`;
+  R.innerHTML = h;
+}
+window.addEventListener("beforeprint", buildReport);
+$("btnPdf").addEventListener("click", ()=>{
+  if (!LAST || !LAST.ok.length){ $("pdfMsg").textContent="Keine vollständigen Instrumente für den Export."; return; }
+  buildReport();
+  $("pdfMsg").textContent = "Im Druckdialog „Als PDF speichern“ wählen.";
+  setTimeout(()=>{ window.print(); setTimeout(()=>{ $("pdfMsg").textContent=""; }, 4000); }, 60);
+});
+
+/* ---------- Anbindung an das Research-Terminal ---------- */
+let TERM = [];
+window.addEventListener("message", ev => {
+  if (ev.origin !== location.origin || !ev.data || ev.data.type !== "rt-bonds") return;
+  TERM = (ev.data.rows || []).filter(r => r.kurs && r.faellig && r.rlz > 0.05);
+  if (!TERM.length) return;
+  $("termBond").innerHTML = TERM.map((r,i)=>`<option value="${i}">${esc(r.name)} · Kurs ${nf2.format(r.kurs)} · Rendite ${r.rendite!=null?nf2.format(r.rendite)+" %":"–"}</option>`).join("");
+  $("termRow").hidden = false; $("termNote").hidden = false;
+  $("termNote").textContent = `Kurse der Wiener Börse aus dem Terminal, Stand ${ev.data.stand || "–"} (15 Min. verzögert). Kaufkosten und Depotgebühr bitte prüfen.`;
+});
+$("addTermBond").addEventListener("click", ()=>{
+  const r = TERM[+$("termBond").value]; if (!r) return;
+  const short = r.name.replace(/Bundesanleihe/,"").replace(/\s+/g," ").trim();
+  S.items.push({id:uid(),type:"bond",name:"Republik Österreich "+short,isin:r.isin,coupon:r.kupon||0,maturity:r.faellig,price:r.kurs,redemption:100,buyCost:0.8,depotFee:0.36,kest:27.5});
+  renderItems(); update();
+});
+if (window.parent !== window) window.parent.postMessage({type:"rt-ready"}, location.origin);
+
+fullRender();
+})();
+</script>
+</body>
+</html>

@@ -33,7 +33,7 @@ header{position:sticky;top:0;z-index:20;background:#000;border-bottom:1px solid 
 .sugg b{color:var(--amber);min-width:90px}
 .clock{color:var(--dim);white-space:nowrap;font-size:12px;text-align:right}
 .clock b{color:var(--amber)}
-.fkeys{display:flex;gap:2px;padding:0 10px 6px;overflow-x:auto}
+.fkeys{display:flex;flex-wrap:wrap;gap:2px;padding:0 10px 6px}
 .fkeys button{background:#141414;border:1px solid var(--line);color:var(--txt);padding:4px 10px;white-space:nowrap}
 .fkeys button b{color:var(--amber);margin-right:6px}
 .fkeys button.on{background:var(--amber);color:#000}
@@ -168,6 +168,7 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
     <button data-v="ECO"><b>F8</b>ECO Makro</button>
     <button data-v="GOVT"><b>F9</b>GOVT Anleihen AT</button>
     <button data-v="MKT"><b>F10</b>MKT Marktupdate</button>
+    <button data-v="NET"><b>·</b>NET Renditevergleich</button>
     <button data-v="TOP"><b>·</b>TOP News</button>
     <button data-v="CAL"><b>·</b>CAL Kalender</button>
     <button data-v="DES"><b>›</b>DES Aktie</button>
@@ -950,6 +951,19 @@ function etfMembership(sym){
   </tbody></table><p class="dim" style="font-size:11px;margin-top:6px">Gewicht laut tagesaktueller Positionsliste des Anbieters (Xtrackers, SPDR). Bei Index-ETFs (iShares, Vanguard) folgt die Mitgliedschaft aus dem Index; deren Positionslisten sind nicht automatisiert abrufbar. Zuordnung über den Firmennamen, vereinzelte Lücken möglich.</p>`;
 }
 
+/* --- Renditevergleich Anleihen & Festgeld (eingebettetes Werkzeug) --- */
+V.NET = async () => {
+  await lazy("bonds");
+  return `<div class="ph" style="border:1px solid var(--line)"><h2>Renditevergleich Anleihen &amp; Festgeld · Nettorendite nach Kosten und KESt</h2><a href="tools/renditevergleich.html" target="_blank" rel="noopener" class="dim" style="font-size:11px">In neuem Tab öffnen ↗</a></div>
+    <iframe id="netFrame" src="tools/renditevergleich.html" title="Renditevergleich" style="width:100%;height:calc(100vh - 175px);min-height:640px;border:1px solid var(--line);border-top:0;background:#ECEEF0;display:block"></iframe>`;
+};
+function sendBonds(){
+  const f = document.getElementById("netFrame"); if (!f || !f.contentWindow || !D.bonds) return;
+  f.contentWindow.postMessage({type:"rt-bonds", rows:D.bonds.rows, stand:dt(D.bonds.updated)}, location.origin);
+}
+window.addEventListener("message", ev => { if (ev.origin===location.origin && ev.data && ev.data.type==="rt-ready") sendBonds(); });
+V.NET.after = el => { const f=el.querySelector("#netFrame"); if (f) f.addEventListener("load", sendBonds); };
+
 V.HELP = () => panel("Befehle", `<table class="help"><tbody>
   <tr><td>AAPL · VOE.VI · Apple</td><td>Ticker oder Name eingeben + GO → Detailseite. Funktioniert für alle Titel im Universum (MSCI ACWI, S&amp;P 500, Nasdaq 100, STOXX 600, ATX).</td></tr>
   <tr><td>DAX · Gold · ^GSPC</td><td>Index oder Markt eingeben → großer Chart (GP)</td></tr>
@@ -962,6 +976,7 @@ V.HELP = () => panel("Befehle", `<table class="help"><tbody>
   <tr><td>ETF</td><td>Ausgewählte ETFs mit OeKB-Meldefonds-Status, Kosten, Performance, Risiko</td></tr>
   <tr><td>CMP</td><td>Vergleichschart: mehrere Titel, Indizes und Rohstoffe auf 100 indexiert, wahlweise in EUR</td></tr>
   <tr><td>GOVT</td><td>Alle österreichischen Bundesanleihen mit Kurs, Rendite, Duration und Zinskurve</td></tr>
+  <tr><td>NET</td><td>Renditevergleich Anleihen &amp; Festgeld: Nettorendite nach Kosten und KESt, Bundesanleihen live übernehmbar, PDF-Export</td></tr>
   <tr><td>MKT</td><td>Dein wöchentliches Marktupdate mit Archiv; PMI-Werte fließen automatisch in ECO</td></tr>
   <tr><td>CAL</td><td>Kalender: Notenbanken, Quartalszahlen, Dividendentermine</td></tr>
   <tr><td>F1 … F10</td><td>Tastenkürzel für die Funktionsleiste · <b>/</b> oder <b>Strg+K</b> = Befehlszeile</td></tr>
@@ -995,7 +1010,7 @@ function fromHash(){
 window.addEventListener("popstate",()=>{fromHash();render();});
 
 /* ============================================================ Befehlszeile */
-const ALIAS={HOME:"HOME",WEI:"WEI",W:"W",WL:"W",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",CMP:"CMP",COMP:"CMP",BRA:"BRA",BRANCHEN:"BRA",IND:"BRA",ETF:"ETF",ETFS:"ETF",FONDS:"ETF",VERGLEICH:"CMP",GOVT:"GOVT",BOND:"GOVT",ANLEIHEN:"GOVT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP"};
+const ALIAS={HOME:"HOME",WEI:"WEI",W:"W",WL:"W",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",CMP:"CMP",COMP:"CMP",BRA:"BRA",BRANCHEN:"BRA",IND:"BRA",ETF:"ETF",ETFS:"ETF",FONDS:"ETF",VERGLEICH:"CMP",GOVT:"GOVT",BOND:"GOVT",NET:"NET",NETTO:"NET",RENDITE:"NET",FESTGELD:"NET",ANLEIHEN:"GOVT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP"};
 function runCmd(raw){
   const p=raw.trim().toUpperCase().split(/\s+/).filter(Boolean); if(!p.length) return;
   if(p.length===1 && ALIAS[p[0]]) return go(ALIAS[p[0]]);
@@ -1011,7 +1026,7 @@ function runCmd(raw){
 const inp=document.getElementById("cmd"), sg=document.getElementById("sugg"); let sIdx=-1;
 function suggest(){
   const q=inp.value.trim().toUpperCase(); if(!q){sg.style.display="none";return;}
-  const cmds=[["HOME","Übersicht"],["WEI","Weltindizes"],["W","Watchlist"],["SCR","Screener"],["ECO","Makro"],["TOP","News & Stimmung"],["BRA","Branchenvergleich"],["ETF","ETFs & Meldefonds"],["CMP","Vergleichschart"],["GOVT","Bundesanleihen Österreich"],["MKT","Marktupdate"],["CAL","Kalender"],["HELP","Hilfe"]];
+  const cmds=[["HOME","Übersicht"],["WEI","Weltindizes"],["W","Watchlist"],["SCR","Screener"],["ECO","Makro"],["TOP","News & Stimmung"],["BRA","Branchenvergleich"],["ETF","ETFs & Meldefonds"],["CMP","Vergleichschart"],["GOVT","Bundesanleihen Österreich"],["NET","Renditevergleich Anleihen & Festgeld"],["MKT","Marktupdate"],["CAL","Kalender"],["HELP","Hilfe"]];
   const mk=[...((D.market||{}).indices||[]),...((D.market||{}).markets||[])].map(r=>[r.name,r.sym+" · Chart"]);
   const wl=((D.market&&D.market.watchlist)||[]).map(r=>[r.sym,r.name]);
   const un=((D.universe&&D.universe.rows)||[]).map(r=>[r.s,r.n]);
