@@ -1,6 +1,6 @@
 {
   "_hinweis": "Hier pflegst du dein Terminal. Ticker im Yahoo-Format (z. B. VOE.VI = voestalpine Wien, SAP.DE = SAP Xetra). Nach dem Speichern holt der nächste Lauf die Daten.",
-  "sec_user_agent": "Private Research Terminal kontakt@example.com",
+  "sec_user_agent": "Private Research Terminal andreas.christler@gmail.com",
 
   "watchlist": [
     "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "JPM", "BRK-B",
