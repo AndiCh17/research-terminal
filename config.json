@@ -24,17 +24,8 @@
     "RBI.VI"
   ],
   "universe": {
-    "_hinweis": "Indexlisten werden jede Nacht neu geladen (iShares-Positionslisten und Wikipedia). Liefert eine Quelle nichts, steht das im Protokoll des Nachtlaufs.",
-    "ishares": [
-      {
-        "name": "MSCI ACWI",
-        "url": "https://www.ishares.com/us/products/239600/ishares-msci-acwi-etf/1467271812596.ajax?fileType=csv&fileName=ACWI_holdings&dataType=fund"
-      },
-      {
-        "name": "STOXX Europe 600",
-        "url": "https://www.ishares.com/de/privatanleger/de/produkte/251931/ishares-stoxx-europe-600-ucits-etf-de-fund/1478358465952.ajax?fileType=csv&fileName=EXSA_holdings&dataType=fund"
-      }
-    ],
+    "_hinweis": "Indexlisten werden jede Nacht aus Wikipedia neu geladen. iShares-Positionslisten liefern von GitHub aus nur die Produktseite und sind deshalb leer; bei Bedarf hier wieder eintragen.",
+    "ishares": [],
     "wikipedia": [
       {
         "name": "S&P 500",
@@ -172,7 +163,7 @@
   ],
   "news_per_ticker": 8,
   "sentiment_model": "ProsusAI/finbert",
-  "nightly_batch": 600,
+  "nightly_batch": 2000,
   "nightly_minutes": 100,
   "central_banks": [
     {

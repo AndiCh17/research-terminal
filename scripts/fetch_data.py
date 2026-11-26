@@ -596,7 +596,7 @@ FRED = [
     ("A191RL1Q225SBEA", "US-BIP real (annualisiert)", "% Q/Q", None, "Wachstum", 0),
     ("INDPRO", "US-Industrieproduktion", "% J/J", "yoy", "Wachstum", 0),
     ("GACDFSA066MSFRBPHI", "Philly-Fed Industrie (USA)", "Saldo", None, "Frühindikatoren", 0),
-    ("GACDINA066MSFRBNY", "Empire State Industrie (USA)", "Saldo", None, "Frühindikatoren", 0),
+    ("GACDISA066MSFRBNY", "Empire State Industrie (USA)", "Saldo", None, "Frühindikatoren", 0),
     ("CFNAI", "Chicago Fed National Activity", "Index", None, "Frühindikatoren", 0),
     ("UMCSENT", "Uni Michigan Konsumklima", "Index", None, "Stimmung", None),
     ("VIXCLS", "VIX Volatilität", "Index", None, "Stimmung", 20),
