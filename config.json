@@ -274,6 +274,14 @@
   "long_indices": {
     "^SP500TR": "S&P 500 inkl. Dividenden (USD)",
     "^GSPC": "S&P 500 (USD)",
+    "MSCIWORLD": {
+      "name": "MSCI World",
+      "try": [
+        "^990100-USD-STRD",
+        "URTH",
+        "IWDA.AS"
+      ]
+    },
     "^GDAXI": "DAX (inkl. Dividenden)",
     "^ATX": "ATX",
     "^STOXX50E": "Euro Stoxx 50",

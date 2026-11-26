@@ -1185,13 +1185,19 @@ def build_holdings(uni_rows: list[dict], fund: dict):
 # ----------------------------------------------------------------- Langfrist-Historie (Beratung)
 def build_long_history():
     idx = CFG.get("long_indices", {})
-    data = history_block(list(idx), period="max", interval="1mo", chunk=20)
+    # Eintrag: "SYMBOL": "Name"  oder  "SCHLÜSSEL": {"name": …, "try": [Kandidaten]} – genommen wird die längste Reihe
+    cand = {k: (v.get("try") if isinstance(v, dict) else [k]) for k, v in idx.items()}
+    data = history_block([s for c in cand.values() for s in c], period="max", interval="1mo", chunk=20)
     out = {}
-    for sym, name in idx.items():
-        c = data.get(sym)
-        if c is None or len(c) < 24:
+    for key, v in idx.items():
+        name = v["name"] if isinstance(v, dict) else v
+        best = max((data.get(s) for s in cand[key] if data.get(s) is not None), key=len, default=None)
+        if best is None or len(best) < 24:
+            log(f"  Langfrist: {name} ohne Daten")
             continue
-        out[sym] = {"name": name, "m": series_pairs(c, 2)}
+        src = next(s for s in cand[key] if data.get(s) is best)
+        log(f"  Langfrist: {name} aus {src} ab {best.index[0].date()}")
+        out[key] = {"name": name, "src": src, "m": series_pairs(best, 2)}
     save(DATA / "long.json", {"updated": NOW.isoformat(), "series": out})
     log(f"Langfrist-Historie: {len(out)} Reihen")
 
@@ -1520,7 +1526,7 @@ def main():
 
     safe(build_bonds, None, "Bundesanleihen")
     safe(build_etfs, None, "ETFs")
-    if MODE == "nightly" or not (DATA / "long.json").exists():
+    if MODE == "nightly" or not set(CFG.get("long_indices", {})) <= set((load(DATA / "long.json") or {}).get("series", {})):
         safe(build_long_history, None, "Langfrist-Historie")
     if MODE == "nightly" or not (DATA / "holdings.json").exists():
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
