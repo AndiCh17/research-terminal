@@ -24,7 +24,7 @@
     "RBI.VI"
   ],
   "universe": {
-    "_hinweis": "Indexlisten werden jede Nacht neu geladen. Weitere iShares-ETFs (Positionslisten-CSV) oder Wikipedia-Listen können ergänzt werden.",
+    "_hinweis": "Indexlisten werden jede Nacht neu geladen (iShares-Positionslisten und Wikipedia). Liefert eine Quelle nichts, steht das im Protokoll des Nachtlaufs.",
     "ishares": [
       {
         "name": "MSCI ACWI",
@@ -38,11 +38,72 @@
     "wikipedia": [
       {
         "name": "S&P 500",
-        "url": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+        "url": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
+        "country": "United States"
       },
       {
-        "name": "Nasdaq 100",
-        "url": "https://en.wikipedia.org/wiki/Nasdaq-100"
+        "name": "DAX",
+        "url": "https://en.wikipedia.org/wiki/DAX",
+        "suffix": ".DE",
+        "country": "Germany"
+      },
+      {
+        "name": "MDAX",
+        "url": "https://en.wikipedia.org/wiki/MDAX",
+        "suffix": ".DE",
+        "country": "Germany"
+      },
+      {
+        "name": "Euro Stoxx 50",
+        "url": "https://en.wikipedia.org/wiki/EURO_STOXX_50"
+      },
+      {
+        "name": "CAC 40",
+        "url": "https://en.wikipedia.org/wiki/CAC_40",
+        "suffix": ".PA",
+        "country": "France"
+      },
+      {
+        "name": "FTSE 100",
+        "url": "https://en.wikipedia.org/wiki/FTSE_100_Index",
+        "suffix": ".L",
+        "country": "United Kingdom"
+      },
+      {
+        "name": "SMI",
+        "url": "https://en.wikipedia.org/wiki/Swiss_Market_Index",
+        "suffix": ".SW",
+        "country": "Switzerland"
+      },
+      {
+        "name": "AEX",
+        "url": "https://en.wikipedia.org/wiki/AEX_index",
+        "suffix": ".AS",
+        "country": "Netherlands"
+      },
+      {
+        "name": "IBEX 35",
+        "url": "https://en.wikipedia.org/wiki/IBEX_35",
+        "suffix": ".MC",
+        "country": "Spain"
+      },
+      {
+        "name": "FTSE MIB",
+        "url": "https://en.wikipedia.org/wiki/FTSE_MIB",
+        "suffix": ".MI",
+        "country": "Italy"
+      },
+      {
+        "name": "OMX Stockholm 30",
+        "url": "https://en.wikipedia.org/wiki/OMX_Stockholm_30",
+        "suffix": ".ST",
+        "country": "Sweden"
+      },
+      {
+        "name": "Nikkei 225",
+        "url": "https://en.wikipedia.org/wiki/Nikkei_225",
+        "suffix": ".T",
+        "country": "Japan"
       }
     ],
     "extra": [

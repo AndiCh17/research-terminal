@@ -492,11 +492,14 @@ def yahoo_symbol(ticker: str, exchange: str) -> str | None:
 
 
 def ishares_holdings(url: str, label: str) -> list[dict]:
-    txt = HTTP.get(url, timeout=60).text
+    r = HTTP.get(url, timeout=60, headers={"Accept": "text/csv,application/octet-stream,*/*",
+                                           "Referer": url.split(".ajax")[0].rsplit("/", 1)[0] + "/"})
+    txt = r.text
     lines = txt.splitlines()
-    idx = next((i for i, ln in enumerate(lines) if re.match(r'^﻿?"?(Ticker|Emittententicker)"?[,;]', ln)), None)
+    idx = next((i for i, ln in enumerate(lines[:40]) if re.match(r'^\ufeff?"?(Ticker|Emittententicker)"?[,;]', ln)), None)
     if idx is None:
-        raise ValueError("keine Positionsliste in der Antwort")
+        snippet = re.sub(r"\s+", " ", txt[:160])
+        raise ValueError(f"keine Positionsliste (HTTP {r.status_code}, Antwort beginnt mit: {snippet!r})")
     body = "\n".join(lines[idx:])
     sep = ";" if lines[idx].count(";") > lines[idx].count(",") else ","
     df = pd.read_csv(io.StringIO(body), sep=sep, dtype=str, on_bad_lines="skip")
@@ -517,19 +520,37 @@ def ishares_holdings(url: str, label: str) -> list[dict]:
     return out
 
 
-def wiki_list(url: str, label: str, col_names=("Symbol", "Ticker"), min_rows=30) -> list[dict]:
+YAHOO_SUFFIXES = tuple(sorted({s for _, s in EXCHANGE_SUFFIX if s}))
+
+
+def wiki_list(url: str, label: str, suffix: str = "", country: str | None = None, min_rows: int = 15) -> list[dict]:
+    """Indexmitglieder aus einer Wikipedia-Tabelle (Spalte Ticker/Symbol)."""
+    clean_h = lambda c: re.sub(r"\[.*?\]", "", str(c)).strip()  # noqa: E731
     tables = pd.read_html(io.StringIO(HTTP.get(url, timeout=60).text))
     for t in tables:
+        if isinstance(t.columns, pd.MultiIndex):
+            t.columns = [" ".join(str(x) for x in c if "Unnamed" not in str(x)) for c in t.columns]
         cols = [str(c) for c in t.columns]
-        sc = next((c for c in cols if c in col_names), None)
-        if sc and len(t) >= min_rows:
-            nc = next((c for c in cols if c in ("Security", "Company", "Name", "Unternehmen")), None)
-            sec = next((c for c in cols if "Sector" in c or "Branche" in c), None)
-            out = [{"s": str(r[sc]).strip().replace(".", "-"), "n": str(r[nc]).strip() if nc else str(r[sc]),
-                    "sec": sector_de(r[sec]) if sec else None, "c": "United States", "src": [label]}
-                   for _, r in t.iterrows() if str(r[sc]).strip() and str(r[sc]) != "nan"]
-            log(f"  {label}: {len(out)} Titel")
-            return out
+        sc = next((c for c in cols if clean_h(c) in ("Symbol", "Ticker", "Ticker symbol", "EPIC")), None)
+        if not sc or len(t) < min_rows:
+            continue
+        nc = next((c for c in cols if clean_h(c) in ("Security", "Company", "Name", "Company name")), None)
+        sec = next((c for c in cols if "ector" in c or "Industry" in c), None)
+        out = []
+        for _, r in t.iterrows():
+            raw = re.sub(r"\[.*?\]", "", str(r[sc])).strip().upper()
+            if not raw or raw == "NAN":
+                continue
+            if raw.endswith(YAHOO_SUFFIXES):
+                sym = raw
+            elif suffix:
+                sym = raw.rstrip(".").replace(".", "-").replace(" ", "-") + suffix
+            else:
+                sym = raw.replace(".", "-")
+            out.append({"s": sym, "n": str(r[nc]).strip() if nc else sym, "sec": sector_de(r[sec]) if sec else None,
+                        "c": country, "src": [label]})
+        log(f"  {label}: {len(out)} Titel")
+        return out
     raise ValueError("Tabelle nicht gefunden")
 
 
@@ -550,7 +571,8 @@ def build_universe_list(old: list[dict]) -> list[dict]:
     for src in uc.get("ishares", []):
         add(safe(lambda: ishares_holdings(src["url"], src["name"]), [], f"Indexliste {src['name']}"))
     for src in uc.get("wikipedia", []):
-        add(safe(lambda: wiki_list(src["url"], src["name"]), [], f"Indexliste {src['name']}"))
+        add(safe(lambda: wiki_list(src["url"], src["name"], src.get("suffix", ""), src.get("country")), [],
+                 f"Indexliste {src['name']}"))
     add([{"s": s, "n": None, "sec": None, "c": None, "src": ["Zusatz"]} for s in uc.get("extra", [])])
     add([{"s": s, "n": None, "sec": None, "c": None, "src": ["Watchlist"]} for s in CFG.get("watchlist", [])])
     if len(found) < 100 and old:
@@ -608,9 +630,26 @@ EUROSTAT = [
 EUROSTAT_GEO = [("EA20", "Euroraum"), ("AT", "Österreich"), ("DE", "Deutschland")]
 
 
+FRED_STATE = {"fails": 0}
+
+
 def fred_series(sid: str, start="2000-01-01") -> pd.Series:
+    key = os.environ.get("FRED_API_KEY", "").strip()
+    if key:
+        url = (f"https://api.stlouisfed.org/fred/series/observations?series_id={sid}&api_key={key}"
+               f"&file_type=json&observation_start={start}")
+        obs = HTTP.get(url, timeout=40).json()["observations"]
+        s = pd.Series({pd.Timestamp(o["date"]): pd.to_numeric(o["value"], errors="coerce") for o in obs}).dropna()
+        return s.sort_index()
+    if FRED_STATE["fails"] >= 2:
+        raise RuntimeError("übersprungen (FRED antwortet nicht – Secret FRED_API_KEY anlegen)")
     url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}&cosd={start}"
-    df = pd.read_csv(io.StringIO(HTTP.get(url, timeout=30).text))
+    try:
+        txt = HTTP.get(url, timeout=20).text
+    except Exception:
+        FRED_STATE["fails"] += 1
+        raise
+    df = pd.read_csv(io.StringIO(txt))
     df.columns = ["date", "v"]
     df["v"] = pd.to_numeric(df["v"], errors="coerce")
     df = df.dropna()
@@ -737,7 +776,12 @@ def build_macro():
             r = safe(f, None, f"Eurostat {indic} {geo}")
             if r:
                 out.append(r)
-    save(DATA / "macro.json", {"updated": NOW.isoformat(), "series": out})
+    old = (load(DATA / "macro.json", {}) or {}).get("series", [])
+    have = {s["id"] for s in out}
+    kept = [s for s in old if s.get("id") not in have and not str(s.get("id", "")).startswith("manual:")]
+    if kept:
+        log(f"Makro: {len(kept)} Reihen aus dem letzten erfolgreichen Abruf übernommen")
+    save(DATA / "macro.json", {"updated": NOW.isoformat(), "series": out + kept})
 
 
 def merge_manual_macro(editions: list[dict]):

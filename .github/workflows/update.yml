@@ -66,6 +66,7 @@ jobs:
         env:
           TERMINAL_PASSWORD: ${{ secrets.TERMINAL_PASSWORD }}
           MKT_PRIVATE_KEY: ${{ secrets.MKT_PRIVATE_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: python scripts/fetch_data.py
 
       - name: Daten speichern (ohne Verlauf, damit das Repository klein bleibt)
