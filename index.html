@@ -162,12 +162,14 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
     <button data-v="WEI"><b>F2</b>WEI Märkte</button>
     <button data-v="W"><b>F3</b>W Watchlist</button>
     <button data-v="SCR"><b>F4</b>SCR Screener</button>
-    <button data-v="ECO"><b>F5</b>ECO Makro</button>
-    <button data-v="TOP"><b>F6</b>TOP News</button>
-    <button data-v="MKT"><b>F7</b>MKT Marktupdate</button>
-    <button data-v="CAL"><b>F8</b>CAL Kalender</button>
-    <button data-v="DES"><b>F9</b>DES Aktie</button>
-    <button data-v="HELP"><b>F10</b>Hilfe</button>
+    <button data-v="CMP"><b>F5</b>CMP Vergleich</button>
+    <button data-v="ECO"><b>F6</b>ECO Makro</button>
+    <button data-v="GOVT"><b>F7</b>GOVT Anleihen AT</button>
+    <button data-v="TOP"><b>F8</b>TOP News</button>
+    <button data-v="MKT"><b>F9</b>MKT Marktupdate</button>
+    <button data-v="CAL"><b>F10</b>CAL Kalender</button>
+    <button data-v="DES"><b>›</b>DES Aktie</button>
+    <button data-v="HELP"><b>?</b>Hilfe</button>
   </nav>
   <div class="ticker-tape"><div id="tape"></div></div>
 </header>
@@ -186,7 +188,7 @@ Kurse verzögert, keine Anlageberatung. Für Kundenunterlagen offizielle Bankque
 <script>
 "use strict";
 /* ============================================================ Daten */
-const D = {market:null, macro:null, news:null, meta:null, universe:null, history:null, calendar:null, marktupdate:null, tick:{}};
+const D = {market:null, macro:null, news:null, meta:null, universe:null, history:null, calendar:null, marktupdate:null, bonds:null, tick:{}};
 let DEMO = false;
 
 /* --- Entschlüsselung (AES-256-GCM, Schlüssel per PBKDF2 aus dem Passwort) --- */
@@ -712,6 +714,129 @@ V.MKT = async () => {
 };
 V.MKT.after = el => { const s = el.querySelector("#mktSel"); if (s) s.onchange = () => { mktIdx = +s.value; render(); }; };
 
+/* --- Mehrlinien-Chart --- */
+const PAL = ["#ff9f1a","#4da3ff","#3ddc84","#ff5c8a","#c792ea","#ffd84d","#5ce1e6","#ff7a45"];
+function multiChart(el, series, opt={}){
+  series = series.filter(s=>s.data && s.data.length>1);
+  if(!series.length){ el.innerHTML = `<div class="empty">Keine Daten für diesen Zeitraum</div>`; return; }
+  const W = el.clientWidth || 700, H = opt.h || 340, pl=8, pr=58, pt=10, pb=22;
+  const all = series.flatMap(s=>s.data), xs = all.map(d=>d[0]), ys = all.map(d=>d[1]);
+  const x0=Math.min(...xs), x1=Math.max(...xs); let mn=Math.min(...ys), mx=Math.max(...ys); const pad=(mx-mn)*0.06||1; mn-=pad; mx+=pad;
+  const X=t=>pl+(t-x0)/(x1-x0||1)*(W-pl-pr), Y=v=>pt+(1-(v-mn)/(mx-mn))*(H-pt-pb);
+  let g=""; for(let i=0;i<=4;i++){const v=mn+(mx-mn)*i/4; g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="#1c1c1c"/><text class="axis" x="${W-pr+6}" y="${Y(v)+3}">${fmt(v,opt.dec??0)}</text>`;}
+  if(opt.ref!=null&&mn<opt.ref&&mx>opt.ref) g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(opt.ref)}" y2="${Y(opt.ref)}" stroke="#666" stroke-dasharray="4 3"/>`;
+  const span=(x1-x0)/864e5, tf = opt.xnum ? null : span>800?{year:"numeric"}:span>120?{month:"short",year:"2-digit"}:{day:"2-digit",month:"2-digit"};
+  const nt = W<520?3:5; for(let i=0;i<=nt;i++){const t=x0+(x1-x0)*i/nt; g+=`<text class="axis" x="${X(t)}" y="${H-6}" text-anchor="${i==0?"start":i==nt?"end":"middle"}">${opt.xnum?fmt(t,0)+" J.":new Date(t).toLocaleDateString("de-AT",tf)}</text>`;}
+  const lines = series.map(s=>`<path d="${s.data.map((d,i)=>`${i?"L":"M"}${X(d[0]).toFixed(1)},${Y(d[1]).toFixed(1)}`).join("")}" fill="none" stroke="${s.color}" stroke-width="${opt.dots?1.2:1.6}"/>` +
+    (opt.dots ? s.data.map(d=>`<circle cx="${X(d[0]).toFixed(1)}" cy="${Y(d[1]).toFixed(1)}" r="${d[2]&&d[2].hl?5:3}" fill="${d[2]&&d[2].hl?"#fff":s.color}"/>`).join("") : "")).join("");
+  el.innerHTML = `<div class="chart"><svg viewBox="0 0 ${W} ${H}" height="${H}">${g}${lines}<line class="vx" y1="${pt}" y2="${H-pb}" stroke="#666" stroke-dasharray="2 2" style="display:none"/><rect class="hit" x="${pl}" y="${pt}" width="${W-pl-pr}" height="${H-pt-pb}" fill="transparent"/></svg><div class="tip"></div></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px;font-size:11px">${series.map(s=>`<span><i style="display:inline-block;width:10px;height:10px;background:${s.color};margin-right:5px;vertical-align:-1px"></i>${esc(s.name)} <b class="${opt.xnum?"":cls(s.data[s.data.length-1][1]-100)}">${opt.xnum?"":fmt(s.data[s.data.length-1][1]-100,1)+" %"}</b></span>`).join("")}</div>`;
+  const svg=el.querySelector("svg"), tip=el.querySelector(".tip"), vx=el.querySelector(".vx"), hit=el.querySelector(".hit");
+  const near=(d,t)=>{let b=d[0],bd=Infinity; for(const p of d){const q=Math.abs(p[0]-t); if(q<bd){bd=q;b=p;}} return b;};
+  const move=ev=>{const r=svg.getBoundingClientRect(), cx=(ev.touches?ev.touches[0].clientX:ev.clientX), px=(cx-r.left)/r.width*W, t=x0+(px-pl)/(W-pl-pr)*(x1-x0);
+    vx.setAttribute("x1",X(t)); vx.setAttribute("x2",X(t)); vx.style.display="";
+    if(opt.xnum){ const p=series.map(s=>[s,near(s.data,t)]).sort((a,b)=>Math.abs(a[1][0]-t)-Math.abs(b[1][0]-t))[0]; tip.innerHTML = p[1][2]?.label ? `${esc(p[1][2].label)}<br>Restlaufzeit ${fmt(p[1][0],1)} J. · <b>${fmt(p[1][1],2)} %</b>` : ""; }
+    else tip.innerHTML = `${new Date(t).toLocaleDateString("de-AT")}<br>` + series.map(s=>{const p=near(s.data,t); return `<span style="color:${s.color}">■</span> ${esc(s.name)}: <b>${fmt(p[1],1)}</b>`;}).join("<br>");
+    tip.style.display="block"; const tx=X(t)/W*r.width; tip.style.left=Math.min(Math.max(tx+10,0), r.width-tip.offsetWidth)+"px"; tip.style.top="10px"; };
+  hit.addEventListener("mousemove",move); hit.addEventListener("touchmove",move,{passive:true});
+  hit.addEventListener("mouseleave",()=>{tip.style.display="none";vx.style.display="none";});
+}
+
+/* --- Vergleich (CMP) --- */
+let cmpSel = (()=>{ try { return JSON.parse(localStorage.getItem("rt_cmp")) || null; } catch(e){ return null; } })() || ["^GSPC","^GDAXI","^ATX"];
+let cmpRange = "1J", cmpEur = true;
+const IDX_CUR = {"^GSPC":"USD","^NDX":"USD","^DJI":"USD","^VIX":"USD","^STOXX50E":"EUR","^GDAXI":"EUR","^ATX":"EUR","^SSMI":"CHF","^FTSE":"GBP","^N225":"JPY","^HSI":"HKD","GC=F":"USD","SI=F":"USD","BZ=F":"USD","CL=F":"USD","HG=F":"USD","BTC-USD":"USD"};
+function fxSeries(cur, weekly){
+  const h = D.history && D.history.series; if(!h) return null;
+  const pick = s => h[s] ? (weekly ? h[s].w : h[s].d) : null;
+  const base = {USD:"EURUSD=X", GBP:"EURGBP=X", GBp:"EURGBP=X", CHF:"EURCHF=X"}[cur];
+  if (base) return pick(base);
+  if (cur==="JPY") { const a=pick("EURUSD=X"), b=pick("USDJPY=X"); if(!a||!b) return null; const m=new Map(b.map(d=>[d[0],d[1]])); return a.filter(d=>m.has(d[0])).map(d=>[d[0], d[1]*m.get(d[0])]); }
+  return null;
+}
+async function cmpData(sym, weekly){
+  const h = D.history && D.history.series;
+  if (h && h[sym]) return {name: h[sym].name, cur: IDX_CUR[sym] || (sym.endsWith("=X")?null:"USD"), data: weekly ? h[sym].w : h[sym].d};
+  try { const t = await loadTicker(sym); return {name: `${t.symbol} ${t.name}`, cur: t.currency, data: weekly ? t.history5y : t.history1y}; } catch(e) { return null; }
+}
+V.CMP = async () => {
+  await lazy("history"); await lazy("universe");
+  return panel("Vergleich", `<div class="fbar" style="position:relative">
+      <input id="cmpAdd" placeholder="Titel, Index oder Rohstoff hinzufügen (z. B. MSFT, DAX, Gold)" style="flex:1;min-width:200px">
+      <div class="sugg" id="cmpSug" style="top:32px"></div>
+      <div class="btns" id="cr">${["1M","3M","6M","1J","3J","5J"].map(x=>`<button data-r="${x}" class="${x===cmpRange?"on":""}">${x}</button>`).join("")}</div>
+      <label><input type="checkbox" id="cmpEur"${cmpEur?" checked":""}> in EUR umgerechnet</label></div>
+    <div class="fbar" id="cmpChips">${cmpSel.map((s,i)=>`<span class="chip" style="border-color:${PAL[i%PAL.length]};color:var(--txt)">${esc(s)} <a href="#" data-rm="${esc(s)}" style="color:var(--dn);margin-left:4px">✕</a></span>`).join("")}</div>
+    <div id="cmpChart"></div><div id="cmpNote" class="dim" style="font-size:11px;margin-top:8px"></div>`,
+    `<small>alle Linien = 100 zu Beginn des Zeitraums</small>`);
+};
+V.CMP.after = async el => {
+  const save = () => { try { localStorage.setItem("rt_cmp", JSON.stringify(cmpSel)); } catch(e){} };
+  el.querySelectorAll("[data-rm]").forEach(a=>a.onclick=e=>{ e.preventDefault(); cmpSel=cmpSel.filter(x=>x!==a.dataset.rm); save(); render(); });
+  el.querySelectorAll("#cr button").forEach(b=>b.onclick=()=>{ cmpRange=b.dataset.r; render(); });
+  el.querySelector("#cmpEur").onchange = e => { cmpEur = e.target.checked; render(); };
+  const inp = el.querySelector("#cmpAdd"), sg = el.querySelector("#cmpSug");
+  inp.oninput = () => {
+    const q = inp.value.trim().toUpperCase(); if(!q){ sg.style.display="none"; return; }
+    const hs = Object.entries((D.history&&D.history.series)||{}).map(([s,v])=>[s,v.name]);
+    const wl = ((D.market&&D.market.watchlist)||[]).map(r=>[r.sym,r.name]);
+    const un = ((D.universe&&D.universe.rows)||[]).filter(r=>r.det).map(r=>[r.s,r.n]);
+    const seen=new Set(), list=[];
+    for (const [a,b] of [...hs,...wl,...un]) { if(list.length>=10) break; if(seen.has(a)) continue; if(a.toUpperCase().startsWith(q)||(q.length>1&&(b||"").toUpperCase().includes(q))){ seen.add(a); list.push([a,b]); } }
+    sg.innerHTML = list.map(([a,b])=>`<div data-v="${esc(a)}"><b>${esc(a)}</b><span>${esc(b||"")}</span></div>`).join("") || `<div class="dim">Nur Indizes, Märkte und Titel mit Detailseite</div>`;
+    sg.style.display="block";
+    sg.querySelectorAll("[data-v]").forEach(d=>d.onmousedown=ev=>{ ev.preventDefault(); if(!cmpSel.includes(d.dataset.v) && cmpSel.length<8) cmpSel.push(d.dataset.v); save(); render(); });
+  };
+  inp.onblur = () => setTimeout(()=>sg.style.display="none",150);
+  const mo = {"1M":1,"3M":3,"6M":6,"1J":12,"3J":36,"5J":60}[cmpRange], weekly = mo>12;
+  const cut = new Date(); cut.setMonth(cut.getMonth()-mo);
+  const notes = [], ser = [];
+  for (const [i,s] of cmpSel.entries()) {
+    const d = await cmpData(s, weekly); if(!d || !d.data) { notes.push(`${s}: keine Daten`); continue; }
+    let pts = d.data.filter(p=>p[1]!=null && new Date(p[0])>=cut).map(p=>[new Date(p[0]).getTime(), p[1]]);
+    if (cmpEur && d.cur && d.cur!=="EUR") {
+      const fx = fxSeries(d.cur, weekly);
+      if (fx) { const fm = fx.map(p=>[new Date(p[0]).getTime(), p[1]]); let j=0;
+        pts = pts.map(p=>{ while(j<fm.length-1 && fm[j+1][0]<=p[0]) j++; return [p[0], p[1]/fm[j][1]]; }); }
+      else notes.push(`${s}: Währung ${d.cur} nicht umgerechnet`);
+    }
+    if (pts.length<2) continue;
+    const b = pts[0][1]; ser.push({name:d.name, color:PAL[i%PAL.length], data:pts.map(p=>[p[0], p[1]/b*100])});
+  }
+  multiChart(el.querySelector("#cmpChart"), ser, {h:360, ref:100});
+  el.querySelector("#cmpNote").textContent = (cmpEur ? "Umrechnung mit den Tageskursen EUR/USD, EUR/GBP, EUR/CHF und USD/JPY. " : "In Originalwährung. ") + "Kursindizes ohne Dividenden (außer DAX, der als Performanceindex Dividenden enthält). " + notes.join(" · ");
+};
+
+/* --- Österreichische Bundesanleihen (GOVT) --- */
+let govtSort = {k:"rlz", d:1}, govtAll = false;
+V.GOVT = async () => {
+  const b = await lazy("bonds"), m = D.macro && D.macro.series || [];
+  if (!b || !b.rows?.length) return panel("Bundesanleihen Österreich", noData("Anleihedaten"));
+  const rows = [...b.rows].sort((x,y)=>{ const a=x[govtSort.k], c=y[govtSort.k]; if(a==null) return 1; if(c==null) return -1; return (typeof a==="string"?a.localeCompare(c):a-c)*govtSort.d; });
+  const h = (k,l,c="") => `<th class="${c}" data-k="${k}">${l}${govtSort.k===k?(govtSort.d>0?" ▲":" ▼"):""}</th>`;
+  const at10 = m.find(s=>s.id==="IRS/M.AT.L.L40.CI.0000.EUR.N.Z"), sp = m.find(s=>s.id==="SPREAD_AT_DE");
+  const centuries = b.rows.filter(r=>r.bis>=2100 && r.rendite!=null);
+  return `<div class="grid g32">
+    ${panel("Zinskurve Republik Österreich", `<div id="curve"></div>`, `<label class="dim" style="font-size:11px"><input type="checkbox" id="gAll"${govtAll?" checked":""}> inkl. 50–100 Jahre</label>`)}
+    <div class="grid">${panel("Eckdaten", `<div class="kv" style="grid-template-columns:1fr">
+        <div><span>Anleihen im Umlauf</span>${b.rows.length}</div><div><span>davon mit Börsenkurs</span>${b.mitKurs}</div>
+        <div><span>10J Österreich (EZB, Monat)</span>${at10?fmt(at10.last,2)+" %":"–"}</div>
+        <div><span>Aufschlag ggü. Deutschland</span>${sp?fmt(sp.last,0)+" Bp.":"–"}</div></div>`)}
+      ${centuries.length?panel("Ultralange Anleihen", centuries.map(r=>`<p style="margin:0 0 8px"><b class="amb">${esc(r.name)}</b><br>Kurs ${fmt(r.kurs,2)} · Rendite ${fmt(r.rendite,2)} % · Mod. Duration ${fmt(r.duration,1)}<br><span class="dim">Steigt die Rendite um 1 %-Punkt, fällt der Kurs um rund ${fmt(r.duration,0)} %.</span></p>`).join("")):""}</div>
+  </div>
+  <div style="margin-top:10px">${panel("Alle Bundesanleihen", `<div class="scroll"><table id="gt"><thead><tr>${h("name","Anleihe","l")}${h("isin","ISIN","l")}${h("kupon","Kupon")}${h("faellig","Fälligkeit")}${h("rlz","Restlaufzeit")}${h("kurs","Kurs")}${h("rendite","Rendite")}${h("duration","Mod. Duration")}${h("volumen","Volumen Mio. €")}</tr></thead><tbody>
+    ${rows.map(r=>`<tr><td class="l nm" style="max-width:320px">${esc(r.name)}${r.gruen?' <span class="chip" style="color:var(--up)">GRÜN</span>':""}</td><td class="l dim">${esc(r.isin)}</td><td>${fmt(r.kupon,2)} %</td><td>${r.faellig?new Date(r.faellig).toLocaleDateString("de-AT"):(r.bis||"–")}</td><td>${r.rlz!=null?fmt(r.rlz,1)+" J.":"–"}</td><td>${fmt(r.kurs,3)}</td><td class="amb">${r.rendite!=null?fmt(r.rendite,2)+" %":"–"}</td><td>${fmt(r.duration,1)}</td><td>${fmt(r.volumen,0)}</td></tr>`).join("")}
+  </tbody></table></div><p class="dim" style="font-size:11px;margin-top:8px">Liste: ${esc(b.quellen?.liste||"")}. Kurse: ${esc(b.quellen?.kurse||"")}. Rendite auf Verfall und modifizierte Duration selbst berechnet aus Clean-Kurs, Kupon (jährlich) und Fälligkeit – Abweichungen zu Bankrechnern im Bereich weniger Basispunkte möglich. Keine Anlageempfehlung.</p>`)}</div>`;
+};
+V.GOVT.after = el => {
+  const b = D.bonds; if(!b) return;
+  const pts = b.rows.filter(r=>r.rendite!=null && r.rlz!=null && (govtAll || r.rlz<=31)).sort((a,c)=>a.rlz-c.rlz)
+    .map(r=>[r.rlz, r.rendite, {label:`${r.name} (${r.isin})`, hl:r.bis>=2100}]);
+  multiChart(el.querySelector("#curve"), [{name:"Rendite auf Verfall", color:"#ff9f1a", data:pts}], {h:300, xnum:true, dots:true, dec:2});
+  el.querySelector("#gAll").onchange = e => { govtAll = e.target.checked; render(); };
+  el.querySelectorAll("#gt th[data-k]").forEach(th=>th.onclick=()=>{ const k=th.dataset.k; govtSort={k, d: govtSort.k===k?-govtSort.d:1}; render(); });
+};
+
 V.HELP = () => panel("Befehle", `<table class="help"><tbody>
   <tr><td>AAPL · VOE.VI · Apple</td><td>Ticker oder Name eingeben + GO → Detailseite. Funktioniert für alle Titel im Universum (MSCI ACWI, S&amp;P 500, Nasdaq 100, STOXX 600, ATX).</td></tr>
   <tr><td>DAX · Gold · ^GSPC</td><td>Index oder Markt eingeben → großer Chart (GP)</td></tr>
@@ -720,6 +845,8 @@ V.HELP = () => panel("Befehle", `<table class="help"><tbody>
   <tr><td>SCR</td><td>Screener: filtern nach Land, Sektor, Index, Marktkapitalisierung, KGV, Dividende, Momentum, Stimmung</td></tr>
   <tr><td>ECO</td><td>Makro USA/Euroraum/Österreich: Zinsen, Inflation, Frühindikatoren, Staatsanleihen, eigene PMI-Werte</td></tr>
   <tr><td>TOP · N</td><td>Schlagzeilen mit FinBERT-Stimmung</td></tr>
+  <tr><td>CMP</td><td>Vergleichschart: mehrere Titel, Indizes und Rohstoffe auf 100 indexiert, wahlweise in EUR</td></tr>
+  <tr><td>GOVT</td><td>Alle österreichischen Bundesanleihen mit Kurs, Rendite, Duration und Zinskurve</td></tr>
   <tr><td>MKT</td><td>Dein wöchentliches Marktupdate mit Archiv; PMI-Werte fließen automatisch in ECO</td></tr>
   <tr><td>CAL</td><td>Kalender: Notenbanken, Quartalszahlen, Dividendentermine</td></tr>
   <tr><td>F1 … F10</td><td>Tastenkürzel für die Funktionsleiste · <b>/</b> oder <b>Strg+K</b> = Befehlszeile</td></tr>
@@ -753,7 +880,7 @@ function fromHash(){
 window.addEventListener("popstate",()=>{fromHash();render();});
 
 /* ============================================================ Befehlszeile */
-const ALIAS={HOME:"HOME",WEI:"WEI",W:"W",WL:"W",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP"};
+const ALIAS={HOME:"HOME",WEI:"WEI",W:"W",WL:"W",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",CMP:"CMP",COMP:"CMP",VERGLEICH:"CMP",GOVT:"GOVT",BOND:"GOVT",ANLEIHEN:"GOVT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP"};
 function runCmd(raw){
   const p=raw.trim().toUpperCase().split(/\s+/).filter(Boolean); if(!p.length) return;
   if(p.length===1 && ALIAS[p[0]]) return go(ALIAS[p[0]]);
@@ -769,7 +896,7 @@ function runCmd(raw){
 const inp=document.getElementById("cmd"), sg=document.getElementById("sugg"); let sIdx=-1;
 function suggest(){
   const q=inp.value.trim().toUpperCase(); if(!q){sg.style.display="none";return;}
-  const cmds=[["HOME","Übersicht"],["WEI","Weltindizes"],["W","Watchlist"],["SCR","Screener"],["ECO","Makro"],["TOP","News & Stimmung"],["MKT","Marktupdate"],["CAL","Kalender"],["HELP","Hilfe"]];
+  const cmds=[["HOME","Übersicht"],["WEI","Weltindizes"],["W","Watchlist"],["SCR","Screener"],["ECO","Makro"],["TOP","News & Stimmung"],["CMP","Vergleichschart"],["GOVT","Bundesanleihen Österreich"],["MKT","Marktupdate"],["CAL","Kalender"],["HELP","Hilfe"]];
   const mk=[...((D.market||{}).indices||[]),...((D.market||{}).markets||[])].map(r=>[r.name,r.sym+" · Chart"]);
   const wl=((D.market&&D.market.watchlist)||[]).map(r=>[r.sym,r.name]);
   const un=((D.universe&&D.universe.rows)||[]).map(r=>[r.s,r.n]);
@@ -793,7 +920,7 @@ inp.addEventListener("keydown",e=>{
 document.getElementById("cmdForm").onsubmit=e=>{e.preventDefault(); const v=inp.value; inp.value=""; sg.style.display="none"; inp.blur(); runCmd(v);};
 document.querySelectorAll("#fkeys button").forEach(b=>b.onclick=()=>go(b.dataset.v));
 document.addEventListener("keydown",e=>{
-  const m=e.key.match(/^F([1-9]|10)$/); if(m){ e.preventDefault(); go(["HOME","WEI","W","SCR","ECO","TOP","MKT","CAL","DES","HELP"][+m[1]-1]); return; }
+  const m=e.key.match(/^F([1-9]|10)$/); if(m){ e.preventDefault(); go(["HOME","WEI","W","SCR","CMP","ECO","GOVT","TOP","MKT","CAL"][+m[1]-1]); return; }
   if((e.key==="/"&&document.activeElement!==inp)||(e.key.toLowerCase()==="k"&&(e.ctrlKey||e.metaKey))){ e.preventDefault(); inp.focus(); }
   if(e.key==="Escape") inp.blur();
 });
@@ -834,7 +961,7 @@ document.getElementById("logout").onclick = () => { store.clear(); location.relo
   document.getElementById("stamp").textContent = "Daten: " + (up ? dt(up) : "keine");
   tape(); fromHash(); render();
   lazy("universe");  // im Hintergrund für Suche & Screener
-  setInterval(async()=>{ D.tick={}; D.universe=D.history=D.calendar=D.marktupdate=null; await loadAll(); tape(); if(!["DES","SCR"].includes(state.view)) render(); }, 15*60*1000);
+  setInterval(async()=>{ D.tick={}; D.universe=D.history=D.calendar=D.marktupdate=D.bonds=null; await loadAll(); tape(); if(!["DES","SCR"].includes(state.view)) render(); }, 15*60*1000);
 })();
 </script>
 </body>

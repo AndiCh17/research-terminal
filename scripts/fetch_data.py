@@ -794,6 +794,120 @@ def merge_manual_macro(editions: list[dict]):
     save(DATA / "macro.json", m)
 
 
+# ----------------------------------------------------------------- Österreichische Bundesanleihen
+OEKB_STRIP = "https://www.oekb.at/en/capital-market-services/government-bond-and-atb-auctions/stripping-of-government-bonds-of-the-republic-of-austria.html"
+WB_GOV = "https://www.wienerborse.at/en/trading/market-segmentation/bond-market/government-bonds/"
+
+
+def bond_master() -> list[dict]:
+    """Alle umlaufenden Bundesanleihen (OeKB-Liste): ISIN, Kupon, Laufzeitjahre, Volumen."""
+    tables = pd.read_html(io.StringIO(HTTP.get(OEKB_STRIP, timeout=40).text))
+    t = next(t for t in tables if any("ISIN" in str(c) for c in t.columns))
+    t.columns = [str(c) for c in t.columns]
+    ci = next(c for c in t.columns if "ISIN" in c)
+    cn = next(c for c in t.columns if "Issue" in c or "Emission" in c or "Bezeichnung" in c)
+    cv = next((c for c in t.columns if "Outstanding" in c or "Aushaftend" in c), None)
+    out = []
+    for _, r in t.iterrows():
+        isin, name = str(r[ci]).strip(), str(r[cn]).strip()
+        if not isin.startswith("AT"):
+            continue
+        m = re.search(r"(\d+[.,]\d+)\s*%", name)
+        y = re.search(r"(\d{4})-(\d{4})", name)
+        vol = pd.to_numeric(str(r[cv]).replace(",", ""), errors="coerce") if cv else None
+        out.append({"isin": isin, "name": name, "kupon": float(m.group(1).replace(",", ".")) if m else None,
+                    "von": int(y.group(1)) if y else None, "bis": int(y.group(2)) if y else None,
+                    "volumen": rnd(vol, 2), "gruen": "(G)" in name})
+    return out
+
+
+def wb_prices() -> dict[str, dict]:
+    """Kurse der Bundesanleihen von der Wiener Börse (15 Min. verzögert)."""
+    page = HTTP.get(WB_GOV, timeout=40).text
+    m = re.search(r'href="([^"]*?/en/bonds/\?[^"]*?XVIE_8164[^"]*)"', page)
+    if not m:
+        raise ValueError("Link zur Kursliste nicht gefunden")
+    url = m.group(1).replace("&amp;", "&")
+    if url.startswith("/"):
+        url = "https://www.wienerborse.at" + url
+    prices = {}
+    for pg in range(1, 4):
+        html = HTTP.get(url + (f"&c7928-page={pg}" if pg > 1 else "") + "&per-page=50", timeout=40).text
+        found = 0
+        for t in pd.read_html(io.StringIO(html)):
+            cols = [str(c) for c in t.columns]
+            if not any("ISIN" in c for c in cols):
+                continue
+            ci = next(c for c in cols if "ISIN" in c)
+            cl = next((c for c in cols if c.startswith("Last") or c.startswith("Letzt")), None)
+            cm = next((c for c in cols if "Maturity" in c or "Fälligkeit" in c), None)
+            cd = next((c for c in cols if "Date" in c or "Datum" in c), None)
+            for _, r in t.iterrows():
+                isin = str(r[ci]).strip()
+                if not isin.startswith("AT"):
+                    continue
+                px = pd.to_numeric(str(r[cl]).replace(",", ""), errors="coerce") if cl else None
+                mat = pd.to_datetime(str(r[cm]), format="%m/%d/%Y", errors="coerce") if cm else None
+                prices[isin] = {"kurs": rnd(px, 3), "faellig": mat.strftime("%Y-%m-%d") if mat is not None and not pd.isna(mat) else None,
+                                "zeit": str(r[cd]) if cd else None}
+                found += 1
+        if found < 50:
+            break
+    if not prices:
+        raise ValueError("keine Kurse in der Liste")
+    return prices
+
+
+def bond_yield(price: float, coupon: float, maturity: datetime, today: datetime):
+    """Rendite auf Verfall (jährlicher Kupon, ACT/ACT), modifizierte Duration. Kurs = Clean-Preis."""
+    if not price or not maturity or maturity <= today:
+        return None, None
+    cfs, d = [], maturity
+    while d > today:
+        cfs.append(d)
+        d = d.replace(year=d.year - 1)
+    prev = d
+    cfs.reverse()
+    accrued = coupon * (today - prev).days / max(1, (cfs[0] - prev).days)
+    dirty = price + accrued
+    t = [(c - today).days / 365.25 for c in cfs]
+    amt = [coupon] * len(cfs)
+    amt[-1] += 100
+
+    def pv(y):
+        return sum(a / (1 + y) ** ti for a, ti in zip(amt, t))
+    lo, hi = -0.05, 0.5
+    for _ in range(200):
+        mid = (lo + hi) / 2
+        if pv(mid) > dirty:
+            lo = mid
+        else:
+            hi = mid
+    y = (lo + hi) / 2
+    mac = sum(ti * a / (1 + y) ** ti for a, ti in zip(amt, t)) / pv(y)
+    return round(y * 100, 3), round(mac / (1 + y), 2)
+
+
+def build_bonds():
+    master = bond_master()
+    prices = safe(wb_prices, {}, "Kurse Wiener Börse")
+    today = datetime(NOW.year, NOW.month, NOW.day)
+    rows = []
+    for b in master:
+        p = prices.get(b["isin"], {})
+        mat = None
+        if p.get("faellig"):
+            mat = datetime.fromisoformat(p["faellig"])
+        y, dur = bond_yield(p.get("kurs"), b["kupon"] or 0.0, mat, today) if mat else (None, None)
+        rows.append({**b, **p, "rendite": y, "duration": dur,
+                     "rlz": round((mat - today).days / 365.25, 2) if mat else (b["bis"] - NOW.year if b["bis"] else None)})
+    rows.sort(key=lambda r: (r["rlz"] is None, r["rlz"] or 0))
+    save(DATA / "bonds.json", {"updated": NOW.isoformat(), "rows": rows,
+                               "quellen": {"liste": "OeKB (Stripping-Übersicht)", "kurse": "Wiener Börse, 15 Min. verzögert"},
+                               "mitKurs": sum(1 for r in rows if r.get("kurs"))})
+    log(f"Bundesanleihen: {len(rows)} Titel, {sum(1 for r in rows if r.get('kurs'))} mit Kurs")
+
+
 # ----------------------------------------------------------------- Marktupdate
 def build_marktupdate() -> list[dict]:
     """Entschlüsselt manual/marktupdate/*.enc (Secret MKT_PRIVATE_KEY) und veröffentlicht sie verschlüsselt."""
@@ -1097,6 +1211,8 @@ def main():
         log("Makro laden …")
         safe(build_macro, None, "Makro")
     safe(lambda: merge_manual_macro(editions), None, "PMI-Zusammenführung")
+
+    safe(build_bonds, None, "Bundesanleihen")
 
     # --- News + Stimmung
     log("News + Stimmung …")
