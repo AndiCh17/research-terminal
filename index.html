@@ -76,6 +76,8 @@ tr.click:hover td{background:var(--hl)}
 .tile .t{color:var(--dim);font-size:11px;display:flex;justify-content:space-between;gap:6px}
 .tile .v{font-size:20px;color:var(--txt);margin:2px 0}
 .tile .s{font-size:11px;color:var(--dim)}
+.tile .s.up{color:var(--up)}.tile .s.dn{color:var(--dn)}
+.grid{align-content:start}
 
 /* News */
 .news{list-style:none;margin:0;padding:0}
@@ -92,6 +94,7 @@ tr.click:hover td{background:var(--hl)}
 .kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:0 14px}
 .kv div{display:flex;justify-content:space-between;border-bottom:1px solid var(--line2);padding:3px 0;gap:8px}
 .kv span{color:var(--dim)}
+.kv span.up{color:var(--up)}.kv span.dn{color:var(--dn)}.kv span.amb{color:var(--amber)}
 .btns{display:flex;gap:2px}
 .btns button{background:#141414;border:1px solid var(--line);color:var(--dim);padding:1px 8px;font-size:11px}
 .btns button.on{color:#000;background:var(--amber);border-color:var(--amber)}
@@ -121,6 +124,23 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
 #gate button{width:100%;background:var(--amber);color:#000;border:0;padding:10px;font-weight:800}
 #gate .err{color:var(--dn);font-size:12px;min-height:18px;margin-top:8px}
 #logout{background:none;border:1px solid var(--line);color:var(--dim);padding:6px 8px;display:none}
+.info{background:none;border:1px solid var(--line);color:var(--blue);font-size:11px;padding:1px 7px}
+.info:hover{border-color:var(--blue)}
+#modal{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.75);display:none;align-items:flex-start;justify-content:center;padding:40px 14px;overflow:auto}
+#modal .box{max-width:720px;width:100%;background:var(--panel);border:1px solid var(--amber);padding:16px 18px;color:#cfcfcf;font-size:12.5px}
+#modal h3{color:var(--amber);margin:0 0 10px;font-size:13px;letter-spacing:.5px}
+#modal h4{color:var(--txt);margin:14px 0 4px;font-size:12px}
+#modal p,#modal li{margin:4px 0;line-height:1.55}
+#modal button.x{float:right;background:none;border:1px solid var(--line);color:var(--dim);padding:2px 9px}
+.fbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.fbar input,.fbar select{background:#111;border:1px solid var(--line);color:var(--txt);font:12px var(--mono);padding:5px 6px;min-width:0}
+.fbar input[type=number]{width:78px}
+.fbar label{color:var(--dim);font-size:11px;display:flex;gap:4px;align-items:center}
+.cal-day{color:var(--amber);border-bottom:1px solid var(--line);padding:10px 0 4px;font-size:12px;letter-spacing:.4px}
+.cal-ev{display:grid;grid-template-columns:90px 1fr auto;gap:8px;padding:4px 0;border-bottom:1px solid var(--line2);align-items:center}
+.cal-ev .t{font-size:10px;text-align:center;padding:1px 4px}
+.t-cb{background:#1b2a44;color:#8fc1ff}.t-earn{background:#2a2108;color:var(--amber2)}.t-exdiv{background:#0e2e18;color:var(--up)}.t-div{background:#1c1c1c;color:var(--dim)}
+.more{display:block;margin:10px auto 0;background:#141414;border:1px solid var(--line);color:var(--amber);padding:6px 14px}
 .banner{background:#2a1d05;color:var(--amber2);border:1px solid #5a3d08;padding:6px 10px;margin-bottom:10px;font-size:12px}
 </style>
 </head>
@@ -141,10 +161,13 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
     <button data-v="HOME"><b>F1</b>Übersicht</button>
     <button data-v="WEI"><b>F2</b>WEI Märkte</button>
     <button data-v="W"><b>F3</b>W Watchlist</button>
-    <button data-v="ECO"><b>F4</b>ECO Makro</button>
-    <button data-v="TOP"><b>F5</b>TOP News</button>
-    <button data-v="DES"><b>F6</b>DES Aktie</button>
-    <button data-v="HELP"><b>F7</b>Hilfe</button>
+    <button data-v="SCR"><b>F4</b>SCR Screener</button>
+    <button data-v="ECO"><b>F5</b>ECO Makro</button>
+    <button data-v="TOP"><b>F6</b>TOP News</button>
+    <button data-v="MKT"><b>F7</b>MKT Marktupdate</button>
+    <button data-v="CAL"><b>F8</b>CAL Kalender</button>
+    <button data-v="DES"><b>F9</b>DES Aktie</button>
+    <button data-v="HELP"><b>F10</b>Hilfe</button>
   </nav>
   <div class="ticker-tape"><div id="tape"></div></div>
 </header>
@@ -155,6 +178,7 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
   <label><input type="checkbox" id="remember"> Auf diesem Gerät angemeldet bleiben</label>
   <button type="submit" id="gateBtn">ANMELDEN</button><div class="err" id="gateErr"></div>
 </form></div>
+<div id="modal"><div class="box" id="modalBox"></div></div>
 <main id="view"><div class="empty">Lade Daten …</div></main>
 <footer>Quellen: Kurse &amp; Kennzahlen Yahoo Finance (yfinance) · Bilanzen US: SEC EDGAR, sonst Yahoo · Makro: FRED, EZB · News: Yahoo Finance, Google News · Stimmung: FinBERT.
 Kurse verzögert, keine Anlageberatung. Für Kundenunterlagen offizielle Bankquellen verwenden.</footer>
@@ -162,7 +186,7 @@ Kurse verzögert, keine Anlageberatung. Für Kundenunterlagen offizielle Bankque
 <script>
 "use strict";
 /* ============================================================ Daten */
-const D = {market:null, macro:null, news:null, meta:null, tick:{}};
+const D = {market:null, macro:null, news:null, meta:null, universe:null, history:null, calendar:null, marktupdate:null, tick:{}};
 let DEMO = false;
 
 /* --- Entschlüsselung (AES-256-GCM, Schlüssel per PBKDF2 aus dem Passwort) --- */
@@ -200,6 +224,10 @@ async function loadAll(){
   D.market = m.value || null; D.macro = ma.value || null; D.news = n.value || null; D.meta = me.value || null;
   DEMO = !!(D.meta && D.meta.demo);
 }
+async function lazy(k){
+  if (D[k] == null) { try { D[k] = await getJSON(`data/${k}.json`); } catch(e) { D[k] = false; } }
+  return D[k] || null;
+}
 async function loadTicker(sym){
   if (D.tick[sym]) return D.tick[sym];
   const f = (D.meta && D.meta.tickers && D.meta.tickers[sym]) || sym.replace(/[^A-Za-z0-9._-]/g,"_");
@@ -235,7 +263,8 @@ const dt = iso => iso ? new Date(iso).toLocaleString("de-AT",{dateStyle:"short",
 function sentTag(s){
   if(!s||!s.label||s.label==="n/a") return `<span class="sent neutral">–</span>`;
   const t = {positive:"POS",negative:"NEG",neutral:"NEU"}[s.label]||s.label;
-  return `<span class="sent ${s.label}" title="FinBERT ${s.label} ${fmt((s.score||0)*100,0)} %">${t}</span>`;
+  const tt = s.p ? `FinBERT: positiv ${fmt(s.p[0]*100,0)} % · neutral ${fmt(s.p[1]*100,0)} % · negativ ${fmt(s.p[2]*100,0)} % → Wert ${fmt(s.value,2)}` : `FinBERT ${s.label} ${fmt((s.score||0)*100,0)} %`;
+  return `<span class="sent ${s.label}" title="${tt}">${t}</span>`;
 }
 function sentScore(v){
   if(v==null) return `<span class="dim">–</span>`;
@@ -273,7 +302,8 @@ function lineChart(el, data, opt={}){
   const nt = W<520 ? 3 : 5;
   for (let i=0;i<=nt;i++){ const t=x0+(x1-x0)*i/nt;
     grid+=`<text class="axis" x="${X(t)}" y="${H-6}" text-anchor="${i==0?"start":i==nt?"end":"middle"}">${new Date(t).toLocaleDateString("de-AT",tf)}</text>`; }
-  const zero = (mn<0&&mx>0) ? `<line x1="${pl}" x2="${W-pr}" y1="${Y(0)}" y2="${Y(0)}" stroke="#555" stroke-dasharray="3 3"/>` : "";
+  const rv = opt.ref!=null ? opt.ref : 0;
+  const zero = (mn<rv&&mx>rv) ? `<line x1="${pl}" x2="${W-pr}" y1="${Y(rv)}" y2="${Y(rv)}" stroke="#777" stroke-dasharray="4 3"/><text class="axis" x="${pl+4}" y="${Y(rv)-4}">${opt.ref!=null?"Schwelle "+fmt(rv,0):""}</text>` : "";
   const gid = "g"+Math.random().toString(36).slice(2,8);
   el.innerHTML = `<div class="chart"><svg viewBox="0 0 ${W} ${H}" height="${H}">
     <defs><linearGradient id="${gid}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".22"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
@@ -325,7 +355,7 @@ const noData = what => `<div class="empty">Noch keine ${what}. Läuft der GitHub
 function quoteTable(rows, opt={}){
   if(!rows||!rows.length) return noData("Kurse");
   return `<div class="scroll"><table><thead><tr><th>${opt.first||"Name"}</th><th>Kurs</th><th>Δ %</th>${opt.ytd!==false?"<th>YTD</th>":""}<th class="l">60T</th></tr></thead><tbody>
-  ${rows.map(r=>`<tr${opt.click?` class="click" data-sym="${esc(r.sym)}"`:""}><td class="nm">${opt.sym?`<span class="sym">${esc(r.sym)}</span> `:""}${esc(r.name)}</td>
+  ${rows.map(r=>`<tr${opt.click?` class="click" data-sym="${esc(r.sym)}"`:opt.gp?` class="click" data-gp="${esc(r.sym)}"`:""}><td class="nm">${opt.sym?`<span class="sym">${esc(r.sym)}</span> `:""}${esc(r.name)}</td>
     <td>${fmt(r.price, r.price<10?4:2)}</td><td class="${cls(r.chgPct)}">${pct(r.chgPct)}</td>${opt.ytd!==false?`<td class="${cls(r.ytd)}">${pct(r.ytd,1)}</td>`:""}<td class="l">${spark(r.spark,80,18)}</td></tr>`).join("")}
   </tbody></table></div>`;
 }
@@ -336,18 +366,26 @@ function newsList(items, n=20, showTicker=true){
     <div class="meta">${showTicker&&it.ticker?`<span class="amb">${esc(it.ticker)}</span> · `:""}${esc(it.source||"")} · ${ago(it.published)} · ${esc(it.via||"")}</div></div></li>`).join("")}</ul>`;
 }
 
-V.HOME = () => {
+V.HOME = async () => {
+  const cal = await lazy("calendar"), mu = await lazy("marktupdate"), ed = mu && mu.editions && mu.editions[0];
+  const kern = ed ? ((ed.sections||[]).find(s=>/kern/i.test(s.title||""))||{}).text || "" : "";
   const m=D.market||{}, n=D.news||{}, wl=(m.watchlist||[]).filter(r=>r.chgPct!=null);
+  const today = new Date().toISOString().slice(0,10);
+  const upcoming = ((cal&&cal.events)||[]).filter(e=>e.d>=today && (e.t==="cb"||e.t==="mkt"||e.wl||(e.t==="earn"&&(e.mcap||0)>=1e11))).slice(0,9);
   const movers=[...wl].sort((a,b)=>Math.abs(b.chgPct)-Math.abs(a.chgPct)).slice(0,8);
   const keyIds=["FM/D.U2.EUR.4F.KR.DFR.LEV","ICP/M.U2.N.000000.4.ANR","ICP/M.AT.N.000000.4.ANR","YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y","FEDFUNDS","DGS10","CPIAUCSL","UNRATE"];
   const ser=(D.macro&&D.macro.series)||[], keys=keyIds.map(id=>ser.find(s=>s.id===id)).filter(Boolean);
   return `<div class="grid g3">
-    ${panel("Indizes", quoteTable(m.indices), `<small>F2 für mehr</small>`)}
+    ${panel("Indizes", quoteTable(m.indices,{gp:true}), `<small>Klick = Chart</small>`)}
     ${panel("Watchlist – größte Bewegungen", quoteTable(movers,{sym:true,click:true,ytd:false}), `<small>F3</small>`)}
-    ${panel("Devisen & Rohstoffe", quoteTable(m.markets))}
+    ${panel("Devisen & Rohstoffe", quoteTable(m.markets,{gp:true}))}
   </div><div class="grid g32" style="margin-top:10px">
     ${panel("Top-Schlagzeilen", newsList([...(n.general||[]),...(n.tickers||[])].sort((a,b)=>(b.published||"").localeCompare(a.published||"")),14), `<small>FinBERT-Stimmung</small>`)}
-    ${panel("Makro-Kompass", keys.length?`<div class="tiles" style="grid-template-columns:1fr 1fr">${keys.map(macroTile).join("")}</div>`:noData("Makrodaten"), `<small>F4</small>`)}
+    <div class="grid">
+    ${panel("Makro-Kompass", keys.length?`<div class="tiles" style="grid-template-columns:1fr 1fr">${keys.map(macroTile).join("")}</div>`:noData("Makrodaten"), `<small>F5</small>`)}
+    ${ed?panel(`Marktupdate KW ${esc(ed.kw)}`, `<div style="color:#d6d6d6;max-height:190px;overflow:hidden">${rich(kern.length>600?kern.slice(0,600)+" …":kern)}</div><button class="more" onclick="go('MKT')">Ganzes Marktupdate öffnen</button>`, `<small>F7</small>`):""}
+    ${panel("Nächste Termine", upcoming.length?upcoming.map(calRow).join(""):`<div class="dim">Noch keine Termine – der Kalender füllt sich nach dem Nachtlauf.</div>`, `<small>F7</small>`)}
+    </div>
   </div>`;
 };
 V.HOME.after = el => { el.querySelectorAll(".tile").forEach(t=>t.onclick=()=>go("ECO", null, t.dataset.id)); };
@@ -355,8 +393,8 @@ V.HOME.after = el => { el.querySelectorAll(".tile").forEach(t=>t.onclick=()=>go(
 V.WEI = () => {
   const m=D.market||{};
   const t = rows => !rows?.length ? noData("Kurse") : `<div class="scroll"><table><thead><tr><th>Name</th><th>Symbol</th><th>Kurs</th><th>Δ</th><th>Δ %</th><th>YTD</th><th>1 Jahr</th><th>Stand</th><th class="l">60 Tage</th></tr></thead><tbody>
-    ${rows.map(r=>`<tr><td class="nm">${esc(r.name)}</td><td class="dim">${esc(r.sym)}</td><td>${fmt(r.price,r.price<10?4:2)}</td><td class="${cls(r.chg)}">${fmt(r.chg,r.price<10?4:2)}</td><td class="${cls(r.chgPct)}">${pct(r.chgPct)}</td><td class="${cls(r.ytd)}">${pct(r.ytd,1)}</td><td class="${cls(r.y1)}">${pct(r.y1,1)}</td><td class="dim">${r.date?new Date(r.date).toLocaleDateString("de-AT"):"–"}</td><td class="l">${spark(r.spark,120,22)}</td></tr>`).join("")}</tbody></table></div>`;
-  return `<div class="grid">${panel("World Equity Indices", t(m.indices))}${panel("Devisen, Rohstoffe, Krypto", t(m.markets))}</div>`;
+    ${rows.map(r=>`<tr class="click" data-gp="${esc(r.sym)}"><td class="nm">${esc(r.name)}</td><td class="dim">${esc(r.sym)}</td><td>${fmt(r.price,r.price<10?4:2)}</td><td class="${cls(r.chg)}">${fmt(r.chg,r.price<10?4:2)}</td><td class="${cls(r.chgPct)}">${pct(r.chgPct)}</td><td class="${cls(r.ytd)}">${pct(r.ytd,1)}</td><td class="${cls(r.y1)}">${pct(r.y1,1)}</td><td class="dim">${r.date?new Date(r.date).toLocaleDateString("de-AT"):"–"}</td><td class="l">${spark(r.spark,120,22)}</td></tr>`).join("")}</tbody></table></div>`;
+  return `<div class="grid">${panel("World Equity Indices", t(m.indices), `<small>Zeile anklicken = großer Chart</small>`)}${panel("Devisen, Rohstoffe, Krypto", t(m.markets))}</div>`;
 };
 
 let wSort = {k:"chgPct", d:-1};
@@ -394,7 +432,7 @@ let ecoRange="5J";
 V.ECO.after = el => {
   const sel=((D.macro&&D.macro.series)||[]).find(s=>s.id===ecoSel);
   if(sel){ const yrs={"2J":2,"5J":5,"10J":10,"Max":99}[ecoRange]; const cut=new Date(); cut.setFullYear(cut.getFullYear()-yrs);
-    lineChart(el.querySelector("#ecoChart"), sel.history.filter(d=>new Date(d[0])>=cut), {unit:sel.unit, color:"var(--amber)", h:280}); }
+    lineChart(el.querySelector("#ecoChart"), sel.history.filter(d=>new Date(d[0])>=cut), {unit:sel.unit, color:"var(--amber)", h:280, ref:sel.ref}); }
   el.querySelectorAll(".tile").forEach(t=>t.onclick=()=>{ecoSel=t.dataset.id; render(); window.scrollTo({top:0,behavior:"smooth"});});
   el.querySelectorAll("#ecoReg button").forEach(b=>b.onclick=()=>{ecoRegion=b.dataset.r; ecoSel=null; render();});
   el.querySelectorAll("#ecoRange button").forEach(b=>b.onclick=()=>{ecoRange=b.dataset.r; render();});
@@ -413,7 +451,7 @@ V.TOP = () => {
   const bars = sum.length ? `<table><thead><tr><th>Titel</th><th>Score</th><th class="l" style="width:45%">Verteilung</th><th>n</th></tr></thead><tbody>${sum.map(([s,v])=>{
     const t=v.pos+v.neg+v.neu||1; return `<tr class="click" data-sym="${esc(s)}"><td class="sym">${esc(s)}</td><td>${sentScore(v.score)}</td><td class="l"><div class="bar"><i style="left:0;width:${v.pos/t*100}%;background:var(--up)"></i><i style="left:${v.pos/t*100}%;width:${v.neu/t*100}%;background:#444"></i><i style="left:${(v.pos+v.neu)/t*100}%;width:${v.neg/t*100}%;background:var(--dn)"></i></div></td><td class="dim">${v.n}</td></tr>`;}).join("")}</tbody></table>` : noData("Stimmungswerte");
   return `<div class="grid g32">${panel("Schlagzeilen", `<div class="btns" id="nf" style="margin-bottom:8px">${["Alle","Allgemein","Watchlist","Positiv","Negativ"].map(f=>`<button data-f="${f}" class="${f===newsFilter?"on":""}">${f}</button>`).join("")}</div>${newsList(items,120)}`, `<small>${n.model?"Modell: "+esc(n.model):"Stimmung nicht verfügbar"}</small>`)}
-    ${panel("Stimmung je Titel", bars, `<small>−1 negativ … +1 positiv</small>`)}</div>`;
+    ${panel("Stimmung je Titel", bars, `<button class="info" data-info="sent">ⓘ So entsteht der Wert</button>`)}</div>`;
 };
 V.TOP.after = el => el.querySelectorAll("#nf button").forEach(b=>b.onclick=()=>{newsFilter=b.dataset.f; render();});
 
@@ -424,7 +462,11 @@ V.DES = async () => {
   if(!state.sym) state.sym = wl[0]?.sym;
   if(!state.sym) return panel("Aktie", noData("Watchlist-Titel"));
   let t; try { t = await loadTicker(state.sym); } catch(e){
-    return panel(esc(state.sym), `<div class="empty">Für <b class="amb">${esc(state.sym)}</b> liegen keine Daten vor.<br><br>Nur Titel aus der Watchlist werden automatisch geladen. Ergänze den Ticker in <b>config.json</b> – nach dem nächsten Lauf ist er da.</div>`);
+    const u = await lazy("universe"), r = u && u.rows.find(x=>x.s===state.sym);
+    if (r) return `<div class="dhead"><span class="s">${esc(r.s)}</span><span class="n">${esc(r.n)}</span><span class="p">${fmt(r.px)} <small class="dim">${esc(r.cur||"")}</small></span><span class="${cls(r.chg)}">${pct(r.chg)}</span><span class="chip">${esc(r.c||"")}</span><span class="chip">${esc(r.sec||"")}</span></div>
+      ${panel("Kurzprofil", `<div class="kv"><div><span>1 Monat</span><span class="${cls(r.m1)}">${pct(r.m1,1)}</span></div><div><span>YTD</span><span class="${cls(r.ytd)}">${pct(r.ytd,1)}</span></div><div><span>1 Jahr</span><span class="${cls(r.y1)}">${pct(r.y1,1)}</span></div><div><span>Marktkap. (EUR)</span>${big(r.mcap)}</div><div><span>KGV</span>${fmt(r.pe,1)}</div><div><span>Div.-Rendite</span>${r.dy!=null?fmt(r.dy,2)+" %":"–"}</div><div><span>Indizes</span>${esc((r.src||[]).join(", "))}</div></div>
+      <p class="dim" style="margin-top:10px">Die vollständige Detailseite (Chart, Bilanzen, News) wird im Nachtlauf erstellt – je Nacht kommen mehrere hundert Titel dazu, die größten zuerst. Sofort verfügbar: Ticker in die <b>Watchlist</b> in config.json aufnehmen.</p>`)}`;
+    return panel(esc(state.sym), `<div class="empty">Für <b class="amb">${esc(state.sym)}</b> liegen keine Daten vor.<br><br>Der Titel ist weder in der Watchlist noch im Universum. Ergänze ihn in <b>config.json</b> (watchlist oder universe → extra).</div>`);
   }
   const st=t.stats||{}, an=t.analyst||{}, f=t.financials;
   const pctKeys=["Div.-Rendite %","Ausschüttungsquote","Bruttomarge","Op. Marge","Nettomarge","EK-Rendite"];
@@ -454,7 +496,7 @@ V.DES = async () => {
           <div><span>Kursziel Ø</span><span>${fmt(an.target)} <span class="${cls(up)}">${up!=null?"("+pct(up,1)+")":""}</span></span></div>
           <div><span>Spanne</span>${fmt(an.low)} – ${fmt(an.high)}</div>
           <div><span>52W Spanne</span>${fmt(st["52W Tief"])} – ${fmt(st["52W Hoch"])}</div>
-          <div><span>News-Stimmung (FinBERT)</span>${sentScore(t.sentiment?.score)}</div>
+          <div><span>News-Stimmung (FinBERT) <button class="info" data-info="sent">ⓘ</button></span>${sentScore(t.sentiment?.score)}</div>
           <div><span>Pos / Neu / Neg</span><span><span class="up">${t.sentiment?.pos??"–"}</span> / ${t.sentiment?.neu??"–"} / <span class="dn">${t.sentiment?.neg??"–"}</span></span></div>
         </div>`)}
     </div>
@@ -476,18 +518,215 @@ V.DES.after = el => {
     barChart(fc, yrs, [{name:"Umsatz",vals:sl("revenue"),color:"#ff9f1a"},{name:"Nettogewinn",vals:sl("netIncome"),color:"#4da3ff"},{name:"Free Cashflow",vals:sl("freeCashflow"),color:"#3ddc84"}]); }
 };
 
+/* --- Index-/Markt-Chart (GP) --- */
+let gpSym = null, gpRange = "1J";
+V.GP = async () => {
+  const h = await lazy("history"), m = D.market || {};
+  const all = [...(m.indices||[]), ...(m.markets||[])];
+  if (!gpSym) gpSym = all[0]?.sym;
+  const r = all.find(x=>x.sym===gpSym) || {sym:gpSym, name:gpSym};
+  const pos = r.hi52&&r.price ? (r.price-r.lo52)/((r.hi52-r.lo52)||1)*100 : null;
+  return `<div class="dhead"><span class="s">${esc(r.name)}</span><span class="dim">${esc(r.sym)}</span>
+      <span class="p">${fmt(r.price, r.price<10?4:2)}</span><span class="${cls(r.chgPct)}">${fmt(r.chg, r.price<10?4:2)} (${pct(r.chgPct)})</span>
+      <span class="dim" style="margin-left:auto;font-size:11px">Stand ${r.date?new Date(r.date).toLocaleDateString("de-AT"):"–"}</span></div>
+    <div class="grid g32">
+      ${panel("Kursverlauf", h ? `<div id="gpChart"></div>` : noData("Kursverläufe"), `<div class="btns" id="gr">${["1M","3M","6M","1J","3J","5J"].map(x=>`<button data-r="${x}" class="${x===gpRange?"on":""}">${x}</button>`).join("")}</div>`)}
+      ${panel("Kennzahlen", `<div class="kv" style="grid-template-columns:1fr">
+        <div><span>Veränderung heute</span><span class="${cls(r.chgPct)}">${pct(r.chgPct)}</span></div>
+        <div><span>Seit Jahresbeginn</span><span class="${cls(r.ytd)}">${pct(r.ytd,1)}</span></div>
+        <div><span>1 Jahr</span><span class="${cls(r.y1)}">${pct(r.y1,1)}</span></div>
+        <div><span>52W Hoch</span>${fmt(r.hi52, r.price<10?4:2)}</div><div><span>52W Tief</span>${fmt(r.lo52, r.price<10?4:2)}</div>
+        <div><span>Abstand zum Hoch</span><span class="${cls(r.hi52?r.price/r.hi52-1:null)}">${r.hi52?pct((r.price/r.hi52-1)*100,1):"–"}</span></div>
+        </div>${pos!=null?`<div style="margin-top:10px" class="dim">Position in der 52W-Spanne</div><div class="bar" style="margin-top:4px"><i style="left:0;width:${pos}%;background:var(--amber)"></i></div>`:""}`)}
+    </div>
+    <div class="grid g2" style="margin-top:10px">${panel("Indizes", quoteTable(m.indices,{gp:true}))}${panel("Devisen & Rohstoffe", quoteTable(m.markets,{gp:true}))}</div>`;
+};
+V.GP.after = el => {
+  const s = D.history && D.history.series && D.history.series[gpSym], c = el.querySelector("#gpChart");
+  if (!s || !c) return;
+  const draw = () => { const mo={"1M":1,"3M":3,"6M":6,"1J":12,"3J":36,"5J":60}[gpRange]; const cut=new Date(); cut.setMonth(cut.getMonth()-mo);
+    lineChart(c, (mo>12?s.w:s.d).filter(d=>new Date(d[0])>=cut), {base:true, h:330}); };
+  draw();
+  el.querySelectorAll("#gr button").forEach(b=>b.onclick=()=>{ gpRange=b.dataset.r; el.querySelectorAll("#gr button").forEach(x=>x.classList.toggle("on",x===b)); draw(); });
+};
+
+/* --- Screener --- */
+const SCR0 = {q:"", c:"", sec:"", src:"", mcap:"", peMin:"", peMax:"", dyMin:"", ytdMin:"", y1Min:"", sentMin:"", det:false, sort:"mcap", dir:-1, lim:100};
+let scr = {...SCR0};
+const PRESETS = {
+  "Dividendenstark": {dyMin:4, peMax:15, peMin:0.1, mcap:"5e9"},
+  "Günstig bewertet": {peMin:0.1, peMax:12, mcap:"5e9"},
+  "Momentum": {y1Min:30, mcap:"10e9", sort:"y1"},
+  "Österreich": {c:"Austria", sort:"mcap"},
+  "Positive News": {sentMin:0.3, sort:"sent"},
+};
+V.SCR = async () => {
+  const u = await lazy("universe");
+  if (!u || !u.rows?.length) return panel("Screener", noData("Universums-Daten"));
+  const opts = (arr, v) => `<option value="">Alle</option>` + arr.map(x=>`<option${x===v?" selected":""}>${esc(x)}</option>`).join("");
+  const countries = [...new Set(u.rows.map(r=>r.c).filter(Boolean))].sort();
+  const sectors = [...new Set(u.rows.map(r=>r.sec).filter(Boolean))].sort();
+  const withF = u.rows.filter(r=>r.pe!=null||r.mcap!=null).length;
+  return panel(`Screener <span class="dim">· ${fmt(u.n,0)} Titel</span>`, `
+    <div class="fbar">${Object.keys(PRESETS).map(k=>`<button class="info" data-preset="${k}">${k}</button>`).join("")}<button class="info" data-preset="">Zurücksetzen</button></div>
+    <div class="fbar">
+      <input id="sq" placeholder="Name oder Ticker" value="${esc(scr.q)}" style="flex:1;min-width:140px">
+      <label>Land <select data-f="c">${opts(countries, scr.c)}</select></label>
+      <label>Sektor <select data-f="sec">${opts(sectors, scr.sec)}</select></label>
+      <label>Index <select data-f="src">${opts(u.sources||[], scr.src)}</select></label>
+      <label>Marktkap. ≥ <select data-f="mcap">${[["","egal"],["1e9","1 Mrd."],["5e9","5 Mrd."],["10e9","10 Mrd."],["50e9","50 Mrd."],["100e9","100 Mrd."]].map(([v,l])=>`<option value="${v}"${String(scr.mcap)===v?" selected":""}>${l}</option>`).join("")}</select></label>
+    </div>
+    <div class="fbar">
+      <label>KGV von <input type="number" step="0.1" data-f="peMin" value="${scr.peMin}"> bis <input type="number" step="0.1" data-f="peMax" value="${scr.peMax}"></label>
+      <label>Div. ≥ % <input type="number" step="0.1" data-f="dyMin" value="${scr.dyMin}"></label>
+      <label>YTD ≥ % <input type="number" data-f="ytdMin" value="${scr.ytdMin}"></label>
+      <label>1 J ≥ % <input type="number" data-f="y1Min" value="${scr.y1Min}"></label>
+      <label>Stimmung ≥ <input type="number" step="0.1" data-f="sentMin" value="${scr.sentMin}"></label>
+      <label><input type="checkbox" data-f="det"${scr.det?" checked":""}> nur mit Detailseite</label>
+    </div>
+    <div id="scrT"></div>
+    <p class="dim" style="font-size:11px;margin-top:8px">Kurse: alle ${fmt(u.n,0)} Titel. Kennzahlen bisher für ${fmt(withF,0)} Titel – der Nachtlauf ergänzt jede Nacht mehrere hundert, bis alle erfasst sind. Marktkapitalisierung in EUR umgerechnet. Stimmung nur bei Titeln mit Detailseite.</p>`,
+    `<small>Klick auf Zeile = Detail</small>`);
+};
+function scrRows(){
+  const u = D.universe; if(!u) return [];
+  const q = scr.q.trim().toUpperCase(), num = v => v===""||v==null ? null : +v;
+  const f = {mcap:num(scr.mcap), peMin:num(scr.peMin), peMax:num(scr.peMax), dyMin:num(scr.dyMin), ytdMin:num(scr.ytdMin), y1Min:num(scr.y1Min), sentMin:num(scr.sentMin)};
+  let rows = u.rows.filter(r =>
+    (!q || r.s.toUpperCase().includes(q) || (r.n||"").toUpperCase().includes(q)) &&
+    (!scr.c || r.c===scr.c) && (!scr.sec || r.sec===scr.sec) && (!scr.src || (r.src||[]).includes(scr.src)) &&
+    (f.mcap==null || (r.mcap||0) >= f.mcap) &&
+    (f.peMin==null || (r.pe!=null && r.pe >= f.peMin)) && (f.peMax==null || (r.pe!=null && r.pe <= f.peMax)) &&
+    (f.dyMin==null || (r.dy||0) >= f.dyMin) && (f.ytdMin==null || (r.ytd!=null && r.ytd >= f.ytdMin)) &&
+    (f.y1Min==null || (r.y1!=null && r.y1 >= f.y1Min)) && (f.sentMin==null || (r.sent!=null && r.sent >= f.sentMin)) &&
+    (!scr.det || r.det));
+  const k = scr.sort, d = scr.dir;
+  rows.sort((a,b)=>{ const x=a[k], y=b[k]; if(x==null&&y==null) return 0; if(x==null) return 1; if(y==null) return -1; return (typeof x==="string"?x.localeCompare(y):x-y)*d; });
+  return rows;
+}
+function drawScr(el){
+  const rows = scrRows(), box = el.querySelector("#scrT"); if(!box) return;
+  const h = (k,l,c="") => `<th class="${c}" data-k="${k}">${l}${scr.sort===k?(scr.dir>0?" ▲":" ▼"):""}</th>`;
+  box.innerHTML = `<div class="dim" style="margin-bottom:6px">${fmt(rows.length,0)} Treffer</div><div class="scroll"><table id="st"><thead><tr>
+    ${h("s","Symbol")}${h("n","Name","l")}${h("c","Land","l")}${h("sec","Sektor","l")}${h("px","Kurs")}<th>Whg.</th>${h("chg","Δ %")}${h("m1","1 M")}${h("ytd","YTD")}${h("y1","1 J")}${h("mcap","Marktkap. €")}${h("pe","KGV")}${h("fpe","KGV erw.")}${h("dy","Div. %")}${h("roe","EKR %")}${h("sent","Stimmung")}${h("er","Zahlen")}</tr></thead><tbody>
+    ${rows.slice(0, scr.lim).map(r=>`<tr class="click" data-sym="${esc(r.s)}"><td class="sym">${esc(r.s)}${r.wl?" ★":""}</td><td class="nm l">${esc(r.n)}</td><td class="l dim">${esc(r.c||"")}</td><td class="l dim">${esc(r.sec||"")}</td>
+      <td>${fmt(r.px)}</td><td class="dim">${esc(r.cur||"")}</td><td class="${cls(r.chg)}">${pct(r.chg)}</td><td class="${cls(r.m1)}">${pct(r.m1,1)}</td><td class="${cls(r.ytd)}">${pct(r.ytd,1)}</td><td class="${cls(r.y1)}">${pct(r.y1,1)}</td>
+      <td>${big(r.mcap)}</td><td>${fmt(r.pe,1)}</td><td>${fmt(r.fpe,1)}</td><td>${r.dy!=null?fmt(r.dy,2):"–"}</td><td>${fmt(r.roe,1)}</td><td>${sentScore(r.sent)}</td><td class="dim">${r.er?new Date(r.er).toLocaleDateString("de-AT"):"–"}</td></tr>`).join("")}
+  </tbody></table></div>${rows.length>scr.lim?`<button class="more" id="more">Weitere ${fmt(Math.min(100, rows.length-scr.lim),0)} anzeigen</button>`:""}`;
+  box.querySelectorAll("tr.click[data-sym]").forEach(tr=>tr.onclick=()=>go("DES", tr.dataset.sym));
+  box.querySelectorAll("th[data-k]").forEach(th=>th.onclick=()=>{ const k=th.dataset.k; scr.dir = scr.sort===k ? -scr.dir : (["s","n","c","sec","er"].includes(k)?1:-1); scr.sort=k; drawScr(el); });
+  const mb = box.querySelector("#more"); if(mb) mb.onclick=()=>{ scr.lim+=100; drawScr(el); };
+}
+V.SCR.after = el => {
+  drawScr(el);
+  let tq; el.querySelector("#sq")?.addEventListener("input", e=>{ clearTimeout(tq); tq=setTimeout(()=>{ scr.q=e.target.value; scr.lim=100; drawScr(el); },200); });
+  el.querySelectorAll("[data-f]").forEach(i=>i.addEventListener("change", ()=>{ scr[i.dataset.f] = i.type==="checkbox" ? i.checked : i.value; scr.lim=100; drawScr(el); }));
+  el.querySelectorAll("[data-preset]").forEach(b=>b.onclick=()=>{ scr = {...SCR0, ...(PRESETS[b.dataset.preset]||{})}; render(); });
+};
+
+/* --- Kalender --- */
+let calF = {t:"", wl:false, big:true};
+const CALT = {mkt:["TERMIN","t-cb"], cb:["NOTENBANK","t-cb"], earn:["ZAHLEN","t-earn"], exdiv:["EX-DIV.","t-exdiv"], div:["ZAHLTAG","t-div"]};
+function calRow(e){
+  const [lab,c] = CALT[e.t]||["",""];
+  const right = e.t==="cb"||e.t==="mkt" ? "" : e.t==="exdiv"&&e.dy ? `<span class="dim">${fmt(e.dy,2)} %</span>` : `<span class="dim">${big(e.mcap)}</span>`;
+  const day = new Date(e.d).toLocaleDateString("de-AT",{weekday:"short",day:"2-digit",month:"2-digit"});
+  return `<div class="cal-ev"${e.sym?` style="cursor:pointer" data-cal="${esc(e.sym)}"`:""}><span class="t ${c}">${lab}</span><span>${e.t==="cb"||e.t==="mkt"?`<b>${esc(e.title)}</b>`:`<span class="sym">${esc(e.sym)}</span>${e.wl?" ★":""} ${esc(e.name)}`}</span><span class="dim" style="text-align:right">${day} ${right}</span></div>`;
+}
+V.CAL = async () => {
+  const cal = await lazy("calendar");
+  if (!cal || !cal.events?.length) return panel("Kalender", noData("Termine"));
+  const today = new Date().toISOString().slice(0,10);
+  const ev = cal.events.filter(e => e.d >= today && (!calF.t || e.t===calF.t || (calF.t==="exdiv"&&e.t==="div")) &&
+    (e.t==="cb" || e.t==="mkt" || ((!calF.wl || e.wl) && (!calF.big || e.wl || (e.mcap||0) >= 1e10))));
+  const days = {}; ev.forEach(e => (days[e.d] = days[e.d] || []).push(e));
+  const body = Object.keys(days).sort().slice(0, 45).map(d => `<div class="cal-day">${new Date(d).toLocaleDateString("de-AT",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).toUpperCase()}</div>${days[d].slice(0,40).map(calRow).join("")}`).join("");
+  return panel("Kalender · nächste 90 Tage", `<div class="fbar" id="cf">
+      ${[["","Alle"],["cb","Notenbanken"],["mkt","Konjunkturtermine"],["earn","Quartalszahlen"],["exdiv","Dividenden"]].map(([v,l])=>`<button class="info${calF.t===v?" on":""}" data-t="${v}" style="${calF.t===v?"color:#000;background:var(--amber)":""}">${l}</button>`).join("")}
+      <label><input type="checkbox" id="cwl"${calF.wl?" checked":""}> nur Watchlist</label>
+      <label><input type="checkbox" id="cbig"${calF.big?" checked":""}> nur ≥ 10 Mrd. € Marktkap.</label></div>
+    ${body || `<div class="dim">Keine Termine für diese Auswahl.</div>`}
+    <p class="dim" style="font-size:11px;margin-top:10px">Quartalszahlen und Dividendentermine laut Yahoo Finance (Termine können sich verschieben, Ex-Tage ohne Gewähr). Notenbanktermine aus config.json. Je mehr Titel der Nachtlauf erfasst hat, desto vollständiger wird der Kalender.</p>`,
+    `<small>★ = Watchlist</small>`);
+};
+V.CAL.after = el => {
+  el.querySelectorAll("#cf [data-t]").forEach(b=>b.onclick=()=>{ calF.t=b.dataset.t; render(); });
+  el.querySelector("#cwl").onchange = e => { calF.wl = e.target.checked; render(); };
+  el.querySelector("#cbig").onchange = e => { calF.big = e.target.checked; render(); };
+};
+
+/* --- Info-Fenster --- */
+const INFO = {
+  sent: `<h3>SO ENTSTEHT DIE NEWS-STIMMUNG</h3>
+    <h4>1. Welche Nachrichten?</h4>
+    <p>Englischsprachige Schlagzeilen aus Yahoo Finance und Google News. Watchlist-Titel: bis zu ca. 14 Schlagzeilen, alle 30 Minuten aktualisiert. Übrige Titel: Yahoo-Schlagzeilen, aktualisiert im Nachtlauf. Für die allgemeinen Marktnachrichten werden Suchbegriffe aus config.json verwendet.</p>
+    <h4>2. Bewertung jeder Schlagzeile</h4>
+    <p>Das Sprachmodell <b>FinBERT</b> (ProsusAI/finbert) wurde speziell auf Finanztexte trainiert. Es liefert für jede Schlagzeile drei Wahrscheinlichkeiten: positiv, neutral und negativ (zusammen 100 %).</p>
+    <ul><li><b>Wert der Schlagzeile</b> = Wahrscheinlichkeit positiv − Wahrscheinlichkeit negativ → Bereich −1 bis +1.<br>Beispiel: 80 % positiv, 15 % neutral, 5 % negativ → +0,75.</li>
+    <li><b>Etikett POS / NEU / NEG</b> = die höchste der drei Wahrscheinlichkeiten. Mit der Maus über das Etikett zeigt die Einzelwerte.</li></ul>
+    <h4>3. Wert je Titel</h4>
+    <p>Zeitgewichteter Durchschnitt aller Schlagzeilen der <b>letzten 14 Tage</b> mit einer <b>Halbwertszeit von 3 Tagen</b>: Eine Meldung von vor 3 Tagen zählt halb so viel wie eine von heute, eine von vor 6 Tagen ein Viertel.</p>
+    <p><b>Lesart:</b> über +0,15 eher positiv · unter −0,15 eher negativ · dazwischen neutral. Die Verteilung (grün / grau / rot) zeigt, wie viele Meldungen in jede Richtung gingen.</p>
+    <h4>4. Grenzen</h4>
+    <ul><li>Nur Überschriften, nicht der Artikeltext. Ironie und Zusammenhang erkennt das Modell schlecht.</li>
+    <li>Alle Quellen zählen gleich, egal ob Reuters oder ein kleiner Blog.</li>
+    <li>Bei wenigen Meldungen (Spalte n) ist der Wert zufallsanfällig.</li>
+    <li>Die Suche nach Firmennamen kann fremde Meldungen erwischen, etwa bei gleichnamigen Firmen.</li>
+    <li>Die Stimmung ist ein Stimmungsbild der Berichterstattung, kein Kurssignal und keine Anlageempfehlung.</li></ul>`,
+};
+function showInfo(k){ const m=document.getElementById("modal"); document.getElementById("modalBox").innerHTML = `<button class="x" onclick="document.getElementById('modal').style.display='none'">✕</button>` + (INFO[k]||""); m.style.display="flex"; }
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-info]"); if (b) { e.preventDefault(); e.stopPropagation(); showInfo(b.dataset.info); return; }
+  if (e.target.id === "modal") e.target.style.display = "none";
+  const c = e.target.closest("[data-cal]"); if (c) go("DES", c.dataset.cal);
+}, true);
+
+/* --- Marktupdate --- */
+let mktIdx = 0;
+const rich = t => esc(t||"").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").split(/\n{2,}/).map(p=>`<p style="margin:0 0 8px">${p.replace(/\n/g,"<br>")}</p>`).join("");
+const cellCls = v => typeof v==="number" ? cls(v) : /^\s*\+\s?\d/.test(String(v)) ? "up" : /^\s*[−-]\s?\d/.test(String(v)) ? "dn" : "";
+function mktSection(s){
+  const badge = s.entwurf ? ` <span class="chip" style="color:var(--amber);border-color:var(--amber)">ENTWURF</span>` : "";
+  let body = "";
+  if (s.type === "table") body = `<div class="scroll"><table><thead><tr>${(s.columns||[]).map((c,i)=>`<th class="${i?"":"l"}">${esc(c)}</th>`).join("")}</tr></thead><tbody>${(s.rows||[]).map(r=>`<tr>${r.map((v,i)=>`<td class="${i?cellCls(v):"l"}" style="${i?"":"white-space:normal"}">${typeof v==="number"?fmt(v,2):esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  else if (s.type === "list") body = `<ul style="margin:0;padding-left:18px">${(s.items||[]).map(i=>`<li style="margin:3px 0">${rich(i).replace(/^<p[^>]*>|<\/p>$/g,"")}</li>`).join("")}</ul>`;
+  else body = `<div style="color:#d6d6d6">${rich(s.text)}</div>`;
+  if (s.note) body += `<div class="dim" style="font-size:11px;margin-top:6px">${esc(s.note)}</div>`;
+  return panel(esc(s.title||"") + badge, body);
+}
+V.MKT = async () => {
+  const m = await lazy("marktupdate"), eds = (m && m.editions) || [];
+  if (!eds.length) return panel("Marktupdate", `<div class="empty">Noch kein Marktupdate im Terminal.<br><br>Sobald im Projekt „WP-Research“ ein Marktupdate erstellt wird, legt Claude die Daten verschlüsselt im Repository ab – nach dem nächsten Lauf erscheinen sie hier.</div>`);
+  const e = eds[Math.min(mktIdx, eds.length-1)];
+  const kpis = (e.kpis||[]).length ? `<div class="tiles" style="margin-bottom:10px">${e.kpis.map(k=>`<div class="tile" style="cursor:default"><div class="t"><span>${esc(k.label)}</span></div><div class="v">${esc(k.wert)}</div><div class="s ${k.dir>0?"up":k.dir<0?"dn":""}">${esc(k.delta||"")}</div></div>`).join("")}</div>` : "";
+  const exp = (e.erwartungen||[]).length ? panel("Überprüfbare Erwartungen", `<table><thead><tr><th class="l">Erwartung</th><th>bis</th><th>Status</th></tr></thead><tbody>${e.erwartungen.map(x=>`<tr><td class="l" style="white-space:normal">${esc(x.text)}</td><td class="dim">${x.bis?new Date(x.bis).toLocaleDateString("de-AT"):"–"}</td><td class="${/nicht/.test(x.status||"")?"dn":/eingetreten|erfüllt/.test(x.status||"")?"up":"dim"}">${esc(x.status||"offen")}</td></tr>`).join("")}</tbody></table>`) : "";
+  const pmi = (e.pmi||[]).length ? panel("Einkaufsmanager", `<table><thead><tr><th class="l">Reihe</th><th>Monat</th><th>Wert</th><th class="l">Quelle</th></tr></thead><tbody>${e.pmi.map(p=>`<tr><td class="l">${esc(p.reihe)}</td><td class="dim">${esc(p.monat)}</td><td class="${p.wert>=50?"up":"dn"}">${fmt(p.wert,1)}</td><td class="l dim">${esc(p.quelle||"")}</td></tr>`).join("")}</tbody></table><div class="dim" style="font-size:11px;margin-top:6px">Über 50 = Expansion, unter 50 = Schrumpfung. Verlauf unter ECO → „Einkaufsmanager (Marktupdate)“.</div>`) : "";
+  return `<div class="dhead"><span class="s">MARKTUPDATE KW ${esc(e.kw)}/${esc(e.jahr)}</span><span class="n">${esc(e.titel||"")}</span>
+      <span class="dim" style="font-size:11px">Datenstand ${e.datenstand?new Date(e.datenstand).toLocaleDateString("de-AT"):"–"}</span>
+      <select id="mktSel" style="margin-left:auto;background:#111;border:1px solid var(--line);color:var(--txt);font:12px var(--mono);padding:4px">${eds.map((x,i)=>`<option value="${i}"${i===mktIdx?" selected":""}>KW ${esc(x.kw)}/${esc(x.jahr)} · ${new Date(x.datum).toLocaleDateString("de-AT")}</option>`).join("")}</select></div>
+    ${kpis}
+    <div class="grid g32"><div class="grid">${(e.sections||[]).map(mktSection).join("")}</div>
+      <div class="grid">${exp}${pmi}${(e.termine||[]).length?panel("Die Woche voraus", e.termine.map(t=>`<div class="cal-ev" style="grid-template-columns:90px 1fr"><span class="dim">${new Date(t.d).toLocaleDateString("de-AT",{weekday:"short",day:"2-digit",month:"2-digit"})}</span><span>${esc(t.title)}</span></div>`).join("")):""}
+      ${(e.quellen||[]).length?panel("Quellen", `<ul style="margin:0;padding-left:18px;color:var(--dim);font-size:11px">${e.quellen.map(q=>`<li>${esc(q)}</li>`).join("")}</ul>`):""}</div></div>
+    <p class="dim" style="font-size:11px;margin-top:10px">Internes Arbeitsdokument. Keine Anlageempfehlung im Sinne des WAG 2018. Nicht zur Weitergabe an Kunden.</p>`;
+};
+V.MKT.after = el => { const s = el.querySelector("#mktSel"); if (s) s.onchange = () => { mktIdx = +s.value; render(); }; };
+
 V.HELP = () => panel("Befehle", `<table class="help"><tbody>
-  <tr><td>AAPL · VOE.VI</td><td>Ticker eingeben + GO → Detailseite (DES). Gilt für alle Titel aus der Watchlist.</td></tr>
-  <tr><td>&lt;TICKER&gt; DES</td><td>Beschreibung, Kennzahlen, Chart, Bilanzen, News</td></tr>
-  <tr><td>WEI</td><td>Weltindizes, Devisen, Rohstoffe</td></tr>
+  <tr><td>AAPL · VOE.VI · Apple</td><td>Ticker oder Name eingeben + GO → Detailseite. Funktioniert für alle Titel im Universum (MSCI ACWI, S&amp;P 500, Nasdaq 100, STOXX 600, ATX).</td></tr>
+  <tr><td>DAX · Gold · ^GSPC</td><td>Index oder Markt eingeben → großer Chart (GP)</td></tr>
+  <tr><td>WEI</td><td>Weltindizes, Devisen, Rohstoffe – Zeile anklicken für den Chart</td></tr>
   <tr><td>W</td><td>Watchlist (sortierbar)</td></tr>
-  <tr><td>ECO</td><td>Makro-Dashboard USA/Euroraum/Österreich (FRED + EZB)</td></tr>
+  <tr><td>SCR</td><td>Screener: filtern nach Land, Sektor, Index, Marktkapitalisierung, KGV, Dividende, Momentum, Stimmung</td></tr>
+  <tr><td>ECO</td><td>Makro USA/Euroraum/Österreich: Zinsen, Inflation, Frühindikatoren, Staatsanleihen, eigene PMI-Werte</td></tr>
   <tr><td>TOP · N</td><td>Schlagzeilen mit FinBERT-Stimmung</td></tr>
-  <tr><td>HOME</td><td>Übersicht</td></tr>
-  <tr><td>F1 … F7</td><td>Tastenkürzel für die Funktionsleiste</td></tr>
-  <tr><td>/ oder Strg+K</td><td>Befehlszeile fokussieren</td></tr>
+  <tr><td>MKT</td><td>Dein wöchentliches Marktupdate mit Archiv; PMI-Werte fließen automatisch in ECO</td></tr>
+  <tr><td>CAL</td><td>Kalender: Notenbanken, Quartalszahlen, Dividendentermine</td></tr>
+  <tr><td>F1 … F10</td><td>Tastenkürzel für die Funktionsleiste · <b>/</b> oder <b>Strg+K</b> = Befehlszeile</td></tr>
+  <tr><td>News-Stimmung</td><td><button class="info" data-info="sent">ⓘ So entsteht der Wert</button></td></tr>
   <tr><td>Watchlist ändern</td><td>config.json im GitHub-Repository bearbeiten → der Workflow startet automatisch.</td></tr>
-  <tr><td>Daten sofort holen</td><td>GitHub → Actions → „Daten aktualisieren“ → Run workflow.</td></tr>
+  <tr><td>PMI eintragen</td><td>Datei manual/pmi.csv bearbeiten (eine Zeile pro Monat). Erscheint unter ECO → „Einkaufsmanager (manuell)“.</td></tr>
+  <tr><td>Daten sofort holen</td><td>GitHub → Actions → „Daten aktualisieren“ → Run workflow (fast oder nightly).</td></tr>
 </tbody></table>`);
 
 /* ============================================================ Router */
@@ -497,37 +736,49 @@ async function render(){
   const html = await fn();
   el.innerHTML = (DEMO?`<div class="banner">Vorschau mit Beispieldaten – echte Kurse erscheinen, sobald der GitHub-Workflow gelaufen ist.</div>`:"") + html;
   el.querySelectorAll("tr.click[data-sym]").forEach(tr=>tr.onclick=()=>go("DES", tr.dataset.sym));
+  el.querySelectorAll("tr.click[data-gp]").forEach(tr=>tr.onclick=()=>go("GP", tr.dataset.gp));
   if(fn.after) fn.after(el);
 }
 function go(view, sym, eco){
-  state.view=view; if(sym) state.sym=sym; if(eco) ecoSel=eco;
-  const h = "#"+view+(view==="DES"&&state.sym?"/"+encodeURIComponent(state.sym):"");
+  state.view=view; if(sym&&view!=="GP") state.sym=sym; if(eco) ecoSel=eco;
+  if(view==="GP"&&sym) gpSym=sym;
+  const h = "#"+view+(view==="DES"&&state.sym?"/"+encodeURIComponent(state.sym):view==="GP"&&gpSym?"/"+encodeURIComponent(gpSym):"");
   if(location.hash!==h) history.pushState(null,"",h);
   render(); window.scrollTo(0,0);
 }
 function fromHash(){
   const [v,s]=location.hash.slice(1).split("/");
-  state.view = V[v] ? v : "HOME"; if(s) state.sym=decodeURIComponent(s);
+  state.view = V[v] ? v : "HOME"; if(s){ if(v==="GP") gpSym=decodeURIComponent(s); else state.sym=decodeURIComponent(s); }
 }
 window.addEventListener("popstate",()=>{fromHash();render();});
 
 /* ============================================================ Befehlszeile */
-const ALIAS={HOME:"HOME",WEI:"WEI",W:"W",WL:"W",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",DES:"DES",HELP:"HELP",HILFE:"HELP"};
+const ALIAS={HOME:"HOME",WEI:"WEI",W:"W",WL:"W",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP"};
 function runCmd(raw){
   const p=raw.trim().toUpperCase().split(/\s+/).filter(Boolean); if(!p.length) return;
   if(p.length===1 && ALIAS[p[0]]) return go(ALIAS[p[0]]);
   const last=p[p.length-1]; const sym = ALIAS[last] ? p.slice(0,-1).join(" ") : p.join(" ");
   if(!sym) return go(ALIAS[last]);
-  const wl=(D.market&&D.market.watchlist)||[];
-  const hit = wl.find(r=>r.sym.toUpperCase()===sym) || wl.find(r=>(r.name||"").toUpperCase().includes(sym));
-  go("DES", hit?hit.sym:sym);
+  const mk=[...((D.market||{}).indices||[]),...((D.market||{}).markets||[])];
+  const ix = mk.find(r=>r.sym.toUpperCase()===sym||(r.name||"").toUpperCase()===sym);
+  if (ix) return go("GP", ix.sym);
+  const wl=(D.market&&D.market.watchlist)||[], un=(D.universe&&D.universe.rows)||[];
+  const hit = wl.find(r=>r.sym.toUpperCase()===sym) || un.find(r=>r.s.toUpperCase()===sym) || wl.find(r=>(r.name||"").toUpperCase().includes(sym)) || un.find(r=>(r.n||"").toUpperCase().includes(sym));
+  go("DES", hit?(hit.sym||hit.s):sym);
 }
 const inp=document.getElementById("cmd"), sg=document.getElementById("sugg"); let sIdx=-1;
 function suggest(){
   const q=inp.value.trim().toUpperCase(); if(!q){sg.style.display="none";return;}
-  const cmds=[["HOME","Übersicht"],["WEI","Weltindizes"],["W","Watchlist"],["ECO","Makro"],["TOP","News & Stimmung"],["HELP","Hilfe"]];
+  const cmds=[["HOME","Übersicht"],["WEI","Weltindizes"],["W","Watchlist"],["SCR","Screener"],["ECO","Makro"],["TOP","News & Stimmung"],["MKT","Marktupdate"],["CAL","Kalender"],["HELP","Hilfe"]];
+  const mk=[...((D.market||{}).indices||[]),...((D.market||{}).markets||[])].map(r=>[r.name,r.sym+" · Chart"]);
   const wl=((D.market&&D.market.watchlist)||[]).map(r=>[r.sym,r.name]);
-  const list=[...cmds,...wl].filter(([a,b])=>a.toUpperCase().startsWith(q)||(b||"").toUpperCase().includes(q)).slice(0,8);
+  const un=((D.universe&&D.universe.rows)||[]).map(r=>[r.s,r.n]);
+  const seen=new Set(), list=[];
+  for (const [a,b] of [...cmds,...mk,...wl,...un]) {
+    if (list.length>=10) break;
+    if (seen.has(a)) continue;
+    if (a.toUpperCase().startsWith(q)||(q.length>1&&(b||"").toUpperCase().includes(q))) { seen.add(a); list.push([a,b]); }
+  }
   sIdx=-1; sg.innerHTML=list.map(([a,b])=>`<div data-v="${esc(a)}"><b>${esc(a)}</b><span>${esc(b||"")}</span></div>`).join("");
   sg.style.display=list.length?"block":"none";
   sg.querySelectorAll("div").forEach(d=>d.onmousedown=e=>{e.preventDefault(); inp.value=""; sg.style.display="none"; runCmd(d.dataset.v);});
@@ -542,7 +793,7 @@ inp.addEventListener("keydown",e=>{
 document.getElementById("cmdForm").onsubmit=e=>{e.preventDefault(); const v=inp.value; inp.value=""; sg.style.display="none"; inp.blur(); runCmd(v);};
 document.querySelectorAll("#fkeys button").forEach(b=>b.onclick=()=>go(b.dataset.v));
 document.addEventListener("keydown",e=>{
-  const m=e.key.match(/^F([1-7])$/); if(m){ e.preventDefault(); go(["HOME","WEI","W","ECO","TOP","DES","HELP"][+m[1]-1]); return; }
+  const m=e.key.match(/^F([1-9]|10)$/); if(m){ e.preventDefault(); go(["HOME","WEI","W","SCR","ECO","TOP","MKT","CAL","DES","HELP"][+m[1]-1]); return; }
   if((e.key==="/"&&document.activeElement!==inp)||(e.key.toLowerCase()==="k"&&(e.ctrlKey||e.metaKey))){ e.preventDefault(); inp.focus(); }
   if(e.key==="Escape") inp.blur();
 });
@@ -582,7 +833,8 @@ document.getElementById("logout").onclick = () => { store.clear(); location.relo
   const up = D.market?.updated || D.meta?.updated;
   document.getElementById("stamp").textContent = "Daten: " + (up ? dt(up) : "keine");
   tape(); fromHash(); render();
-  setInterval(async()=>{ D.tick={}; await loadAll(); tape(); if(state.view!=="DES") render(); }, 10*60*1000);
+  lazy("universe");  // im Hintergrund für Suche & Screener
+  setInterval(async()=>{ D.tick={}; D.universe=D.history=D.calendar=D.marktupdate=null; await loadAll(); tape(); if(!["DES","SCR"].includes(state.view)) render(); }, 15*60*1000);
 })();
 </script>
 </body>

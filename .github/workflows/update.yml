@@ -2,14 +2,27 @@ name: Daten aktualisieren
 
 on:
   schedule:
+    # Werktags alle 30 Minuten von 07:00 bis 23:00 MEZ (Zeiten in UTC)
     - cron: "*/30 6-22 * * 1-5"
-    - cron: "0 9 * * 0,6"
-  workflow_dispatch: {}
+    # Am Wochenende zweimal täglich
+    - cron: "0 9,17 * * 0,6"
+    # Nachtlauf: Indexlisten, Kennzahlen, Detailseiten, Makro, Kalender
+    - cron: "15 1 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "fast = schnelle Aktualisierung, nightly = großer Nachtlauf"
+        type: choice
+        options: [fast, nightly]
+        default: fast
   push:
-    paths: ["config.json", "scripts/**"]
+    branches: [main]
+    paths: ["config.json", "scripts/**", "index.html", "manual/**"]
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: update-data
@@ -18,9 +31,20 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 170
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      MODE: ${{ github.event.schedule == '15 1 * * *' && 'nightly' || inputs.mode || 'fast' }}
+      DATA_DIR: ${{ github.workspace }}/store
     steps:
       - uses: actions/checkout@v4
+
+      - name: Gespeicherte Daten holen (Branch data-store)
+        run: |
+          git clone --depth 1 --branch data-store "https://github.com/${GITHUB_REPOSITORY}.git" store \
+            || (mkdir -p store && echo "Erster Lauf – noch keine gespeicherten Daten")
 
       - uses: actions/setup-python@v5
         with:
@@ -36,19 +60,37 @@ jobs:
       - name: Pakete installieren
         run: |
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install -r requirements.txt
+          pip install -U -r requirements.txt
 
-      - name: Daten holen
+      - name: Daten holen (${{ env.MODE }})
         env:
           TERMINAL_PASSWORD: ${{ secrets.TERMINAL_PASSWORD }}
+          MKT_PRIVATE_KEY: ${{ secrets.MKT_PRIVATE_KEY }}
         run: python scripts/fetch_data.py
 
-      - name: Daten speichern
+      - name: Daten speichern (ohne Verlauf, damit das Repository klein bleibt)
+        working-directory: store
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git config user.name "terminal-bot"
-          git config user.email "terminal-bot@users.noreply.github.com"
-          git add data
-          git diff --cached --quiet && echo "Keine Änderungen" && exit 0
-          git commit -m "Daten $(date -u +'%Y-%m-%d %H:%M') UTC"
-          git pull --rebase --autostash
-          git push
+          git config --global user.name "terminal-bot"
+          git config --global user.email "terminal-bot@users.noreply.github.com"
+          [ -d .git ] || git init -q
+          git checkout -q --orphan snapshot
+          git add -A
+          git commit -q -m "Daten $(date -u +'%Y-%m-%d %H:%M') UTC (${MODE})"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" snapshot:data-store
+
+      - name: Webseite zusammenstellen
+        run: |
+          mkdir -p _site/data
+          cp index.html _site/
+          touch _site/.nojekyll
+          rsync -a --exclude .git store/ _site/data/
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

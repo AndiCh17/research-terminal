@@ -3,10 +3,13 @@
 Ein Bloomberg-artiges Research-Terminal, das komplett kostenlos auf GitHub läuft.
 Auf dem Arbeits-PC brauchst du nur den Browser, installieren musst du nichts.
 
-**So funktioniert es:** GitHub startet alle 30 Minuten ein Python-Skript in der Cloud. Es holt
-Kurse (yfinance), Bilanzen (SEC EDGAR / Yahoo), Makrodaten (FRED + EZB) und Schlagzeilen
-(Yahoo + Google News), bewertet die Schlagzeilen mit FinBERT und speichert alles im Ordner `data/`.
-Die Webseite `index.html` zeigt diese Daten an.
+**So funktioniert es:** GitHub startet alle 30 Minuten ein Python-Skript in der Cloud (Modus *fast*):
+Indizes, Märkte, Watchlist, Tageskurse aller ca. 2.500–3.000 Titel des Universums, Schlagzeilen.
+Einmal pro Nacht (01:15 UTC, Modus *nightly*) werden zusätzlich die Indexlisten aktualisiert, Kennzahlen und
+Detailseiten für mehrere hundert Titel erstellt (rotierend, bis alle erfasst sind), Makrodaten und Kalender geladen.
+
+Die Daten liegen verschlüsselt im Branch `data-store` (immer nur der neueste Stand, ohne Verlauf),
+die Webseite wird direkt aus dem Workflow veröffentlicht.
 
 ---
 
@@ -61,7 +64,10 @@ heruntergeladen wird. Danach sind es 2–4 Minuten. Grüner Haken = fertig.
 Manuell starten: **Run workflow**.
 
 ### 8. Webseite einschalten
-**Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main` / `(root)` → Save**
+**Settings → Pages → Build and deployment → Source: „GitHub Actions“** auswählen (nicht „Deploy from a branch“).
+
+Danach einmal **Actions → Daten aktualisieren → Run workflow → mode: nightly** starten. Der erste Nachtlauf
+dauert bis zu ca. 2 Stunden. Die Seite ist aber schon nach dem ersten schnellen Lauf erreichbar.
 
 Nach 1–2 Minuten ist das Terminal erreichbar unter
 `https://<dein-github-name>.github.io/research-terminal/`
@@ -75,11 +81,14 @@ Als Lesezeichen speichern. Am Handy: „Zum Home-Bildschirm hinzufügen“.
 | Eingabe | Wirkung |
 |---|---|
 | `AAPL` oder `VOE.VI` + GO | Detailseite des Titels |
-| `WEI` | Weltindizes, Devisen, Rohstoffe |
+| `DAX`, `Gold` | großer Chart für Index/Markt |
+| `WEI` | Weltindizes, Devisen, Rohstoffe (Zeile anklicken = Chart) |
 | `W` | Watchlist (sortierbar) |
-| `ECO` | Makro USA / Euroraum / Österreich |
-| `TOP` | News mit FinBERT-Stimmung |
-| `F1`–`F7` | Funktionsleiste |
+| `SCR` | Screener über das ganze Universum |
+| `ECO` | Makro USA / Euroraum / Österreich, Frühindikatoren, Staatsanleihen |
+| `TOP` | News mit FinBERT-Stimmung (ⓘ erklärt die Berechnung) |
+| `CAL` | Notenbanken, Quartalszahlen, Dividendentermine |
+| `F1`–`F9` | Funktionsleiste |
 | `/` oder `Strg+K` | Befehlszeile |
 
 ## Ticker-Format (Yahoo)
@@ -95,14 +104,25 @@ Als Lesezeichen speichern. Am Handy: „Zum Home-Bildschirm hinzufügen“.
 
 Den richtigen Ticker findest du auf finance.yahoo.com: Titel suchen und das Kürzel in der URL übernehmen.
 
+## Universum
+In `config.json` → `universe`: iShares-Positionslisten (MSCI ACWI, STOXX Europe 600), Wikipedia-Listen (S&P 500,
+Nasdaq 100) und eine Zusatzliste (österreichische Titel). Weitere iShares-ETFs lassen sich mit ihrer CSV-Adresse ergänzen.
+Im Protokoll des Nachtlaufs steht je Quelle, wie viele Titel gefunden wurden. Steht dort eine Warnung, hat sich
+vermutlich die Adresse geändert.
+
+## Einkaufsmanager-Indizes (PMI)
+Die offiziellen PMIs (ISM, HCOB/S&P Global) sind lizenzpflichtig. Automatisch geladen werden freie Alternativen:
+EU-Kommission (Wirtschaftsstimmung ESI, Industrie-, Dienstleistungs-, Verbrauchervertrauen für Euroraum, Österreich,
+Deutschland), Philly-Fed, Empire State, Chicago Fed. Offizielle PMI-Werte kannst du in `manual/pmi.csv` selbst eintragen.
+
 ## Was du wissen solltest
 - **Was das Passwort schützt:** alle Kurse, Kennzahlen, Bilanzen, News und Stimmungswerte.
   **Nicht geschützt** sind der Code und `config.json`, also deine Watchlist, weil das Repository öffentlich ist.
   Vor dem ersten Lauf zeigt die Seite unverschlüsselte Beispieldaten ohne Passwortabfrage.
 - **„Angemeldet bleiben“** speichert das Passwort im Browser dieses Geräts. Am Arbeits-PC besser nicht anhaken.
   Abmelden über das ⏻-Symbol oben rechts.
-- **Detailseiten** gibt es nur für Titel in der Watchlist. Ein Titel ist erst nach dem nächsten Lauf verfügbar.
-  Empfehlung: bis ca. 40 Titel, damit ein Lauf unter 10 Minuten bleibt.
+- **Detailseiten:** Watchlist-Titel werden alle 30 Minuten aktualisiert, alle übrigen im Nachtlauf (ca. 600 pro Nacht,
+  `nightly_batch` in config.json). Bis alle Titel erfasst sind, dauert es einige Nächte. Bis dahin zeigt die Detailseite ein Kurzprofil.
 - **Bilanzen:** US-Titel kommen aus SEC EDGAR (10-K, bis zu 10 Jahre), alle anderen aus Yahoo (ca. 4 Jahre).
 - **FinBERT** versteht nur Englisch. Deshalb werden englische Schlagzeilen bewertet.
 - **Verzögerung:** Kurse sind 15–20 Minuten verzögert und werden alle 30 Minuten aktualisiert (werktags 7–23 Uhr).
@@ -119,11 +139,12 @@ config.json                   Watchlist, Indizes, Märkte, News-Themen
 scripts/fetch_data.py         Datensammler
 requirements.txt              Python-Pakete
 .github/workflows/update.yml  Zeitplan für GitHub Actions
-data/                         wird automatisch befüllt
+manual/pmi.csv                selbst eingetragene PMI-Werte
+(Branch data-store)           verschlüsselte Daten, wird automatisch befüllt
 ```
 
 ## Ausbauideen
+- ETFs mit steuerlichem Vertreter in Österreich + „In welchen ETFs steckt diese Aktie?“
+- Österreichische Staatsanleihen als Einzeltitel (Kupon, Laufzeit, Rendite)
 - Europäische Bilanzen aus ESEF-Berichten (filings.xbrl.org)
-- Screener (z. B. KGV < 15 und Dividende > 3 %)
-- Earnings-Kalender, Insider-Transaktionen (SEC Form 4)
 - Portfolio-Ansicht mit Gewichtung und Performance

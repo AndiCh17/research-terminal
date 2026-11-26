@@ -1,0 +1,7 @@
+# Offizielle Einkaufsmanager-Indizes selbst eintragen (z. B. aus dem Marktupdate).
+# Eine Zeile pro Monat und Reihe: monat;reihe;wert   – Monat als JJJJ-MM, Dezimalzeichen Komma oder Punkt.
+# Der Reihenname bestimmt die Region: "Euro…" = Euroraum, "USA/ISM" = USA, "Österreich…", "Deutschland…".
+# Beispiel (# am Zeilenanfang entfernen, um die Zeile zu aktivieren):
+# 2026-10;Euroraum Industrie-PMI;49,5
+# 2026-10;USA ISM Industrie;48,7
+monat;reihe;wert

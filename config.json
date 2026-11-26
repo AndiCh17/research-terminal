@@ -1,13 +1,83 @@
 {
   "_hinweis": "Hier pflegst du dein Terminal. Ticker im Yahoo-Format (z. B. VOE.VI = voestalpine Wien, SAP.DE = SAP Xetra). Nach dem Speichern holt der nächste Lauf die Daten.",
   "sec_user_agent": "Private Research Terminal andreas.christler@gmail.com",
-
   "watchlist": [
-    "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "JPM", "BRK-B",
-    "SAP.DE", "SIE.DE", "ALV.DE", "ASML.AS", "MC.PA", "NESN.SW", "NOVO-B.CO",
-    "EBS.VI", "VER.VI", "OMV.VI", "VOE.VI", "RBI.VI"
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "AMZN",
+    "GOOGL",
+    "META",
+    "JPM",
+    "BRK-B",
+    "SAP.DE",
+    "SIE.DE",
+    "ALV.DE",
+    "ASML.AS",
+    "MC.PA",
+    "NESN.SW",
+    "NOVO-B.CO",
+    "EBS.VI",
+    "VER.VI",
+    "OMV.VI",
+    "VOE.VI",
+    "RBI.VI"
   ],
-
+  "universe": {
+    "_hinweis": "Indexlisten werden jede Nacht neu geladen. Weitere iShares-ETFs (Positionslisten-CSV) oder Wikipedia-Listen können ergänzt werden.",
+    "ishares": [
+      {
+        "name": "MSCI ACWI",
+        "url": "https://www.ishares.com/us/products/239600/ishares-msci-acwi-etf/1467271812596.ajax?fileType=csv&fileName=ACWI_holdings&dataType=fund"
+      },
+      {
+        "name": "STOXX Europe 600",
+        "url": "https://www.ishares.com/de/privatanleger/de/produkte/251931/ishares-stoxx-europe-600-ucits-etf-de-fund/1478358465952.ajax?fileType=csv&fileName=EXSA_holdings&dataType=fund"
+      }
+    ],
+    "wikipedia": [
+      {
+        "name": "S&P 500",
+        "url": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+      },
+      {
+        "name": "Nasdaq 100",
+        "url": "https://en.wikipedia.org/wiki/Nasdaq-100"
+      }
+    ],
+    "extra": [
+      "ANDR.VI",
+      "ATS.VI",
+      "BG.VI",
+      "CAI.VI",
+      "DOC.VI",
+      "EBS.VI",
+      "EVN.VI",
+      "FACC.VI",
+      "LNZ.VI",
+      "MMK.VI",
+      "OMV.VI",
+      "PAL.VI",
+      "POST.VI",
+      "RBI.VI",
+      "SBO.VI",
+      "STR.VI",
+      "TKA.VI",
+      "UQA.VI",
+      "VER.VI",
+      "VIG.VI",
+      "VOE.VI",
+      "WIE.VI",
+      "AGR.VI",
+      "ROS.VI",
+      "PYT.VI",
+      "ZAG.VI",
+      "SEM.VI",
+      "FLU.VI",
+      "KTCG.VI",
+      "AMAG.VI"
+    ]
+  },
   "indices": {
     "^GSPC": "S&P 500",
     "^NDX": "Nasdaq 100",
@@ -21,7 +91,6 @@
     "^HSI": "Hang Seng",
     "^VIX": "VIX"
   },
-
   "markets": {
     "EURUSD=X": "EUR/USD",
     "EURCHF=X": "EUR/CHF",
@@ -34,14 +103,107 @@
     "HG=F": "Kupfer",
     "BTC-USD": "Bitcoin"
   },
-
   "news_queries": [
     "stock market",
     "ECB interest rates",
     "Federal Reserve",
     "European stocks"
   ],
-
   "news_per_ticker": 8,
-  "sentiment_model": "ProsusAI/finbert"
+  "sentiment_model": "ProsusAI/finbert",
+  "nightly_batch": 600,
+  "nightly_minutes": 100,
+  "central_banks": [
+    {
+      "date": "2026-12-09",
+      "bank": "Fed",
+      "note": "Zinsentscheid"
+    },
+    {
+      "date": "2026-12-17",
+      "bank": "EZB",
+      "note": "Zinsentscheid"
+    },
+    {
+      "date": "2027-01-27",
+      "bank": "Fed",
+      "note": "Zinsentscheid"
+    },
+    {
+      "date": "2027-02-04",
+      "bank": "EZB",
+      "note": "Zinsentscheid"
+    },
+    {
+      "date": "2027-03-17",
+      "bank": "Fed",
+      "note": "Zinsentscheid + Projektionen"
+    },
+    {
+      "date": "2027-03-18",
+      "bank": "EZB",
+      "note": "Zinsentscheid + Projektionen"
+    },
+    {
+      "date": "2027-04-28",
+      "bank": "Fed",
+      "note": "Zinsentscheid"
+    },
+    {
+      "date": "2027-04-29",
+      "bank": "EZB",
+      "note": "Zinsentscheid"
+    },
+    {
+      "date": "2027-06-09",
+      "bank": "Fed",
+      "note": "Zinsentscheid + Projektionen"
+    },
+    {
+      "date": "2027-06-10",
+      "bank": "EZB",
+      "note": "Zinsentscheid + Projektionen"
+    },
+    {
+      "date": "2027-07-22",
+      "bank": "EZB",
+      "note": "Zinsentscheid"
+    },
+    {
+      "date": "2027-07-28",
+      "bank": "Fed",
+      "note": "Zinsentscheid"
+    },
+    {
+      "date": "2027-09-09",
+      "bank": "EZB",
+      "note": "Zinsentscheid + Projektionen"
+    },
+    {
+      "date": "2027-09-15",
+      "bank": "Fed",
+      "note": "Zinsentscheid + Projektionen"
+    },
+    {
+      "date": "2027-10-27",
+      "bank": "Fed",
+      "note": "Strategiesitzung (kein Zinsentscheid)"
+    },
+    {
+      "date": "2027-10-28",
+      "bank": "EZB",
+      "note": "Zinsentscheid"
+    },
+    {
+      "date": "2027-11-17",
+      "bank": "Fed",
+      "note": "Zinsentscheid + Projektionen"
+    },
+    {
+      "date": "2027-12-16",
+      "bank": "EZB",
+      "note": "Zinsentscheid + Projektionen"
+    }
+  ],
+  "_central_banks_quelle": "Fed: Pressemitteilung 12.11.2026 (revidierter Kalender 2027). EZB: EZB-Kalender. Termine können sich ändern – bei Bedarf hier anpassen."
 }
