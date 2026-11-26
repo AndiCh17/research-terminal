@@ -512,6 +512,7 @@ V.DES = async () => {
     </div>
     <div style="margin-top:10px">${panel("Branchenvergleich", peerCompare(t.symbol))}</div>
     <div style="margin-top:10px">${panel("In diesen ETFs enthalten", etfMembership(t.symbol))}</div>
+    <div style="margin-top:10px">${panel("Quartalszahlen", quarterlyHtml(t))}</div>
     <div style="margin-top:10px">${panel("Finanzen (Jahresabschlüsse)", finHtml)}</div>
     <div style="margin-top:10px">${panel("News", newsList(t.news, 25, false))}</div>`;
 };
@@ -522,6 +523,8 @@ V.DES.after = el => {
     const cut=new Date(); cut.setMonth(cut.getMonth()-m); lineChart(el.querySelector("#pxChart"), (src||[]).filter(d=>new Date(d[0])>=cut), {base:true, h:290, unit:t.currency}); };
   draw();
   el.querySelectorAll("#dr button").forEach(b=>b.onclick=()=>{desRange=b.dataset.r; el.querySelectorAll("#dr button").forEach(x=>x.classList.toggle("on",x===b)); draw();});
+  const q=t.quarterly, qc=el.querySelector("#qChart");
+  if(q&&qc&&q.periods){ const k=Math.max(0,q.periods.length-12); barChart(qc, q.periods.slice(k).map(p=>p.replace("-"," ")), [{name:"Umsatz",vals:(q.revenue||[]).slice(k),color:"#ff9f1a"},{name:"Nettogewinn",vals:(q.netIncome||[]).slice(k),color:"#4da3ff"}], 190); }
   const f=t.financials, fc=el.querySelector("#finChart");
   if(f&&fc){ const yrs=f.years.slice(-6), off=f.years.length-yrs.length; const sl=k=>(f[k]||[]).slice(off);
     barChart(fc, yrs, [{name:"Umsatz",vals:sl("revenue"),color:"#ff9f1a"},{name:"Nettogewinn",vals:sl("netIncome"),color:"#4da3ff"},{name:"Free Cashflow",vals:sl("freeCashflow"),color:"#3ddc84"}]); }
@@ -963,6 +966,39 @@ function sendBonds(){
 }
 window.addEventListener("message", ev => { if (ev.origin===location.origin && ev.data && ev.data.type==="rt-ready") sendBonds(); });
 V.NET.after = el => { const f=el.querySelector("#netFrame"); if (f) f.addEventListener("load", sendBonds); };
+
+/* --- Quartalszahlen --- */
+function quarterlyHtml(t){
+  const q = t.quarterly, su = t.surprises || [];
+  let h = "";
+  if (q && q.periods && q.periods.length) {
+    const n = q.periods.length, show = Math.min(8, n), off = n - show;
+    const yoy = (arr, i) => { const a=arr?.[i], b=arr?.[i-4]; return a!=null && b ? (a/b-1)*100*(b<0?-1:1) : null; };
+    const margin = i => q.revenue?.[i] && q.netIncome?.[i]!=null ? q.netIncome[i]/q.revenue[i]*100 : null;
+    const cols = [...Array(show).keys()].map(k=>k+off);
+    const row = (l, f, c="") => `<tr><td class="l">${l}</td>${cols.map(i=>{ const v=f(i); return `<td class="${c==="g"?cls(v):""}">${v==null?"–":(c==="g"||c==="p")?pct(v,1,c==="g"):c==="e"?fmt(v,2):big(v)}</td>`; }).join("")}</tr>`;
+    h += `<div id="qChart"></div><div class="scroll"><table><thead><tr><th class="l">${esc(q.currency||"")}</th>${cols.map(i=>`<th>${esc(q.periods[i])}</th>`).join("")}</tr></thead><tbody>
+      ${row("Umsatz", i=>q.revenue?.[i])}
+      ${row("&nbsp;&nbsp;Δ ggü. Vorjahresquartal", i=>yoy(q.revenue,i), "g")}
+      ${row("Operatives Ergebnis", i=>q.operatingIncome?.[i])}
+      ${row("Nettogewinn", i=>q.netIncome?.[i])}
+      ${row("&nbsp;&nbsp;Δ ggü. Vorjahresquartal", i=>yoy(q.netIncome,i), "g")}
+      ${row("Nettomarge", i=>margin(i), "p")}
+      ${row("EPS (verwässert)", i=>q.eps?.[i], "e")}
+      ${row("&nbsp;&nbsp;Δ ggü. Vorjahresquartal", i=>yoy(q.eps,i), "g")}
+    </tbody></table></div><div class="dim" style="font-size:11px;margin:6px 0 10px">Quelle: ${esc(q.source)}. Quartale nach Kalenderquartal des Periodenendes${q.source.includes("SEC")?"; 4. Quartal = Geschäftsjahr minus Q1–Q3":""}.</div>`;
+  } else h += `<div class="dim">Noch keine Quartalszahlen – sie kommen mit dem nächsten Nachtlauf.</div>`;
+  const past = su.filter(x=>x.rep!=null), next = su.filter(x=>x.rep==null && x.d >= new Date().toISOString().slice(0,10)).slice(0,1);
+  if (past.length || next.length) {
+    const beats = past.filter(x=>x.sur!=null && x.sur>0).length;
+    h += `<div class="ph" style="margin:6px -9px 8px;border-top:1px solid var(--line)"><h2>Gewinn je Aktie: Schätzung vs. Ergebnis</h2><small>${past.length?`${beats} von ${past.length} Quartalen über den Erwartungen`:""}</small></div>
+      ${next.length?`<div class="fbar"><span class="chip" style="color:var(--amber);border-color:var(--amber)">Nächste Zahlen: ${new Date(next[0].d).toLocaleDateString("de-AT")}${next[0].est!=null?` · erwartetes EPS ${fmt(next[0].est,2)}`:""}</span></div>`:""}
+      <div class="scroll"><table><thead><tr><th class="l">Veröffentlichung</th><th>EPS erwartet</th><th>EPS berichtet</th><th>Überraschung</th><th class="l" style="width:35%"></th></tr></thead><tbody>
+      ${past.slice().reverse().map(x=>`<tr><td class="l">${new Date(x.d).toLocaleDateString("de-AT")}</td><td>${fmt(x.est,2)}</td><td>${fmt(x.rep,2)}</td><td class="${cls(x.sur)}">${pct(x.sur,1)}</td><td class="l"><div class="bar" style="width:${Math.min(100,Math.abs(x.sur||0)*4)}%;${(x.sur||0)<0?"background:var(--dn)":"background:var(--up)"}"></div></td></tr>`).join("")}
+      </tbody></table></div><div class="dim" style="font-size:11px;margin-top:6px">Konsensschätzung und berichtetes Ergebnis laut Yahoo Finance (bereinigtes EPS, kann vom GAAP-Wert oben abweichen).</div>`;
+  }
+  return h;
+}
 
 V.HELP = () => panel("Befehle", `<table class="help"><tbody>
   <tr><td>AAPL · VOE.VI · Apple</td><td>Ticker oder Name eingeben + GO → Detailseite. Funktioniert für alle Titel im Universum (MSCI ACWI, S&amp;P 500, Nasdaq 100, STOXX 600, ATX).</td></tr>

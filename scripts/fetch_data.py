@@ -306,6 +306,7 @@ class Edgar:
         r.raise_for_status()
         facts = r.json().get("facts", {})
         gaap = facts.get("us-gaap", {})
+        self.last_gaap = (sym, gaap)
         res: dict[str, dict[int, float]] = {}
         for key, tags in SEC_TAGS.items():
             for tag in tags:
@@ -347,6 +348,81 @@ class Edgar:
             out["freeCashflow"] = [None if a is None or b is None else a - b
                                    for a, b in zip(out["operatingCashflow"], out["capex"])]
         return out
+
+
+Q_TAGS = {"revenue": SEC_TAGS["revenue"], "netIncome": SEC_TAGS["netIncome"],
+          "operatingIncome": SEC_TAGS["operatingIncome"], "eps": SEC_TAGS["eps"]}
+
+
+def edgar_quarterly(gaap: dict, n=16):
+    """Quartalswerte aus 10-Q/10-K; viertes Quartal = Geschäftsjahr minus Q1–Q3."""
+    out: dict[str, dict[str, float]] = {}
+    for key, tags in Q_TAGS.items():
+        for tag in tags:
+            node = gaap.get(tag)
+            if not node:
+                continue
+            units = node.get("units", {})
+            vals = units.get("USD") or units.get("USD/shares") or next(iter(units.values()), [])
+            q, fy = {}, []
+            for f in vals:
+                if f.get("form") not in ("10-Q", "10-K", "10-Q/A", "10-K/A") or not f.get("start") or not f.get("end"):
+                    continue
+                st, en = datetime.fromisoformat(f["start"]), datetime.fromisoformat(f["end"])
+                days = (en - st).days
+                if 80 <= days <= 100:
+                    k = en.strftime("%Y-%m-%d")
+                    if k not in q or f.get("filed", "") > q[k][0]:
+                        q[k] = (f.get("filed", ""), float(f["val"]), st)
+                elif 340 <= days <= 380:
+                    fy.append((st, en, float(f["val"])))
+            for st, en, v in fy:  # Q4 ableiten
+                k = en.strftime("%Y-%m-%d")
+                if k in q:
+                    continue
+                inside = [x for kk, x in q.items() if x[2] >= st - timedelta(days=5) and datetime.fromisoformat(kk) <= en]
+                if len(inside) == 3:
+                    q[k] = ("derived", v - sum(x[1] for x in inside), en - timedelta(days=91))
+            if q:
+                for k, (_, v, _) in q.items():
+                    out.setdefault(k, {}).setdefault(key, v)
+                break
+    if not out:
+        return None
+    ends = sorted(out)[-n:]
+    lab = lambda e: f"{e[:4]}-Q{(int(e[5:7]) - 1) // 3 + 1}"  # noqa: E731
+    return {"source": "SEC EDGAR (10-Q/10-K)", "currency": "USD", "periods": [lab(e) for e in ends], "ends": ends,
+            **{k: [out[e].get(k) for e in ends] for k in Q_TAGS}}
+
+
+def yahoo_quarterly(t: yf.Ticker):
+    q = t.quarterly_income_stmt
+    if q is None or q.empty:
+        return None
+    cols = sorted(q.columns)[-8:]
+
+    def pick(names):
+        for n in names:
+            if n in q.index:
+                return [rnd(q.at[n, c], 4) if c in q.columns else None for c in cols]
+        return [None] * len(cols)
+    return {"source": "Yahoo Finance", "currency": safe(lambda: t.fast_info["currency"], None, "Währung"),
+            "periods": [f"{c.year}-Q{(c.month - 1) // 3 + 1}" for c in cols], "ends": [c.strftime("%Y-%m-%d") for c in cols],
+            "revenue": pick(["Total Revenue", "Operating Revenue"]), "netIncome": pick(["Net Income", "Net Income Common Stockholders"]),
+            "operatingIncome": pick(["Operating Income", "EBIT"]), "eps": pick(["Diluted EPS", "Basic EPS"])}
+
+
+def earnings_surprises(t: yf.Ticker, n=12):
+    df = t.get_earnings_dates(limit=n + 4)
+    if df is None or df.empty:
+        return []
+    out = []
+    for d, r in df.iterrows():
+        est, rep = r.get("EPS Estimate"), r.get("Reported EPS")
+        sur = r.get("Surprise(%)")
+        out.append({"d": pd.Timestamp(d).strftime("%Y-%m-%d"), "est": rnd(est, 3), "rep": rnd(rep, 3),
+                    "sur": rnd(sur, 2) if sur is not None and not (isinstance(sur, float) and math.isnan(sur)) else None})
+    return sorted(out, key=lambda x: x["d"])[-n:]
 
 
 def yahoo_financials(t: yf.Ticker):
@@ -1138,9 +1214,16 @@ def build_ticker(sym: str, edgar: "Edgar", closes_1y: pd.Series | None, sent: "S
         safe(lambda: t.history(period="1y", auto_adjust=False)["Close"].dropna(), None, f"1y {sym}")
 
     is_us = "." not in sym and info.get("country") in (None, "United States")
+    edgar.last_gaap = None
     fin = safe(lambda: edgar.financials(sym), None, f"SEC {sym}") if is_us else None
+    quarterly = None
+    if fin and getattr(edgar, "last_gaap", None) and edgar.last_gaap[0] == sym:
+        quarterly = safe(lambda: edgar_quarterly(edgar.last_gaap[1]), None, f"SEC-Quartale {sym}")
     if not fin:
         fin = safe(lambda: yahoo_financials(t), None, f"Yahoo-Bilanz {sym}")
+    if not quarterly:
+        quarterly = safe(lambda: yahoo_quarterly(t), None, f"Yahoo-Quartale {sym}")
+    surprises = safe(lambda: earnings_surprises(t), [], f"Gewinnüberraschungen {sym}")
 
     def g(*keys):
         for k in keys:
@@ -1189,7 +1272,8 @@ def build_ticker(sym: str, edgar: "Edgar", closes_1y: pd.Series | None, sent: "S
         "dates": {"earnings": iso_date(earn), "exDividend": iso_date(g("exDividendDate")),
                   "dividendPay": iso_date(g("dividendDate"))},
         "history1y": series_pairs(hist1), "history5y": series_pairs(hist5),
-        "financials": fin, "news": news, "sentiment": agg, "updated": NOW.isoformat(),
+        "financials": fin, "quarterly": quarterly, "surprises": surprises,
+        "news": news, "sentiment": agg, "updated": NOW.isoformat(),
     }
     prof = {"n": name, "sec": detail["sector"], "ind": g("industry"), "c": g("country"), "cur": g("currency"),
             "mcap": g("marketCap"), "pe": g("trailingPE"), "fpe": g("forwardPE"), "pb": g("priceToBook"),
