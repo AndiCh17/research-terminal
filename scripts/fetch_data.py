@@ -608,7 +608,7 @@ def wiki_list(url: str, label: str, suffix: str = "", country: str | None = None
         if isinstance(t.columns, pd.MultiIndex):
             t.columns = [" ".join(str(x) for x in c if "Unnamed" not in str(x)) for c in t.columns]
         cols = [str(c) for c in t.columns]
-        sc = next((c for c in cols if clean_h(c) in ("Symbol", "Ticker", "Ticker symbol", "EPIC")), None)
+        sc = next((c for c in cols if clean_h(c) in ("Symbol", "Ticker", "Ticker symbol", "EPIC", "Code", "Stock code")), None)
         if not sc or len(t) < min_rows:
             continue
         nc = next((c for c in cols if clean_h(c) in ("Security", "Company", "Name", "Company name")), None)
@@ -1124,7 +1124,19 @@ def em_korea_taiwan(min_weight=0.02) -> list[dict]:
         else:
             continue
         out.append({"s": sym, "n": r["name"].title(), "sec": None, "c": c, "src": ["MSCI EM (Korea/Taiwan)"]})
-    log(f"  MSCI EM (Korea/Taiwan): {len(out)} Titel")
+    # Börsenplatz prüfen: Taipei Exchange (.TWO) bzw. KOSDAQ (.KQ) sind in der Positionsliste nicht immer erkennbar
+    alt = {".TW": ".TWO", ".TWO": ".TW", ".KS": ".KQ", ".KQ": ".KS"}
+    have = history_block([r["s"] for r in out], period="5d", interval="1d")
+    miss = [r for r in out if have.get(r["s"]) is None or not len(have[r["s"]])]
+    if miss:
+        swap = {r["s"]: r["s"].rsplit(".", 1)[0] + alt["." + r["s"].rsplit(".", 1)[1]] for r in miss}
+        have2 = history_block(list(swap.values()), period="5d", interval="1d")
+        for r in miss:
+            n = swap[r["s"]]
+            r["s"] = n if (have2.get(n) is not None and len(have2[n])) else None
+    dropped = sum(1 for r in out if not r["s"])
+    out = [r for r in out if r["s"]]
+    log(f"  MSCI EM (Korea/Taiwan): {len(out)} Titel ({len(miss)} Börsenplatz geprüft, {dropped} ohne Kurse verworfen)")
     return out
 
 
