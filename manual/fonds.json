@@ -1400,7 +1400,7 @@
     "AT0000X250WT2"
    ],
    "region": "Global",
-   "match": "KEPLER X-250 Welt Aktien"
+   "match": "X-250 Welt Aktien"
   },
   {
    "name": "Starmix Ausgewogen",
@@ -1424,6 +1424,19 @@
    "isins": [],
    "region": null,
    "match": "Portefeuille I - Sicherheit Plus"
+  },
+  {
+   "name": "KEPLER X-300 Equal Welt Aktien",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B4L5Y983",
+   "isins": [
+    "AT00X300EWT3",
+    "AT0000A3LQK6"
+   ],
+   "region": "Global (gleichgewichtet)",
+   "match": "X-300 Equal Welt Aktien"
   }
  ]
 }
