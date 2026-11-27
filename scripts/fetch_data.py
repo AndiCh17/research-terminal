@@ -1022,13 +1022,39 @@ def build_bonds():
 
 
 # ----------------------------------------------------------------- ETFs
-ETF_INDEX = {"SXR8.DE": "S&P 500", "VUSA.DE": "S&P 500", "XDEW.DE": "S&P 500", "EXS1.DE": "DAX", "DBXD.DE": "DAX",
-             "EUN2.DE": "Euro Stoxx 50", "SXRV.DE": "Nasdaq 100", "EQQQ.DE": "Nasdaq 100", "EXXX.DE": "ATX"}
+ETF_INDEX = {"IE00B5BMR087": "S&P 500", "IE00BLNMYC90": "S&P 500", "DE0005933931": "DAX", "IE00B53L3W79": "Euro Stoxx 50",
+             "IE00BYVQ9F29": "Nasdaq 100", "LU0659579063": "ATX"}
+
+
+def resolve_etf_tickers(etfs: list[dict]):
+    """Fehlende Yahoo-Ticker über die ISIN suchen (Xetra bevorzugt) und merken."""
+    cache = load(DATA / "etf_tickers.json", {}) or {}
+    for e in etfs:
+        if e.get("ticker"):
+            continue
+        if cache.get(e["isin"]):
+            e["ticker"] = cache[e["isin"]]
+            continue
+        def find():
+            quotes = yf.Search(e["isin"], max_results=10).quotes or []
+            syms = [q["symbol"] for q in quotes if q.get("symbol")]
+            order = [s for suf in (".DE", ".F", ".VI", ".AS", ".MI", ".PA", ".L", ".SW") for s in syms if s.endswith(suf)]
+            for sym in order + [s for s in syms if s not in order]:
+                h = history_block([sym], period="1mo").get(sym)
+                if h is not None and len(h) > 5:
+                    return sym
+            return None
+        sym = safe(find, None, f"Tickersuche {e['isin']}")
+        log(f"  ETF-Ticker {e['isin']}: {sym or 'nicht gefunden'}")
+        if sym:
+            e["ticker"] = cache[e["isin"]] = sym
+    save(DATA / "etf_tickers.json", cache, quiet=True)
 
 
 def build_etfs():
     cfg = json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8"))
     etfs = cfg.get("etfs", [])
+    resolve_etf_tickers(etfs)
     tick = [e["ticker"] for e in etfs if e.get("ticker")]
     d1 = history_block(tick, period="1y")
     w5 = history_block(tick, period="5y", interval="1wk")
@@ -1037,7 +1063,7 @@ def build_etfs():
     for e in etfs:
         t = e.get("ticker")
         c, w = d1.get(t), w5.get(t)
-        row = {**e, "index": ETF_INDEX.get(t)}
+        row = {**e, "index": ETF_INDEX.get(e["isin"])}
         if MODE == "nightly" or e["isin"] not in old or old[e["isin"]].get("ter") is None:
             info = safe(lambda: yf.Ticker(t).info or {}, {}, f"ETF {t}") if t else {}
             ter = info.get("netExpenseRatio") or info.get("annualReportExpenseRatio")
@@ -1201,7 +1227,7 @@ def build_holdings(uni_rows: list[dict], fund: dict):
             continue
         if not src.get("anbieter"):
             continue
-        rows = safe(lambda: read_holdings(e), [], f"Positionen {e['ticker']}")
+        rows = safe(lambda: read_holdings(e), [], f"Positionen {e.get('ticker') or e['isin']}")
         if not rows:
             continue
         tops[e["isin"]] = [[n, rnd(w, 2)] for n, w in sorted(rows, key=lambda x: -x[1])[:10]]
@@ -1221,7 +1247,7 @@ def build_holdings(uni_rows: list[dict], fund: dict):
         meta[e["isin"]] = {"art": "liste", "quelle": src.get("quelle") or "Positionsliste des Anbieters",
                            "naeherung": bool(src.get("isin") or src.get("ticker")), "n": len(rows), "hit": hit,
                            "wsum": rnd(sum(agg.values()), 1), "wall": rnd(sum(w for _, w in rows), 1)}
-        log(f"  Positionen {e['ticker']}: {len(rows)} Titel, {hit} im Universum zugeordnet")
+        log(f"  Positionen {e.get('ticker') or e['isin']}: {len(rows)} Titel, {hit} im Universum zugeordnet")
     save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta})
 
 
@@ -1619,7 +1645,9 @@ def main():
     safe(build_etfs, None, "ETFs")
     if MODE == "nightly" or not set(CFG.get("long_indices", {})) <= set((load(DATA / "long.json") or {}).get("series", {})):
         safe(build_long_history, None, "Langfrist-Historie")
-    if MODE == "nightly" or "meta" not in (load(DATA / "holdings.json") or {}):
+    _h = load(DATA / "holdings.json") or {}
+    _need = {e["isin"] for e in json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8")).get("etfs", []) if e.get("holdings")}
+    if MODE == "nightly" or "meta" not in _h or not _need <= set(_h.get("meta", {})):
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
 
     # --- News + Stimmung
