@@ -6,7 +6,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B4L5Y983",
    "isins": [
     "AT0000796446",
     "AT0000A1V4N3",
@@ -22,7 +21,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BKM4GZ66",
    "isins": [
     "AT0000745864",
     "AT0000745856",
@@ -41,7 +39,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BK5BR626",
    "isins": [
     "AT0000495288",
     "AT0000A1U5Z5",
@@ -58,7 +55,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BZ02LR44",
    "isins": [
     "AT0000A1U693",
     "AT0000A28LD7",
@@ -80,7 +76,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BYVJRP78",
    "isins": [
     "AT0000A1TB42",
     "AT0000A1TB34",
@@ -103,7 +98,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B52VJ196",
    "isins": [
     "AT0000986377",
     "AT0000785225",
@@ -120,7 +114,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BZ02LR44",
    "isins": [
     "AT0000A20EY5",
     "AT0000A26P95"
@@ -133,7 +126,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "LU0659579063",
    "isins": [
     "AT0000859293",
     "AT0000A1TMJ4",
@@ -150,7 +142,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BYVJRR92",
    "isins": [
     "AT0000764741",
     "AT0000764758",
@@ -165,7 +156,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": null,
    "isins": [
     "AT0000936513",
     "AT0000A1TVZ1",
@@ -184,7 +174,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": null,
    "isins": [
     "AT0000688668",
     "AT0000A1TWR6",
@@ -198,7 +187,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B1YZSC51",
    "isins": [
     "AT0000A3U020",
     "AT0000A3U038",
@@ -216,7 +204,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BM67HK77",
    "isins": [
     "AT0000714274",
     "AT0000714282",
@@ -232,7 +219,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BM67HT60",
    "isins": [
     "AT0000688858",
     "AT0000688866",
@@ -249,7 +235,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BZ02LR44",
    "isins": [
     "AT0000A28LH8"
    ],
@@ -261,7 +246,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B4L5Y983",
    "isins": [
     "AT0000A09ZJ4",
     "AT0000A09ZL0",
@@ -278,7 +262,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE000U58J0M1",
    "isins": [
     "AT0000A2DFJ0",
     "AT0000A2DFG6",
@@ -300,7 +283,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B4L5Y983",
    "isins": [],
    "region": null,
    "match": "Index-Selection-Equity"
@@ -310,7 +292,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B6R52259",
    "isins": [],
    "region": null,
    "match": "Raiffeisen Systematic Core All Country Equity"
@@ -320,7 +301,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B4L5Y983",
    "isins": [
     "AT0000A3VDT4",
     "AT0000A3VDS6",
@@ -337,7 +317,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B1YZSC51",
    "isins": [],
    "region": "Europa",
    "match": "Raiffeisen Systematic Core Europe Equity"
@@ -347,7 +326,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": null,
    "isins": [],
    "region": "Pazifik",
    "match": "Raiffeisen Systematic Core Pacific Equity"
@@ -357,7 +335,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B5BMR087",
    "isins": [],
    "region": "USA",
    "match": "Raiffeisen Systematic Core US Equity"
@@ -367,7 +344,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B4L5Y983",
    "isins": [
     "AT0000A3QPZ5",
     "AT0000A3QQ04",
@@ -382,7 +358,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B1YZSC51",
    "isins": [
     "AT0000A3EU10",
     "AT0000A3DUS8",
@@ -398,7 +373,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": null,
    "isins": [],
    "region": "Pazifik",
    "match": "Raiffeisen Systematic Pacific Equity"
@@ -408,7 +382,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B5BMR087",
    "isins": [],
    "region": "USA",
    "match": "Raiffeisen Systematic US Equity"
@@ -417,8 +390,7 @@
    "name": "Raiffeisen-Nachhaltigkeit-Diversified",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 40,
-   "proxy": "IE00BZ02LR44",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Nachhaltigkeit-Diversified"
@@ -427,8 +399,7 @@
    "name": "Raiffeisen-Nachhaltigkeit-Solide",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 25,
-   "proxy": "IE00BZ02LR44",
+   "aktien": null,
    "isins": [
     "AT0000A1DU54",
     "AT0000A1DU47",
@@ -447,8 +418,7 @@
    "name": "Raiffeisen-Nachhaltigkeit-Mix",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 50,
-   "proxy": "IE00BZ02LR44",
+   "aktien": null,
    "isins": [
     "AT0000859517",
     "AT0000805361",
@@ -469,8 +439,7 @@
    "name": "Raiffeisen-Nachhaltigkeit-Wachstum",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 75,
-   "proxy": "IE00BZ02LR44",
+   "aktien": null,
    "isins": [
     "AT0000A2CMH2",
     "AT0000A2CMJ8",
@@ -487,8 +456,7 @@
    "name": "Raiffeisenfonds-Sicherheit",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 25,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisenfonds-Sicherheit"
@@ -497,8 +465,7 @@
    "name": "Raiffeisenfonds-Ertrag",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 50,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisenfonds-Ertrag"
@@ -507,8 +474,7 @@
    "name": "Raiffeisenfonds-Wachstum",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 75,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisenfonds-Wachstum"
@@ -517,8 +483,7 @@
    "name": "Raiffeisen-FondsPension-Sicherheit",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 25,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-FondsPension-Sicherheit"
@@ -527,8 +492,7 @@
    "name": "Raiffeisen-FondsPension-Ertrag",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 50,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-FondsPension-Ertrag"
@@ -537,8 +501,7 @@
    "name": "Raiffeisen-FondsPension-Wachstum",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 75,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-FondsPension-Wachstum"
@@ -547,8 +510,7 @@
    "name": "Raiffeisen-Portfolio-Solide",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 30,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Portfolio-Solide"
@@ -557,8 +519,7 @@
    "name": "Raiffeisen-Portfolio-Balanced",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 50,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Portfolio-Balanced"
@@ -567,8 +528,7 @@
    "name": "Raiffeisen-Portfolio-Growth",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 75,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Portfolio-Growth"
@@ -577,8 +537,7 @@
    "name": "Raiffeisen Global Income",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 35,
-   "proxy": "IE00BK5BR626",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen Global Income"
@@ -587,8 +546,7 @@
    "name": "Raiffeisen Global Income II",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 35,
-   "proxy": "IE00BK5BR626",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen Global Income II"
@@ -597,8 +555,7 @@
    "name": "Raiffeisen Global Strategic Opportunities",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 50,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen Global Strategic Opportunities"
@@ -607,8 +564,7 @@
    "name": "Raiffeisen Gewinnfreibetrag Mix",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 50,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen Gewinnfreibetrag Mix"
@@ -617,8 +573,7 @@
    "name": "Raiffeisen Gewinnfreibetrag Solide",
    "kag": "Raiffeisen KAG",
    "kat": "Misch",
-   "aktien": 25,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen Gewinnfreibetrag Solide"
@@ -628,7 +583,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-EmergingMarkets-ESG-Transformation-Rent"
@@ -638,7 +592,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000712526",
     "AT0000712518",
@@ -654,7 +607,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-ESG-Euro-Rendite"
@@ -664,7 +616,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-ESG-Euro-Rent"
@@ -674,7 +625,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-ESG-Global-Rent"
@@ -684,7 +634,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Europa-HighYield"
@@ -694,7 +643,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Euro-ShortTerm-Rent"
@@ -704,7 +652,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Global-Fundamental-Rent"
@@ -714,7 +661,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-GreenBonds"
@@ -724,7 +670,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Inflationsschutz-Anleihen"
@@ -734,7 +679,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Nachhaltigkeit-Dollar-ShortTerm-Rent"
@@ -744,7 +688,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Nachhaltigkeit-EmergingMarkets-LocalBonds"
@@ -754,7 +697,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Nachhaltigkeit-Rent"
@@ -764,7 +706,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Nachhaltigkeit-ShortTerm"
@@ -774,7 +715,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Osteuropa-Rent"
@@ -784,7 +724,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Österreich-Rent"
@@ -794,7 +733,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Rent-Flexibel"
@@ -804,7 +742,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen Gewinnfreibetrag Anleihen"
@@ -814,7 +751,6 @@
    "kag": "Raiffeisen KAG",
    "kat": "Rohstoffe",
    "aktien": 0,
-   "proxy": null,
    "isins": [],
    "region": null,
    "match": "Raiffeisen-Active-Commodities"
@@ -824,7 +760,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000618723",
     "AT0000A044U8"
@@ -837,7 +772,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Geldmarkt",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000754668",
     "AT0000722632"
@@ -850,7 +784,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000799861",
     "AT0000722566",
@@ -866,7 +799,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000A2MHG3"
    ],
@@ -878,7 +810,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000784756",
     "AT0000722558",
@@ -892,7 +823,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000815006",
     "AT0000642632",
@@ -908,7 +838,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000600663",
     "AT0000600671",
@@ -923,7 +852,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000799846",
     "AT0000A1CTD8",
@@ -938,7 +866,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000653688",
     "AT0000653696",
@@ -953,7 +880,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000737085",
     "AT0000722541",
@@ -968,7 +894,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000718580",
     "AT0000718598",
@@ -983,7 +908,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000A066H8",
     "AT0000A066J4",
@@ -998,7 +922,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000799804",
     "AT0000722665"
@@ -1011,7 +934,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000A066K2",
     "AT0000A066L0"
@@ -1024,7 +946,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT00RENT26A7",
     "AT00RENT26T7",
@@ -1038,7 +959,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT00RENT28A3",
     "AT00RENT28T3",
@@ -1052,7 +972,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Anleihen",
    "aktien": 0,
-   "proxy": null,
    "isins": [
     "AT0000A326E3",
     "AT00RENT30A9",
@@ -1065,8 +984,7 @@
    "name": "KEPLER Ethik Mix Solide",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
-   "aktien": 25,
-   "proxy": "IE00BZ02LR44",
+   "aktien": null,
    "isins": [
     "AT0000A19288",
     "AT0000A19296",
@@ -1081,8 +999,7 @@
    "name": "KEPLER Ethik Mix Ausgewogen",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
-   "aktien": 50,
-   "proxy": "IE00BZ02LR44",
+   "aktien": null,
    "isins": [
     "AT000ETHIKA8",
     "AT000ETHIKT8",
@@ -1097,8 +1014,7 @@
    "name": "KEPLER Ethik Mix Dynamisch",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
-   "aktien": 75,
-   "proxy": "IE00BZ02LR44",
+   "aktien": null,
    "isins": [
     "AT0000A2RJ45",
     "AT0000A2RJ52"
@@ -1110,8 +1026,7 @@
    "name": "KEPLER Mix Solide",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
-   "aktien": 25,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [
     "AT0000825468",
     "AT0000722582"
@@ -1123,8 +1038,7 @@
    "name": "KEPLER Mix Ausgewogen",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
-   "aktien": 50,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [
     "AT0000825476",
     "AT0000722590"
@@ -1136,8 +1050,7 @@
    "name": "KEPLER Mix Dynamisch",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
-   "aktien": 75,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [
     "AT0000825500",
     "AT0000722608"
@@ -1149,8 +1062,7 @@
    "name": "KEPLER Vorsorge Mixfonds",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
-   "aktien": 35,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [
     "AT0000969787",
     "AT0000722640",
@@ -1165,8 +1077,7 @@
    "name": "KEPLER Multi-Flex Portfolio",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
-   "aktien": 30,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [
     "AT000MULTIA2",
     "AT000MULTIT2",
@@ -1179,8 +1090,7 @@
    "name": "KEPLER Active World Portfolio",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
-   "aktien": 50,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [
     "AT0000A0PDC8",
     "AT0000A0PDD6",
@@ -1194,8 +1104,7 @@
    "name": "Portfolio Management Ausgewogen",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
-   "aktien": 50,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [
     "AT0000707542",
     "AT0000707559"
@@ -1208,7 +1117,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B8FHGS14",
    "isins": [
     "AT0000A0NUV7",
     "AT0000A0NUW5",
@@ -1225,7 +1133,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B1YZSC51",
    "isins": [
     "AT0000817788",
     "AT0000722681",
@@ -1240,7 +1147,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BP3QZ601",
    "isins": [
     "AT0000799820",
     "AT0000722657",
@@ -1255,7 +1161,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "DE0005933931",
    "isins": [
     "AT0000647680",
     "AT0000647698"
@@ -1268,7 +1173,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BZ02LR44",
    "isins": [
     "AT0000675657",
     "AT0000675665",
@@ -1286,7 +1190,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B5BMR087",
    "isins": [
     "AT0000825484",
     "AT0000722574",
@@ -1301,7 +1204,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BP3QZB59",
    "isins": [
     "AT0000A0AGZ4",
     "AT0000A0AH06",
@@ -1318,7 +1220,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B4L5Y983",
    "isins": [
     "AT0000607387",
     "AT0000A28C64",
@@ -1334,7 +1235,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B4L5Y983",
    "isins": [
     "AT0000653662",
     "AT0000653670",
@@ -1349,7 +1249,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BYVJRR92",
    "isins": [
     "AT000UMWELT5",
     "AT0000A2STU6",
@@ -1363,7 +1262,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B9CQXS71",
    "isins": [
     "AT0000A2YCA2",
     "AT0000A2YCB0",
@@ -1378,7 +1276,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BP3QZ825",
    "isins": [
     "AT0000A32YY8",
     "AT0000A37JK7",
@@ -1394,7 +1291,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B4L5Y983",
    "isins": [
     "AT0000A3BSN7",
     "AT0000X250WT2"
@@ -1406,8 +1302,7 @@
    "name": "Starmix Ausgewogen",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
-   "aktien": 50,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [
     "AT0000637889",
     "AT0000711585"
@@ -1419,8 +1314,7 @@
    "name": "Portefeuille I - Sicherheit Plus",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
-   "aktien": 15,
-   "proxy": "IE00B4L5Y983",
+   "aktien": null,
    "isins": [],
    "region": null,
    "match": "Portefeuille I - Sicherheit Plus"
@@ -1430,7 +1324,6 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B4L5Y983",
    "isins": [
     "AT00X300EWT3",
     "AT0000A3LQK6"
@@ -1438,5 +1331,6 @@
    "region": "Global (gleichgewichtet)",
    "match": "X-300 Equal Welt Aktien"
   }
- ]
+ ],
+ "hinweis": "Bestände nur aus Fondsberichten; keine Näherung über ETFs. 'aktien' nur als Kategorie-Info (Aktien=100, Anleihen/Geldmarkt=0, Misch=unbekannt)."
 }

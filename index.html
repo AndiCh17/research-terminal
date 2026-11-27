@@ -1148,12 +1148,12 @@ V.BRA.after = el => {
 /* --- ETFs --- */
 let etfCat = "", etfSort = {k:"kategorie", d:1};
 let etfTopOpen = null;
-/* Fonds (Raiffeisen KAG, KEPLER): Stammdaten aus manual/fonds.json, Aktienteil über Vergleichs-ETF */
+/* Fonds (Raiffeisen KAG, KEPLER): Stammdaten aus manual/fonds.json, Bestand ausschließlich aus Fondsberichten */
 let fondsKag="", fondsKat="", fondsOpen=null;
 function fondsView(){
   const F=(D.fonds&&D.fonds.fonds)||[], E=(D.etfs&&D.etfs.etfs)||[];
   const HM=(D.holdings&&D.holdings.meta)||{};
-  const rows=F.filter(f=>(!fondsKag||f.kag===fondsKag)&&(!fondsKat||f.kat===fondsKat)).map(f=>{ const rep=HM["F:"+f.name]; const L=rep?etfLook("F:"+f.name):(f.proxy&&f.aktien?etfLook(f.proxy):null); const px=E.find(e=>e.isin===f.proxy); return {f,L,px,rep}; });
+  const rows=F.filter(f=>(!fondsKag||f.kag===fondsKag)&&(!fondsKat||f.kat===fondsKat)).map(f=>{ const rep=HM["F:"+f.name]; const L=rep?etfLook("F:"+f.name):null; return {f,L,rep}; });
   const nRep=rows.filter(r=>r.rep).length;
   const kags=[...new Set(F.map(f=>f.kag))], kats=[...new Set(F.map(f=>f.kat))];
   const top1=l=>{ const h=(l||[]).find(([k])=>k!=="ohne Angabe"); return h?`${h[0]} ${fmt(h[1],0)} %`:"–"; };
@@ -1162,16 +1162,16 @@ function fondsView(){
     <div class="fbar"><div class="btns" id="fk"><button data-k="" class="${fondsKag?"":"on"}">Alle Gesellschaften</button>${kags.map(k=>`<button data-k="${esc(k)}" class="${k===fondsKag?"on":""}">${esc(k)}</button>`).join("")}</div>
       <div class="btns" id="fc"><button data-c="" class="${fondsKat?"":"on"}">Alle Arten</button>${kats.map(k=>`<button data-c="${esc(k)}" class="${k===fondsKat?"on":""}">${esc(k)}</button>`).join("")}</div></div>
     <div class="scroll"><table><thead><tr><th class="l">Fonds</th><th class="l">Gesellschaft</th><th class="l">Art</th><th>Aktienquote</th><th class="l">Datengrundlage</th><th>KGV</th><th>Div.</th><th>erw. EPS-Wachst.</th><th class="l">Größter Sektor</th><th class="l">Größtes Land</th><th></th></tr></thead><tbody>
-    ${rows.map(({f,L,px,rep},i)=>`<tr><td class="l nm" style="max-width:320px">${esc(f.name)}<br><span class="dim" style="font-size:11px">${f.isins.length?esc(f.isins.slice(0,3).join(" · "))+(f.isins.length>3?" …":""):"ISIN noch nicht hinterlegt"}${f.region?" · "+esc(f.region):""}</span></td>
-      <td class="l dim">${esc(f.kag)}</td><td class="l dim">${esc(f.kat)}</td><td>${rep?`${fmt(rep.aktien,0)} %`:`${f.aktien} %${f.kat==="Misch"?' <span class="dim" title="strategische Richtgröße">≈</span>':""}`}</td>
-      <td class="l" style="max-width:220px;overflow:hidden;text-overflow:ellipsis">${rep?`<span class="sent positive" title="Vermögensaufstellung">BESTAND</span> <span class="dim">${esc(rep.quelle==="Halbjahresbericht"?"HJB":"RB")} ${esc(rep.stichtag||"")}</span>`:`<span class="dim" title="Näherung über vergleichbaren ETF">≈ ${px?esc(px.name):"–"}</span>`}</td>
+    ${rows.map(({f,L,rep},i)=>`<tr><td class="l nm" style="max-width:320px">${esc(f.name)}<br><span class="dim" style="font-size:11px">${f.isins.length?esc(f.isins.slice(0,3).join(" · "))+(f.isins.length>3?" …":""):"ISIN noch nicht hinterlegt"}${f.region?" · "+esc(f.region):""}</span></td>
+      <td class="l dim">${esc(f.kag)}</td><td class="l dim">${esc(f.kat)}</td><td>${rep?`${fmt(rep.aktien,0)} %`:'<span class="dim">–</span>'}</td>
+      <td class="l" style="max-width:220px;overflow:hidden;text-overflow:ellipsis">${rep?`<span class="sent positive" title="Vermögensaufstellung">BESTAND</span> <span class="dim">${esc(rep.quelle==="Halbjahresbericht"?"HJB":"RB")} ${esc(rep.stichtag||"")}</span>`:`<span class="dim" title="Für diesen Fonds ist noch kein Bericht hinterlegt">kein Bestand</span>`}</td>
       <td>${L?fmt(L.pe,1):"–"}</td><td>${L&&L.dy!=null?fmt(L.dy,2)+" %":"–"}</td><td class="${cls(L&&L.feg)}">${L?pct(L.feg,1):"–"}</td><td class="l dim">${L?top1(L.sek):"–"}</td><td class="l dim">${L?top1(L.land):"–"}</td>
-      <td>${L||rep?`<a href="#" data-fo="${i}">${fondsOpen===f.name?"▾":"▸"} Einblick</a>`:""}</td></tr>
-      ${fondsOpen===f.name&&(L||rep)?`<tr><td colspan="11" style="background:var(--panel2);text-align:left;white-space:normal;padding:12px">${rep
+      <td>${rep?`<a href="#" data-fo="${i}">${fondsOpen===f.name?"▾":"▸"} Einblick</a>`:""}</td></tr>
+      ${fondsOpen===f.name&&rep?`<tr><td colspan="11" style="background:var(--panel2);text-align:left;white-space:normal;padding:12px">${rep
         ? `<div class="dim" style="font-size:11.5px;margin-bottom:8px">Bestand laut ${esc(rep.quelle)} per <b>${esc(rep.stichtag||"")}</b>: Aktien ${fmt(rep.aktien,1)} %${rep.anleihen?` · Anleihen ${fmt(rep.anleihen,1)} %`:""}${rep.fonds?` · Fonds ${fmt(rep.fonds,1)} %`:""} · Rest Liquidität/Derivate. <a href="${esc(rep.url)}" target="_blank" rel="noopener">Bericht öffnen ↗</a></div>${rep.n?etfInsight({isin:"F:"+f.name}):'<div class="dim">Keine Aktienpositionen im Bestand.</div>'}`
-        : `<div class="dim" style="font-size:11.5px;margin-bottom:8px">Kein Bericht automatisch gefunden – Aktienteil (${f.aktien} % des Fonds) angenähert über <b>${esc(px?px.name:f.proxy)}</b>.</div>${etfInsight(px||{isin:f.proxy})}`}</td></tr>`:""}`).join("")}
+        : ""}</td></tr>`:""}`).join("")}
     </tbody></table></div>
-    <p class="dim" style="font-size:11px;margin-top:8px">Stammdaten der Publikumsfonds von Raiffeisen Capital Management (Raiffeisen KAG) und KEPLER-FONDS KAG. <b>BESTAND</b> (${nRep} Fonds): Positionen und Aktienquote aus der Vermögensaufstellung des letzten Halbjahres- bzw. Rechenschaftsberichts (öffentliche PDF der Raiffeisen KAG, wird wöchentlich auf neue Berichte geprüft) – exakt zum Stichtag, danach können sich die Gewichte durch Umschichtungen verschieben. <b>≈</b>: kein Bericht gefunden (u. a. KEPLER), Aktienteil über einen vergleichbaren ETF angenähert, bei Mischfonds mit strategischer Aktienquote. Fehlende ISINs werden laufend ergänzt (manual/fonds.json). Keine Anlageempfehlung.</p>`);
+    <p class="dim" style="font-size:11px;margin-top:8px">Stammdaten der Publikumsfonds von Raiffeisen Capital Management (Raiffeisen KAG) und KEPLER-FONDS KAG. <b>BESTAND</b> (${nRep} Fonds): Positionen und Aktienquote aus der Vermögensaufstellung des letzten Halbjahres- bzw. Rechenschaftsberichts (öffentliche PDF der Raiffeisen KAG, wird wöchentlich auf neue Berichte geprüft) – exakt zum Stichtag, danach können sich die Gewichte durch Umschichtungen verschieben. <b>kein Bestand</b>: Für diesen Fonds ist noch kein Bericht automatisch abrufbar (u. a. KEPLER) – es werden bewusst keine Annahmen getroffen, Aktienquote und Kennzahlen bleiben leer. Keine Anlageempfehlung.</p>`);
 }
 /* Durchblick: Kennzahlen eines ETFs aus seinen (dem Universum zugeordneten) Positionen */
 let etfMode = "perf";
@@ -1502,9 +1502,9 @@ V.BER.after = el => {
 /* ===================== DEPOTANALYSE (alles bleibt im Browser) ===================== */
 let depRows = [], depMsg = "";
 const DEP_KAT = {
-  "Aktien Welt":{aktien:100, proxy:"IE00B4L5Y983"}, "Aktien Europa":{aktien:100, proxy:"IE00B1YZSC51"}, "Aktien USA":{aktien:100, proxy:"IE00B5BMR087"},
-  "Aktien Schwellenländer":{aktien:100, proxy:"IE00BKM4GZ66"}, "Aktien Österreich":{aktien:100, proxy:"LU0659579063"}, "Aktien sonstige":{aktien:100, proxy:null},
-  "Mischfonds defensiv":{aktien:25, proxy:"IE00B4L5Y983"}, "Mischfonds ausgewogen":{aktien:50, proxy:"IE00B4L5Y983"}, "Mischfonds dynamisch":{aktien:75, proxy:"IE00B4L5Y983"},
+  "Aktien Welt":{aktien:100}, "Aktien Europa":{aktien:100}, "Aktien USA":{aktien:100},
+  "Aktien Schwellenländer":{aktien:100}, "Aktien Österreich":{aktien:100}, "Aktien sonstige":{aktien:100},
+  "Mischfonds defensiv":{aktien:25}, "Mischfonds ausgewogen":{aktien:50}, "Mischfonds dynamisch":{aktien:75},
   "Anleihen":{aktien:0, cls:"Anleihen"}, "Geldmarkt/Liquidität":{aktien:0, cls:"Geldmarkt/Liquidität"}, "Rohstoffe/Gold":{aktien:0, cls:"Rohstoffe/Gold"},
   "Immobilien":{aktien:0, cls:"Immobilien"}, "Sonstiges":{aktien:0, cls:"Sonstiges"}
 };
@@ -1549,7 +1549,8 @@ function depResolve(r){
   const f = (isin && F.find(x=>x.isins.includes(isin) || ((HMd["F:"+x.name]||{}).tranchen||[]).includes(isin))) || fundByName(r.name);
   const fr = f && D.holdings && D.holdings.meta && D.holdings.meta["F:"+f.name];
   if(f && fr) return {typ:"Fonds", label:f.name, aktien:fr.aktien, proxy:fr.n?"F:"+f.name:null, cls:fr.anleihen>5?"Anleihen":"Geldmarkt/Liquidität", kag:f.kag, bericht:fr.stichtag};
-  if(f) return {typ:"Fonds", label:f.name, aktien:f.aktien, proxy:f.proxy, cls:f.kat==="Anleihen"?"Anleihen":f.kat==="Geldmarkt"?"Geldmarkt/Liquidität":f.kat==="Rohstoffe"?"Rohstoffe/Gold":null, kag:f.kag};
+  if(f) return f.kat==="Misch" ? {typ:"Fonds", label:f.name, aktien:null, misch:true, kag:f.kag}
+    : {typ:"Fonds", label:f.name, aktien:f.kat==="Aktien"?100:0, proxy:null, cls:f.kat==="Anleihen"?"Anleihen":f.kat==="Geldmarkt"?"Geldmarkt/Liquidität":f.kat==="Rohstoffe"?"Rohstoffe/Gold":"Sonstiges", kag:f.kag, ohne:true};
   const sym = isin && D.holdings && D.holdings.isin && D.holdings.isin[isin];
   const row = sym && D.universe && D.universe.rows.find(x=>x.s===sym);
   if(row) return {typ:"Aktie", label:row.n, aktien:100, sym, row};
@@ -1562,7 +1563,7 @@ function depAnalyse(){
   const cls={}, add=(k,v)=>cls[k]=(cls[k]||0)+v;
   const expo=new Map(); let eqTot=0, eqLook=0;
   pos.forEach(p=>{
-    const R=p.res; if(R.aktien==null){ add("nicht zugeordnet",p.amt); return; }
+    const R=p.res; if(R.misch){ add("Mischfonds (Aufteilung unbekannt)",p.amt); return; } if(R.aktien==null){ add("nicht zugeordnet",p.amt); return; }
     const eq=p.amt*R.aktien/100, rest=p.amt-eq;
     if(eq>0){ add("Aktien",eq); eqTot+=eq;
       if(R.typ==="Aktie"){ const e=expo.get(R.row.s)||{r:R.row,v:0,src:new Set()}; e.v+=eq; e.src.add(p.isin||p.name); expo.set(R.row.s,e); eqLook+=eq; }
@@ -1619,7 +1620,7 @@ V.DEP = async () => {
       <td class="l"><input data-f="name" data-i="${i}" value="${esc(r.name)}" style="width:220px"></td>
       <td><input data-f="amt" data-i="${i}" type="number" step="0.01" value="${r.amt||""}" style="width:110px;text-align:right"></td>
       <td class="l">${R.typ==="unbekannt"?katOpts(r):`<span class="chip" style="color:${R.typ==="Aktie"?"var(--blue)":R.typ==="ETF"?"var(--amber)":"var(--up)"}">${R.typ}</span> <span class="dim" style="font-size:11.5px">${esc(R.label)}</span>${R.typ==="Zuordnung"?" "+katOpts(r):""}`}</td>
-      <td class="l dim">${R.aktien!=null?fmt(R.aktien,0)+" %":"–"}${R.bericht?` <span title="laut Fondsbericht per ${esc(R.bericht)}">· Bestand ${esc(R.bericht)}</span>`:R.typ==="Fonds"?' <span title="Näherung über Vergleichs-ETF">≈</span>':""}</td><td><a href="#" data-del="${i}" style="color:var(--dn)">✕</a></td></tr>`; }).join("")}
+      <td class="l dim">${R.aktien!=null?fmt(R.aktien,0)+" %":"–"}${R.bericht?` <span title="laut Fondsbericht per ${esc(R.bericht)}">· Bestand ${esc(R.bericht)}</span>`:R.misch?' <span class="dim" title="Kein Bericht – Aufteilung Aktien/Anleihen unbekannt">· kein Bestand</span>':R.ohne?' <span class="dim" title="Kein Bericht – Einzeltitel unbekannt">· ohne Durchblick</span>':""}</td><td><a href="#" data-del="${i}" style="color:var(--dn)">✕</a></td></tr>`; }).join("")}
     </tbody></table></div>` : `<div class="dim" style="padding:10px 0">Noch keine Positionen. Screenshot (z. B. mit Win+Umschalt+S) aufnehmen und hier mit <b>Strg+V</b> einfügen – oder eine Excel-Liste kopieren und ebenfalls Strg+V drücken.</div>`;
   const res = A ? `<div class="grid g3" style="margin-top:10px">
       ${panel("Aufteilung nach Anlageklasse", bars(A.cls.map(([k,v])=>[k,v/A.tot*100]),8)+`<div class="dim" style="font-size:11px;margin-top:8px">Depotwert ${fmt(A.tot,0)} € · Aktienanteil ${fmt(A.eqTot/A.tot*100,0)} % · davon durchleuchtet ${fmt(A.eqTot?A.eqLook/A.eqTot*100:0,0)} %</div>`)}
