@@ -581,6 +581,7 @@ V.DES = async () => {
       ${panel("Kennzahlen", `<div class="kv">${Object.entries(st).map(([k,v])=>`<div><span>${esc(k)}</span>${sv(k,v)}</div>`).join("")}</div>`)}
       ${panel("Unternehmen", `<div class="desc">${esc(t.description||"Keine Beschreibung.")}</div><div class="kv" style="margin-top:8px"><div><span>Branche</span>${esc(t.industry||"–")}</div><div><span>Mitarbeiter</span>${fmt(t.employees,0)}</div><div><span>Web</span>${t.website?`<a href="${safeUrl(t.website)}" target="_blank" rel="noopener">${esc(t.website.replace(/^https?:\/\/(www\.)?/,""))}</a>`:"–"}</div></div>`)}
     </div>
+    <div style="margin-top:10px">${panel("Analystenmeinungen – Häuser, Einstufungen, Kursziele", analystHtml(t))}</div>
     <div style="margin-top:10px">${panel("Branchenvergleich", peerCompare(t.symbol))}</div>
     <div style="margin-top:10px">${panel("In diesen ETFs enthalten", etfMembership(t.symbol))}</div>
     <div style="margin-top:10px">${panel("Quartalszahlen", quarterlyHtml(t))}</div>
@@ -966,6 +967,37 @@ function peerCompare(sym){
     <tr style="border-top:2px solid var(--amber)"><td class="l amb">Median der Gruppe</td><td>${big(median(peers.map(r=>r.mcap)))}</td>${cols.map(([k,,f])=>`<td class="amb">${k==="rmean"?RMEAN(med[k]):f(med[k])}</td>`).join("")}</tr>
     </tbody></table></div>
     <p class="dim" style="font-size:11px;margin-top:6px">Gewinn = Nettogewinn der letzten 12 Monate, in EUR umgerechnet. Gewinnwachstum = letztes Quartal ggü. Vorjahresquartal. Erwartetes EPS-Wachstum = Konsens-Gewinn je Aktie der nächsten 12 Monate ggü. den letzten 12 Monaten. Kursziel-Potenzial = durchschnittliches Analysten-Kursziel ggü. aktuellem Kurs. Quelle: Yahoo Finance.</p>`;
+}
+
+/* --- Einzelne Analystenmeinungen --- */
+const GRADE_DE = {"strong buy":"Starker Kauf","buy":"Kaufen","outperform":"Übergewichten","overweight":"Übergewichten","market outperform":"Übergewichten","sector outperform":"Übergewichten","accumulate":"Aufstocken","add":"Aufstocken","positive":"Positiv",
+  "neutral":"Halten","hold":"Halten","equal-weight":"Halten","equal weight":"Halten","market perform":"Halten","sector perform":"Halten","peer perform":"Halten","in-line":"Halten","in line":"Halten","sector weight":"Halten",
+  "underperform":"Untergewichten","underweight":"Untergewichten","market underperform":"Untergewichten","sector underperform":"Untergewichten","reduce":"Reduzieren","negative":"Negativ","sell":"Verkaufen","strong sell":"Starker Verkauf"};
+const ACT_DE = {up:["Hochgestuft","up"], down:["Abgestuft","dn"], init:["Neu aufgenommen","amb"], main:["Bestätigt","dim"], reit:["Bestätigt","dim"]};
+const gradeDe = g => g ? (GRADE_DE[String(g).toLowerCase()] || g) : "";
+const gradeCls = g => { const x=gradeDe(g); return /Kauf|Übergew|Aufstock|Positiv/.test(x)?"up":/Untergew|Verkauf|Reduz|Negativ/.test(x)?"dn":""; };
+function analystHtml(t){
+  const A=(t.actions||[]).filter(a=>a.firm);
+  if(!A.length) return `<div class="dim">Für diesen Titel führt Yahoo Finance keine einzelnen Analystenmeinungen (vor allem bei europäischen und kleineren Werten lückenhaft). Der Konsens steht oben unter „Analysten &amp; Stimmung“.</div>`;
+  const cur=t.currency||"";
+  // jeweils letzte Meinung je Haus innerhalb von 12 Monaten
+  const cut=new Date(); cut.setMonth(cut.getMonth()-12);
+  const latest=new Map(); A.forEach(a=>{ if(new Date(a.d)>=cut && !latest.has(a.firm)) latest.set(a.firm,a); });
+  const L=[...latest.values()], tg=L.filter(a=>a.pt).sort((a,b)=>a.pt-b.pt);
+  const cnt={up:0,hold:0,dn:0}; L.forEach(a=>{ const c=gradeCls(a.to); cnt[c==="up"?"up":c==="dn"?"dn":"hold"]++; });
+  const med=tg.length?median(tg.map(a=>a.pt)):null, up=med&&t.price?(med/t.price-1)*100:null;
+  const tile=(l,v,s="")=>`<div class="tile" style="cursor:default;padding:8px 10px"><div class="t"><span>${l}</span></div><div class="v" style="font-size:17px">${v}</div>${s?`<div class="s">${s}</div>`:""}</div>`;
+  const tiles=`<div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));margin-bottom:10px">
+    ${tile("Häuser (12 Monate)",fmt(L.length,0),`<span class="up">${cnt.up} positiv</span> · ${cnt.hold} neutral · <span class="dn">${cnt.dn} negativ</span>`)}
+    ${tile("Kursziel Median",med?fmt(med)+" "+esc(cur):"–",up!=null?`<span class="${cls(up)}">${pct(up,1)} zum Kurs</span>`:"")}
+    ${tile("Höchstes Ziel",tg.length?fmt(tg[tg.length-1].pt)+" "+esc(cur):"–",tg.length?esc(tg[tg.length-1].firm):"")}
+    ${tile("Niedrigstes Ziel",tg.length?fmt(tg[0].pt)+" "+esc(cur):"–",tg.length?esc(tg[0].firm):"")}</div>`;
+  const rows=A.slice(0,25).map(a=>{ const [al,ac]=ACT_DE[a.act]||[a.act||"",""]; const ch=a.pt&&a.ppt?(a.pt/a.ppt-1)*100:null;
+    return `<tr><td class="l">${new Date(a.d).toLocaleDateString("de-AT")}</td><td class="l">${esc(a.firm)}</td><td class="l ${ac}">${esc(al)}</td>
+      <td class="l">${a.from&&a.from!==a.to?`<span class="dim">${esc(gradeDe(a.from))} → </span>`:""}<span class="${gradeCls(a.to)}">${esc(gradeDe(a.to))}</span></td>
+      <td>${a.ppt&&a.ppt!==a.pt?`<span class="dim">${fmt(a.ppt)} → </span>`:""}${a.pt?`<b>${fmt(a.pt)}</b>`:"–"}</td><td class="${cls(ch)}">${ch!=null&&Math.abs(ch)>0.05?pct(ch,1):""}</td></tr>`; }).join("");
+  return tiles+`<div class="scroll"><table><thead><tr><th class="l">Datum</th><th class="l">Haus</th><th class="l">Aktion</th><th class="l">Einstufung</th><th>Kursziel ${esc(cur)}</th><th>Änderung</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="dim" style="font-size:11px;margin-top:6px">Einzelmeldungen laut Yahoo Finance, letzte 18 Monate (neueste zuerst). Die Kacheln zählen je Haus nur die jüngste Meinung der letzten 12 Monate. Einstufungen ins Deutsche übertragen; Kursziele in Handelswährung der Notiz.</p>`;
 }
 
 /* --- Branchenübersicht (BRA) --- */

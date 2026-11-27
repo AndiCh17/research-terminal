@@ -1326,6 +1326,7 @@ def build_ticker(sym: str, edgar: "Edgar", closes_1y: pd.Series | None, sent: "S
     }
     analyst = {"rating": g("recommendationKey"), "n": g("numberOfAnalystOpinions"),
                "target": g("targetMeanPrice"), "high": g("targetHighPrice"), "low": g("targetLowPrice")}
+    actions = safe(lambda: analyst_actions(t), [], f"Analystenmeinungen {sym}")
     name = g("longName", "shortName") or sym
     news = safe(lambda: yahoo_news(t, sym, CFG.get("news_per_ticker", 8)), [], f"Yahoo-News {sym}")
     if google:
@@ -1342,7 +1343,7 @@ def build_ticker(sym: str, edgar: "Edgar", closes_1y: pd.Series | None, sent: "S
         "website": g("website"), "employees": g("fullTimeEmployees"), "description": g("longBusinessSummary"),
         "price": rnd(price), "chg": rnd(price - prev) if price and prev else None,
         "chgPct": rnd((price / prev - 1) * 100, 3) if price and prev else None,
-        "stats": stats, "analyst": analyst,
+        "stats": stats, "analyst": analyst, "actions": actions,
         "dates": {"earnings": iso_date(earn), "exDividend": iso_date(g("exDividendDate")),
                   "dividendPay": iso_date(g("dividendDate"))},
         "history1y": series_pairs(hist1), "history5y": series_pairs(hist5),
@@ -1360,6 +1361,26 @@ def build_ticker(sym: str, edgar: "Edgar", closes_1y: pd.Series | None, sent: "S
             "up": (g("targetMeanPrice") / price - 1) if (g("targetMeanPrice") and price) else None,
             "sent": agg["score"], "f": file_safe(sym), "upd": NOW.isoformat()}
     return detail, prof
+
+
+def analyst_actions(t: yf.Ticker, months=18, limit=40) -> list[dict]:
+    """Einzelne Analystenmeinungen: Haus, Datum, Einstufung und Kursziel (soweit Yahoo sie führt)."""
+    df = t.upgrades_downgrades
+    if df is None or df.empty:
+        return []
+    df = df.copy()
+    idx = pd.to_datetime(df.index)
+    idx = idx.tz_localize(None) if getattr(idx, "tz", None) is not None else idx
+    df.index = idx
+    df = df[df.index >= pd.Timestamp(NOW.replace(tzinfo=None)) - pd.DateOffset(months=months)].sort_index(ascending=False)
+    col = lambda r, *names: next((r[n] for n in names if n in r and pd.notna(r[n]) and r[n] != ""), None)  # noqa: E731
+    out = []
+    for d, r in df.head(limit).iterrows():
+        pt, ppt = col(r, "currentPriceTarget"), col(r, "priorPriceTarget")
+        out.append({"d": d.strftime("%Y-%m-%d"), "firm": str(col(r, "Firm") or ""), "to": col(r, "ToGrade"), "from": col(r, "FromGrade"),
+                    "act": col(r, "Action"), "pt": rnd(float(pt), 2) if pt not in (None, 0) else None,
+                    "ppt": rnd(float(ppt), 2) if ppt not in (None, 0) else None, "pta": col(r, "priceTargetAction")})
+    return out
 
 
 def fx_to_eur(currencies: set[str]) -> dict[str, float]:
