@@ -1307,6 +1307,7 @@ def build_holdings(uni_rows: list[dict], fund: dict):
     _SYMC.clear()
     _SYMC.update(load(DATA / "fund_symbols.json") or {})
     _SEARCH_LEFT[0] = 250 if MODE == "nightly" else 120
+    _RES_LEFT[0] = 500 if MODE == "nightly" else 200
     _EXTRA.clear()
     cfg = json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8"))
     keys: dict[str, str] = {}
@@ -1562,7 +1563,10 @@ def guess_symbols(it: dict) -> list[str]:
     return list(dict.fromkeys(out))
 
 
-def resolve_positions(items: list[dict], keys: dict, first: dict, isin_map: dict) -> dict[str, str]:
+_RES_LEFT = [0]
+
+
+def resolve_positions(items: list[dict], keys: dict, first: dict, isin_map: dict, min_w: float = 0.0) -> dict[str, str]:
     """ISIN → Yahoo-Symbol für Aktienpositionen: ETF-Listen, Firmenname, Börsenkürzel, zuletzt Yahoo-Suche."""
     cache = load(DATA / "fund_symbols.json") or {}
     out: dict[str, str] = {}
@@ -1583,7 +1587,8 @@ def resolve_positions(items: list[dict], keys: dict, first: dict, isin_map: dict
             if c[0]:
                 out[isin] = c[0]
             continue
-        pending[isin] = it
+        if it.get("w", 1) >= min_w:
+            pending[isin] = it
     if pending:
         cands = {isin: guess_symbols(it) for isin, it in pending.items()}
         allc = sorted({s for v in cands.values() for s in v})
@@ -1592,7 +1597,8 @@ def resolve_positions(items: list[dict], keys: dict, first: dict, isin_map: dict
         searched = 0
         for isin, it in pending.items():
             sym = next((s for s in cands[isin] if s in ok), None)
-            if not sym and searched < 120:
+            if not sym and _RES_LEFT[0] > 0:
+                _RES_LEFT[0] -= 1
                 searched += 1
                 try:
                     q = [x for x in (yf.Search(it["name"][:40], max_results=5).quotes or []) if x.get("quoteType") == "EQUITY"]
@@ -1810,7 +1816,11 @@ _ISH_CUT = re.compile(r"\s(Registered|Reg\.|Namens-|Inhaber-|Aandelen|Actions|Ac
 def ish_candidates(src: dict) -> list[str]:
     out = []
     for y in (NOW.year, NOW.year - 1):
-        if src.get("slug"):
+        if src.get("plc"):
+            n = f"ishares-{src['plc']}-plc" if src["plc"] != "i" else "ishares-plc"
+            out += [f"{ISH_BASE}interim-report/{n}-interim-report-{y}.pdf", f"{ISH_BASE}interim-report/{n}-en-interim-report-{y}.pdf",
+                    f"{ISH_BASE}annual-report/{n}-en-annual-report-{y}.pdf", f"{ISH_BASE}annual-report/{n}-annual-report-{y}.pdf"]
+        elif src.get("slug"):
             sl = src["slug"]
             out += [f"{ISH_BASE}interim-report/{sl}-en-interim-report-{y}.pdf", f"{ISH_BASE}annual-report/{sl}-jahresbericht-{y}.pdf",
                     f"{ISH_BASE}annual-report/{sl}-pc-annual-report-{y}.pdf"]
@@ -1863,19 +1873,73 @@ def parse_ish_report(pages: list[str], fonds: str | None) -> dict:
     return {"stichtag": stichtag, "items": items}
 
 
+_MON_EN = {m: i + 1 for i, m in enumerate(["january", "february", "march", "april", "may", "june", "july", "august", "september",
+                                            "october", "november", "december"])}
+_IRL_POS = re.compile(r"^([A-Z]{3})\s+([\d,]+)\s+(.+)$")
+_IRL_END = re.compile(r"^(.*?)\s+\(?[\d,]+\)?\s+(-?\d{1,3}\.\d{2})$")
+
+
+def parse_irl_report(pages: list[str], fonds: str) -> dict:
+    """Schedule of Investments eines irischen iShares-Sammelberichts (Aktienteil eines Teilfonds)."""
+    norm = lambda x: re.sub(r"[^A-Z0-9&$€%]", "", x.upper().replace("(CONTINUED)", ""))  # noqa: E731
+    want = norm(fonds)
+    sel, stichtag = [], None
+    for t in pages:
+        m = re.search(r"SCHEDULE OF INVESTMENTS(?: \(continued\))?\n(.+?)\nAs at (\d{1,2}) (\w+) (\d{4})", t)
+        if m and norm(m.group(1)) == want:
+            sel.append(t)
+            if not stichtag and m.group(3).lower() in _MON_EN:
+                stichtag = f"{int(m.group(2)):02d}.{_MON_EN[m.group(3).lower()]:02d}.{m.group(4)}"
+    items, eq, cur_item, country = [], False, None, None
+    for ln in "\n".join(sel).splitlines():
+        ln = ln.strip()
+        if re.match(r"^Equities\b", ln):
+            eq = True
+            continue
+        if re.match(r"^(Total equities|Financial derivative|Corporate debt|Government debt|Collective investment|Rights\b|Warrants\b|"
+                    r"Total transferable|Total value of investments|Futures|Forward currency|Bonds\b|Supranational)", ln):
+            eq = False
+            cur_item = None
+            continue
+        if not eq:
+            continue
+        mc = re.match(r"^(.+?) \(\d{1,2} \w+ \d{4}: -?[\d\.]+%\)$", ln)
+        if mc and not mc.group(1).startswith("Total"):
+            country = mc.group(1).replace(" (continued)", "")
+            continue
+        mp = _IRL_POS.match(ln)
+        if mp and not ln.startswith("Total"):
+            cur_item = {"cur": mp.group(1), "txt": mp.group(3)}
+        elif cur_item is not None and not ln.startswith("Total"):
+            cur_item["txt"] += " " + ln
+        else:
+            continue
+        me = _IRL_END.match(cur_item["txt"])
+        if me:
+            name = re.sub(r"\s*[\^~∞±*†]+\s*$", "", me.group(1)).strip()
+            items.append({"isin": "N:" + name_key(name), "name": name, "tick": "", "code": "", "cur": cur_item["cur"],
+                          "w": float(me.group(2)), "grp": "Aktien", "land": country})
+            cur_item = None
+        elif len(cur_item["txt"]) > 200:
+            cur_item = None
+    return {"stichtag": stichtag, "items": [i for i in items if i["isin"] != "N:"]} if items else {}
+
+
 def ish_report(src: dict, cache: dict) -> dict | None:
-    key = src.get("slug") or ("invag:" + src.get("fonds", ""))
+    key = src.get("slug") or (f"{src.get('plc') or 'invag'}:" + src.get("fonds", ""))
     old = cache.get(key) or {}
     if old.get("checked") and (NOW - datetime.fromisoformat(old["checked"])).days < 6 and old.get("items"):
         return old
     best = old if old.get("items") else None
+    seen = set(old.get("seen") or [])
     for url in ish_candidates(src):
         try:
+            if url in seen or (best and best.get("url") == url):
+                continue
             if HTTP.head(url, timeout=20, allow_redirects=False).status_code != 200:
                 continue
-            if best and best.get("url") == url:
-                continue
-            rep = parse_ish_report(ish_pages(url), src.get("fonds"))
+            seen.add(url)
+            rep = parse_irl_report(ish_pages(url), src["fonds"]) if src.get("plc") else parse_ish_report(ish_pages(url), src.get("fonds"))
         except Exception as ex:
             log(f"  iShares-Bericht {url.rsplit('/', 1)[-1]}: {ex}")
             continue
@@ -1886,6 +1950,7 @@ def ish_report(src: dict, cache: dict) -> dict | None:
             best = {**rep, "url": url, "typ": "Halbjahresbericht" if "interim" in url else "Jahresbericht"}
     if best:
         best["checked"] = NOW.isoformat()
+        best["seen"] = sorted(seen)
         cache[key] = best
     return best
 
@@ -1899,14 +1964,24 @@ def add_ish_reports(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: dict
         rep = safe(lambda: ish_report(src, cache), None, f"iShares-Bericht {e.get('ticker')}")
         if not rep:
             continue
-        symmap = resolve_positions(rep["items"], keys, first, isin_map)
+        symmap = resolve_positions(rep["items"], keys, first, isin_map, min_w=0.04)
         agg, names = {}, {}
         for it in rep["items"]:
             s_ = symmap.get(it["isin"])
             if s_:
                 agg[s_] = agg.get(s_, 0) + it["w"]
-                isin_map.setdefault(it["isin"], s_)
+                if not it["isin"].startswith("N:"):
+                    isin_map.setdefault(it["isin"], s_)
                 extra.add(s_)
+        keep = {}
+        fsm = meta.get(e["isin"]) or {}
+        if src.get("rest") and fsm.get("art") == "factsheet":
+            # aktuelle Top 10 aus dem Factsheet behalten, nur den Rest aus dem (älteren) Bericht
+            keep = {s_: w for s_, lst in by_sym.items() for i, w in lst if i == e["isin"] and w is not None}
+            restw = {s_: w for s_, w in agg.items() if s_ not in keep}
+            rt = sum(restw.values()) or 1
+            target = max(0.0, 100 - fsm.get("wsum", sum(keep.values())))
+            agg = {**keep, **{s_: w / rt * target for s_, w in restw.items()}}
         # bisherige Näherung für diesen ETF ersetzen
         for s_ in list(by_sym):
             by_sym[s_] = [x for x in by_sym[s_] if x[0] != e["isin"]]
@@ -1914,9 +1989,14 @@ def add_ish_reports(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: dict
                 del by_sym[s_]
         for s_, w in agg.items():
             by_sym.setdefault(s_, []).append([e["isin"], rnd(w, 3)])
+        wall = sum(i["w"] for i in rep["items"])
+        if keep:
+            meta[e["isin"]] = {**fsm, "art": "factsheet+bericht", "rest": len(agg) - len(keep), "rest_stichtag": rep["stichtag"],
+                               "rest_url": rep["url"], "wall": rnd(sum(agg.values()), 1), "hit": len(agg)}
+            log(f"  iShares-Bericht {e.get('ticker')}: Top 10 laut Factsheet, Rest {len(agg) - len(keep)} Titel laut Bericht per {rep['stichtag']}")
+            continue
         top = sorted(rep["items"], key=lambda x: -x["w"])[:10]
         tops[e["isin"]] = [[nice_name(t["name"]), rnd(t["w"], 2)] for t in top]
-        wall = sum(i["w"] for i in rep["items"])
         meta[e["isin"]] = {"art": "bericht", "quelle": f"{rep['typ']} iShares", "stichtag": rep["stichtag"], "url": rep["url"],
                            "n": len(rep["items"]), "hit": len(agg), "wsum": rnd(sum(agg.values()), 1), "wall": rnd(wall, 1),
                            "aktien": rnd(wall, 1), "anleihen": 0}

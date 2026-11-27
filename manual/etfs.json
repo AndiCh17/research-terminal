@@ -100,7 +100,11 @@
    "holdings": {
     "anbieter": "xtrackers",
     "isin": "IE00BL25JM42",
-    "quelle": "Positionsliste Xtrackers MSCI World Value (gleicher Index MSCI World Enhanced Value)"
+    "quelle": "Positionsliste Xtrackers MSCI World Value (gleicher Index MSCI World Enhanced Value)",
+    "bericht": {
+     "plc": "iv",
+     "fonds": "iSHARES EDGE MSCI WORLD VALUE FACTOR UCITS ETF"
+    }
    }
   },
   {
@@ -115,7 +119,11 @@
    "holdings": {
     "anbieter": "xtrackers",
     "isin": "IE00BL25JL35",
-    "quelle": "Positionsliste Xtrackers MSCI World Quality (gleicher Index MSCI World Sector Neutral Quality)"
+    "quelle": "Positionsliste Xtrackers MSCI World Quality (gleicher Index MSCI World Sector Neutral Quality)",
+    "bericht": {
+     "plc": "iv",
+     "fonds": "iSHARES EDGE MSCI WORLD QUALITY FACTOR UCITS ETF"
+    }
    }
   },
   {
@@ -130,7 +138,11 @@
    "holdings": {
     "anbieter": "xtrackers",
     "isin": "IE00BL25JP72",
-    "quelle": "Positionsliste Xtrackers MSCI World Momentum (gleicher Index)"
+    "quelle": "Positionsliste Xtrackers MSCI World Momentum (gleicher Index)",
+    "bericht": {
+     "plc": "iv",
+     "fonds": "iSHARES EDGE MSCI WORLD MOMENTUM FACTOR UCITS ETF"
+    }
    }
   },
   {
@@ -325,7 +337,12 @@
    "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026",
    "holdings": {
     "index": "NIFTY 50",
-    "naeherung": true
+    "naeherung": true,
+    "bericht": {
+     "plc": "iv",
+     "fonds": "iSHARES MSCI INDIA UCITS ETF"
+    },
+    "quelle": "Bericht iShares"
    }
   },
   {
@@ -340,7 +357,11 @@
    "holdings": {
     "anbieter": "xtrackers",
     "isin": "LU0274209740",
-    "quelle": "Positionsliste Xtrackers MSCI Japan (Näherung: Japan ohne Nebenwerte)"
+    "quelle": "Positionsliste Xtrackers MSCI Japan (Näherung: Japan ohne Nebenwerte)",
+    "bericht": {
+     "plc": "iii",
+     "fonds": "iSHARES CORE MSCI JAPAN IMI UCITS ETF"
+    }
    }
   },
   {
@@ -440,7 +461,12 @@
    "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026",
    "holdings": {
     "factsheet": "https://www.ishares.com/gls-download/literature/fact-sheet/rbot-ishares-automation-robotics-ucits-etf-fund-fact-sheet-en-gb.pdf",
-    "quelle": "Factsheet iShares (Top 10)"
+    "quelle": "Factsheet iShares (Top 10)",
+    "bericht": {
+     "plc": "iv",
+     "fonds": "iSHARES AUTOMATION & ROBOTICS UCITS ETF",
+     "rest": true
+    }
    }
   },
   {
@@ -520,7 +546,11 @@
    "holdings": {
     "anbieter": "xtrackers",
     "isin": "IE00BFMNPS42",
-    "quelle": "Näherung über Xtrackers MSCI USA ESG (ESG-Leaders statt SRI-Auswahl)"
+    "quelle": "Näherung über Xtrackers MSCI USA ESG (ESG-Leaders statt SRI-Auswahl)",
+    "bericht": {
+     "plc": "iv",
+     "fonds": "iSHARES MSCI USA SRI UCITS ETF"
+    }
    }
   },
   {
@@ -535,7 +565,11 @@
    "holdings": {
     "anbieter": "xtrackers",
     "isin": "IE00BFMNHK08",
-    "quelle": "Näherung über Xtrackers MSCI Europe ESG (ESG-Leaders statt SRI-Auswahl)"
+    "quelle": "Näherung über Xtrackers MSCI Europe ESG (ESG-Leaders statt SRI-Auswahl)",
+    "bericht": {
+     "plc": "ii",
+     "fonds": "iSHARES MSCI EUROPE SRI UCITS ETF"
+    }
    }
   },
   {
@@ -550,7 +584,11 @@
    "holdings": {
     "anbieter": "xtrackers",
     "isin": "IE00BG370F43",
-    "quelle": "Näherung über Xtrackers MSCI Emerging Markets ESG (ESG-Leaders statt SRI-Auswahl)"
+    "quelle": "Näherung über Xtrackers MSCI Emerging Markets ESG (ESG-Leaders statt SRI-Auswahl)",
+    "bericht": {
+     "plc": "iv",
+     "fonds": "iSHARES MSCI EM SRI UCITS ETF"
+    }
    }
   },
   {
@@ -585,7 +623,12 @@
    "letzteMeldung": null,
    "holdings": {
     "factsheet": "https://www.ishares.com/gls-download/literature/fact-sheet/inra-ishares-global-clean-energy-transition-ucits-etf-fund-fact-sheet-en-gb.pdf",
-    "quelle": "Factsheet iShares (Top 10)"
+    "quelle": "Factsheet iShares (Top 10)",
+    "bericht": {
+     "plc": "ii",
+     "fonds": "iSHARES GLOBAL CLEAN ENERGY TRANSITION UCITS ETF",
+     "rest": true
+    }
    }
   },
   {
@@ -643,7 +686,14 @@
    "meldefonds": null,
    "vertreter": null,
    "ertrag": "thesaurierend",
-   "letzteMeldung": null
+   "letzteMeldung": null,
+   "holdings": {
+    "bericht": {
+     "plc": "iv",
+     "fonds": "iSHARES DIGITALISATION UCITS ETF"
+    },
+    "quelle": "Bericht iShares"
+   }
   }
  ],
  "_holdings_hinweis": "Positionslisten: Xtrackers und SPDR direkt vom Anbieter (täglich), S&P-500-, DAX- und Euro-Stoxx-50-ETFs über die Indexzusammensetzung. iShares und Vanguard geben ihre Listen nicht automatisiert heraus."
