@@ -160,6 +160,19 @@ tr.click:hover td{background:var(--hl)}
   .fbar label{flex:1 1 140px}
   .dhead{padding:8px 10px}
   .dhead .s,.dhead .p{font-size:19px}
+  .hm{display:none}
+  .pb{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .nm{max-width:150px}
+  table{font-size:12.5px}
+  th{font-size:10px;letter-spacing:.3px}
+  .ph h2{font-size:11px}
+  .ph small{display:none}
+  .btns button{padding:4px 9px;font-size:12px}
+  .kv{grid-template-columns:1fr}
+  .chart .tip{font-size:10.5px}
+  .tile{padding:8px 10px}
+  .more{width:100%}
+  #modalBox{width:calc(100vw - 20px)!important;max-height:85vh}
 }
 footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px solid var(--line2)}
 /* Passwort-Sperre */
@@ -435,8 +448,8 @@ function moversData(){
 function moverTable(rows, empty){
   if(!rows.length) return `<div class="dim" style="padding:14px 4px">${empty}</div>`;
   const L={chg:"Tag",m1:"1 Monat",ytd:"seit 1.1."}[movT];
-  return `<table><thead><tr><th class="l">Titel</th><th class="l">Branche</th><th>Kurs</th><th>${L}</th></tr></thead><tbody>
-    ${rows.map(r=>`<tr class="click" data-sym="${esc(r.s)}"><td class="l nm"><span class="sym">${esc(r.s)}</span> ${esc(r.n)}</td><td class="l dim" style="max-width:150px;overflow:hidden;text-overflow:ellipsis">${esc(r.ind||r.sec||"")}</td><td>${fmt(r.px,r.px<10?3:2)} <span class="dim" style="font-size:10.5px">${esc(r.cur||"")}</span></td><td class="${cls(r[movT])}" style="font-weight:600">${pct(r[movT],1)}</td></tr>`).join("")}
+  return `<table><thead><tr><th class="l">Titel</th><th class="l hm">Branche</th><th>Kurs</th><th>${L}</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr class="click" data-sym="${esc(r.s)}"><td class="l nm"><span class="sym">${esc(r.s)}</span> ${esc(r.n)}</td><td class="l dim hm" style="max-width:150px;overflow:hidden;text-overflow:ellipsis">${esc(r.ind||r.sec||"")}</td><td>${fmt(r.px,r.px<10?3:2)} <span class="dim" style="font-size:10.5px">${esc(r.cur||"")}</span></td><td class="${cls(r[movT])}" style="font-weight:600">${pct(r[movT],1)}</td></tr>`).join("")}
   </tbody></table>`;
 }
 V.HOME = async () => {
@@ -460,7 +473,7 @@ V.HOME = async () => {
   <div style="margin-top:10px">${panel(`Top-Mover <span class="dim" style="text-transform:none;letter-spacing:0;font-weight:400">· ${fmt(mv.n,0)} Titel im Filter</span>`, `<div class="grid g2" id="movWrap">
       <div><div style="color:var(--up);font-weight:600;font-size:12px;margin:0 0 4px">▲ Gestiegen</div>${moverTable(mv.up,"Keine Gewinner im Filter.")}</div>
       <div><div style="color:var(--dn);font-weight:600;font-size:12px;margin:0 0 4px">▼ Gefallen</div>${moverTable(mv.dn,"Keine Verlierer im Filter.")}</div>
-    </div>`, ctl)}</div>
+    </div>${(D.news&&D.news.movers&&D.news.movers.length)?`<button class="more" onclick="go('TOP')">Nachrichten zu den Top-Movern →</button>`:""}`, ctl)}</div>
   <div class="grid g32" style="margin-top:10px">
     ${panel("Top-Schlagzeilen", newsList([...(n.general||[]),...(n.tickers||[])].sort((a,b)=>(b.published||"").localeCompare(a.published||"")),14), `<small>FinBERT-Stimmung</small>`)}
     <div class="grid">
@@ -499,7 +512,7 @@ V.ECO = () => {
   const ser = all.filter(s=>ecoRegion==="Alle"||s.region===ecoRegion);
   if(!ecoSel || !all.find(s=>s.id===ecoSel)) ecoSel = ser[0]?.id;
   const sel = all.find(s=>s.id===ecoSel);
-  const ORD=["Einkaufsmanager (Marktupdate)","Zinsen Euroraum","Zinsen USA","Staatsanleihen","Inflation","Wachstum","Arbeitsmarkt","Stimmung"];
+  const ORD=["Einkaufsmanager (Marktupdate)","Zinsen Euroraum","Zinsen USA","Staatsanleihen","Kreditaufschläge","Inflation","Wachstum","Arbeitsmarkt","Stimmung"];
   const groups=[...new Set(ser.map(s=>s.group))].sort((a,b)=>((ORD.indexOf(a)+1)||99)-((ORD.indexOf(b)+1)||99));
   return `${panel(sel?`${esc(sel.name)} <span class="dim">· ${esc(sel.region)} · ${esc(sel.source)}</span>`:"Chart", `<div id="ecoChart"></div>`, `<div class="btns" id="ecoRange">${["2J","5J","10J","Max"].map(r=>`<button data-r="${r}" class="${r===ecoRange?"on":""}">${r}</button>`).join("")}</div>`)}
     <div style="margin:10px 0" class="btns" id="ecoReg">${regions.map(r=>`<button data-r="${esc(r)}" class="${r===ecoRegion?"on":""}">${esc(r)}</button>`).join("")}</div>
@@ -517,6 +530,11 @@ V.ECO.after = el => {
 
 /* --- News --- */
 let newsFilter="Alle";
+function moverNewsHtml(n){
+  const M=(n&&n.movers)||[]; if(!M.length) return "";
+  return `<div class="grid g3" style="margin-bottom:10px">${M.map(m=>`<div class="panel"><div class="ph" style="cursor:pointer" data-mv="${esc(m.s)}"><h2 style="text-transform:none;letter-spacing:0;color:var(--txt);font-size:13px"><span class="${m.dir==="up"?"up":"dn"}">${m.dir==="up"?"▲":"▼"}</span> <span class="sym">${esc(m.s)}</span> ${esc(m.n||"")}</h2><b class="${cls(m.chg)}">${pct(m.chg,1)}</b></div>
+    <div class="pb">${m.news&&m.news.length?newsList(m.news,4,false):`<div class="dim" style="font-size:12px">Keine aktuellen Schlagzeilen gefunden.</div>`}</div></div>`).join("")}</div>`;
+}
 V.TOP = () => {
   const n=D.news||{}; let items=[...(n.general||[]).map(x=>({...x,_g:1})),...(n.tickers||[])];
   items.sort((a,b)=>(b.published||"").localeCompare(a.published||""));
@@ -527,9 +545,10 @@ V.TOP = () => {
   const sum=Object.entries(n.summary||{}).filter(([,v])=>v.score!=null).sort((a,b)=>b[1].score-a[1].score);
   const bars = sum.length ? `<table><thead><tr><th>Titel</th><th>Score</th><th class="l" style="width:45%">Verteilung</th><th>n</th></tr></thead><tbody>${sum.map(([s,v])=>{
     const t=v.pos+v.neg+v.neu||1; return `<tr class="click" data-sym="${esc(s)}"><td class="sym">${esc(s)}</td><td>${sentScore(v.score)}</td><td class="l"><div class="bar"><i style="left:0;width:${v.pos/t*100}%;background:var(--up)"></i><i style="left:${v.pos/t*100}%;width:${v.neu/t*100}%;background:#444"></i><i style="left:${(v.pos+v.neu)/t*100}%;width:${v.neg/t*100}%;background:var(--dn)"></i></div></td><td class="dim">${v.n}</td></tr>`;}).join("")}</tbody></table>` : noData("Stimmungswerte");
-  return panel("Schlagzeilen", `<div class="btns" id="nf" style="margin-bottom:8px">${["Alle","Allgemein","Unternehmen","Positiv","Negativ"].map(f=>`<button data-f="${f}" class="${f===newsFilter?"on":""}">${f}</button>`).join("")}</div>${newsList(items,150)}`, `<button class="info" data-info="sent">ⓘ So entsteht die Stimmung</button>`);
+  const mv = moverNewsHtml(n);
+  return (mv?`<div class="dim" style="font-size:11px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;color:var(--amber)">Nachrichten zu den Top-Movern des Tages <span class="dim" style="text-transform:none;letter-spacing:0;font-weight:400">· je 3 Gewinner und Verlierer ab 5 Mrd. € Marktwert</span></div>${mv}`:"") + panel("Schlagzeilen", `<div class="btns" id="nf" style="margin-bottom:8px">${["Alle","Allgemein","Unternehmen","Positiv","Negativ"].map(f=>`<button data-f="${f}" class="${f===newsFilter?"on":""}">${f}</button>`).join("")}</div>${newsList(items,150)}`, `<button class="info" data-info="sent">ⓘ So entsteht die Stimmung</button>`);
 };
-V.TOP.after = el => el.querySelectorAll("#nf button").forEach(b=>b.onclick=()=>{newsFilter=b.dataset.f; render();});
+V.TOP.after = el => { el.querySelectorAll("#nf button").forEach(b=>b.onclick=()=>{newsFilter=b.dataset.f; render();}); el.querySelectorAll("[data-mv]").forEach(h=>h.onclick=()=>go("DES",h.dataset.mv)); };
 
 /* --- Aktie im Detail --- */
 let desRange="1J";
@@ -1241,7 +1260,7 @@ function scenarioChart(el, models){
   const all=ser.flatMap(s=>s.pts.map(p=>p[1])); let mn=Math.min(...all,0), mx=Math.max(...all,0); const pad=(mx-mn)*0.06; mn-=pad; mx+=pad;
   const X=x=>pl+(x+2)/5*(W-pl-pr), Y=v=>pt+(1-(v-mn)/(mx-mn))*(H-pt-pb);
   let g=""; for(let i=0;i<=5;i++){const v=mn+(mx-mn)*i/5; g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="#1f252e"/><text class="axis" x="${W-pr+6}" y="${Y(v)+3}">${fmt(v,0)} %</text>`;}
-  for(let x=-2;x<=3;x++) g+=`<text class="axis" x="${X(x)}" y="${H-8}" text-anchor="${x===-2?"start":x===3?"end":"middle"}">${x>0?"+":""}${x} %-Pkt.</text><line x1="${X(x)}" x2="${X(x)}" y1="${pt}" y2="${H-pb}" stroke="#1a1f27"/>`;
+  for(let x=-2;x<=3;x++) g+=`<text class="axis" x="${X(x)}" y="${H-8}" text-anchor="${x===-2?"start":x===3?"end":"middle"}">${x>0?"+":""}${x}${W<560?"":" %-Pkt."}</text><line x1="${X(x)}" x2="${X(x)}" y1="${pt}" y2="${H-pb}" stroke="#1a1f27"/>`;
   g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(0)}" y2="${Y(0)}" stroke="#666"/><line x1="${X(berDy)}" x2="${X(berDy)}" y1="${pt}" y2="${H-pb}" stroke="var(--amber)" stroke-dasharray="4 3"/>`;
   const lines=ser.map(s=>`<path d="${s.pts.map((p,i)=>`${i?"L":"M"}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join("")}" fill="none" stroke="${s.color}" stroke-width="1.8"/>`).join("");
   el.innerHTML=`<div class="chart"><svg viewBox="0 0 ${W} ${H}" height="${H}">${g}${lines}</svg></div>

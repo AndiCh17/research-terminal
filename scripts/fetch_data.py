@@ -489,6 +489,27 @@ def yahoo_news(t: yf.Ticker, sym: str, n: int):
     return items
 
 
+def mover_news(rows: list[dict], sent: "Sentiment", k=3, min_mcap=5e9) -> list[dict]:
+    """Die je 3 stärksten Gewinner und Verlierer des Tages (ab 5 Mrd. € Marktwert) mit ihren Schlagzeilen."""
+    cand = [r for r in rows if r.get("chg") is not None and (r.get("mcap") or 0) >= min_mcap]
+    cand.sort(key=lambda r: r["chg"])
+    pick = [("up", r) for r in reversed(cand[-k:]) if r["chg"] > 0] + [("down", r) for r in cand[:k] if r["chg"] < 0]
+    out = []
+    for d, r in pick:
+        items = safe(lambda: yahoo_news(yf.Ticker(r["s"]), r["s"], 6), [], f"Mover-News {r['s']}")
+        if not items:
+            items = safe(lambda: google_news(f'"{r.get("n") or r["s"]}" stock', 5, r["s"]), [], f"Mover-Google {r['s']}")
+            for it in items:
+                it["ticker"] = r["s"]
+        items = dedupe(items)[:6]
+        for it, sc in zip(items, sent.score([it["title"] for it in items]) if items else []):
+            it["sentiment"] = sc
+        out.append({"s": r["s"], "n": r.get("n"), "chg": r["chg"], "px": r.get("px"), "cur": r.get("cur"),
+                    "dir": d, "news": sorted(items, key=lambda n: n.get("published") or "", reverse=True)})
+    log(f"  Top-Mover-News: {len(out)} Titel")
+    return out
+
+
 def google_news(query: str, n: int, tag: str | None = None):
     import feedparser
 
@@ -690,6 +711,10 @@ FRED = [
     ("PCEPILFE", "US-Kerninflation (PCE, Fed-Zielgröße)", "% J/J", "yoy", "Inflation", 2),
     ("UNRATE", "US-Arbeitslosenquote", "%", None, "Arbeitsmarkt", None),
     ("A191RL1Q225SBEA", "US-Wirtschaftswachstum (BIP, annualisiert)", "% Q/Q", None, "Wachstum", 0),
+    # Risikoaufschläge ggü. Staatsanleihen (ICE BofA, optionsbereinigt)
+    ("BAMLC0A0CM", "Aufschlag Unternehmensanleihen USA (Investment Grade)", "%-Pkt.", None, "Kreditaufschläge", None),
+    ("BAMLH0A0HYM2", "Aufschlag Hochzinsanleihen USA (High Yield)", "%-Pkt.", None, "Kreditaufschläge", None),
+    ("BAMLHE00EHYIOAS", "Aufschlag Hochzinsanleihen Euro (High Yield)", "%-Pkt.", None, "Kreditaufschläge", None),
 ]
 ECB = [
     ("FM/D.U2.EUR.4F.KR.DFR.LEV", "EZB-Einlagensatz", "%", "Zinsen Euroraum"),
@@ -815,7 +840,7 @@ def build_macro():
             elif tr == "diff":
                 s = s.diff()
             return series_block(s, {"id": sid, "name": name, "unit": unit, "group": grp,
-                                    "region": "USA", "source": "FRED", "ref": ref})
+                                    "region": ("Euroraum" if "Euro " in name else "USA"), "source": "FRED", "ref": ref})
         r = safe(f, None, f"FRED {sid}")
         if r:
             out.append(r)
@@ -1561,7 +1586,9 @@ def main():
     macro_old = load(DATA / "macro.json", None)
     fred_missing = bool(os.environ.get("FRED_API_KEY")) and macro_old is not None and \
         not any(x.get("source") == "FRED" for x in macro_old.get("series", []))
-    if MODE == "nightly" or macro_old is None or fred_missing:
+    ids_old = {x.get("id") for x in (macro_old or {}).get("series", [])}
+    new_series = bool(os.environ.get("FRED_API_KEY")) and any(f[0] not in ids_old for f in FRED)
+    if MODE == "nightly" or macro_old is None or fred_missing or new_series:
         log("Makro laden …")
         safe(build_macro, None, "Makro")
     safe(lambda: merge_manual_macro(editions), None, "PMI-Zusammenführung")
@@ -1583,12 +1610,13 @@ def main():
         n["sentiment"] = sc
     by_date = lambda n: n.get("published") or ""  # noqa: E731
     summary = {s: d["sentiment"] for s, d in details.items()}
+    movers = safe(lambda: mover_news(rows, sent), [], "News der Top-Mover")
     save(DATA / "news.json", {
         "updated": NOW.isoformat(), "model": CFG.get("sentiment_model") if sent.pipe else None,
         "method": {"halfLifeDays": HALF_LIFE_DAYS, "windowDays": WINDOW_DAYS},
         "general": sorted(general, key=by_date, reverse=True),
         "tickers": sorted([n for d in details.values() for n in d["news"]], key=by_date, reverse=True)[:250],
-        "summary": summary,
+        "summary": summary, "movers": movers,
     })
     save(DATA / "meta.json", {"updated": NOW.isoformat(), "mode": MODE, "tickers": meta_map,
                               "universe": len(rows), "details": len(meta_map), "marktupdate": len(editions)})
