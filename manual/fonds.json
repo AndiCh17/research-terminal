@@ -792,7 +792,10 @@
     "AT0000A2AXJ9"
    ],
    "region": "Euro",
-   "match": "KEPLER Vorsorge Rentenfonds"
+   "match": "KEPLER Vorsorge Rentenfonds",
+   "berichte": [
+    "https://markets.bawag.at/dokumente/HB-92066b0b-c24b-4897-8391-d6fdf51f6816.pdf"
+   ]
   },
   {
    "name": "KEPLER Euro Rentenfonds",
@@ -1008,7 +1011,10 @@
     "AT0000A26ZA7"
    ],
    "region": "Global",
-   "match": "KEPLER Ethik Mix Ausgewogen"
+   "match": "KEPLER Ethik Mix Ausgewogen",
+   "berichte": [
+    "https://markets.bawag.at/dokumente/HB-e4a73553-fe12-4bce-9826-b4df82913921.pdf"
+   ]
   },
   {
    "name": "KEPLER Ethik Mix Dynamisch",
@@ -1056,7 +1062,10 @@
     "AT0000722608"
    ],
    "region": "Global",
-   "match": "KEPLER Mix Dynamisch"
+   "match": "KEPLER Mix Dynamisch",
+   "berichte": [
+    "https://www.easybank.at/markets/dokumente/HB-59a1036d-3ba4-49b1-9048-0e3b2874d128.pdf"
+   ]
   },
   {
    "name": "KEPLER Vorsorge Mixfonds",
@@ -1071,7 +1080,10 @@
     "AT0000A37JJ9"
    ],
    "region": "Global",
-   "match": "KEPLER Vorsorge Mixfonds"
+   "match": "KEPLER Vorsorge Mixfonds",
+   "berichte": [
+    "https://markets.bawag.at/dokumente/HB-8d19bba1-bdc5-4c68-94f7-b695beea3fef.pdf"
+   ]
   },
   {
    "name": "KEPLER Multi-Flex Portfolio",
@@ -1098,7 +1110,10 @@
     "AT0000A22KH3"
    ],
    "region": "Global",
-   "match": "KEPLER Active World Portfolio"
+   "match": "KEPLER Active World Portfolio",
+   "berichte": [
+    "https://www.easybank.at/markets/dokumente/RS-df2616c9-e039-4044-bd4f-069f1c1b8de9.pdf"
+   ]
   },
   {
    "name": "Portfolio Management Ausgewogen",
@@ -1126,7 +1141,10 @@
     "AT0000A2YCS4"
    ],
    "region": "Global",
-   "match": "KEPLER Risk Select Aktienfonds"
+   "match": "KEPLER Risk Select Aktienfonds",
+   "berichte": [
+    "https://markets.bawag.at/dokumente/HB-80793271-5148-4731-80a9-17056bf748c3.pdf"
+   ]
   },
   {
    "name": "KEPLER Europa Aktienfonds",
@@ -1140,7 +1158,11 @@
     "AT0000A2AXE0"
    ],
    "region": "Europa",
-   "match": "KEPLER Europa Aktienfonds"
+   "match": "KEPLER Europa Aktienfonds",
+   "berichte": [
+    "https://markets.bawag.at/dokumente/HB-00cc1315-fc6d-4baf-b37e-0abd8ad1f33a.pdf",
+    "https://www.dad.at/fonds/dokumente/RS-0894ef0e-cca1-45b2-8e57-f2c938337916.pdf"
+   ]
   },
   {
    "name": "KEPLER Ethik Quality Aktienfonds",
@@ -1154,7 +1176,10 @@
     "AT0000A2UXJ7"
    ],
    "region": "Global",
-   "match": "KEPLER Ethik Quality Aktienfonds"
+   "match": "KEPLER Ethik Quality Aktienfonds",
+   "berichte": [
+    "https://markets.bawag.at/dokumente/HB-88bc2678-1de9-4576-9425-7a43eef382cc.pdf"
+   ]
   },
   {
    "name": "KEPLER D-A-CH Plus Aktienfonds",
@@ -1197,7 +1222,11 @@
     "AT0000A2AXD2"
    ],
    "region": "USA",
-   "match": "KEPLER US Aktienfonds"
+   "match": "KEPLER US Aktienfonds",
+   "berichte": [
+    "https://www.easybank.at/markets/dokumente/HB-3edad56f-7f9d-48ae-9376-4661087edaba.pdf",
+    "https://www.easybank.at/markets/dokumente/RS-158effbe-ec77-4ab1-b552-73663f7a7c44.pdf"
+   ]
   },
   {
    "name": "KEPLER Value Aktienfonds",

@@ -1554,6 +1554,97 @@ def find_report(isins: list[str], since: str | None) -> tuple[str, str, str] | N
     return None
 
 
+_KEP_END = re.compile(r"\s(-?\d{1,3},\d{2})([A-Z]{2}[A-Z0-9]{9}[0-9])$")
+_KEP_NEW = re.compile(r"^([A-Z]{2}[A-Z0-9]{9}[0-9])\s+(.+?)\s+[\d\.,\s\-]+?\s(-?\d{1,3},\d{2})$")
+def parse_kepler_text(txt: str) -> dict:
+    """Vermögensaufstellung eines KEPLER-Berichts (Prozent und ISIN stehen am Zeilenende)."""
+    m = re.search(r"Vermögensaufstellung zum (\d\d)\s?\.(\d\d)\s?\.\s?(\d{4})", txt)
+    if not m:
+        mo = {"jänner": 1, "januar": 1, "februar": 2, "märz": 3, "april": 4, "mai": 5, "juni": 6, "juli": 7, "august": 8,
+              "september": 9, "oktober": 10, "november": 11, "dezember": 12}
+        m2 = re.search(r"Vermögensaufstellung zum (\d{1,2})\. ?([A-Za-zäÄ]+) (\d{4})", txt)
+        if not m2 or m2.group(2).lower() not in mo:
+            return {}
+        m = re.search(re.escape(m2.group(0)), txt)
+        dd, mm_, yy = f"{int(m2.group(1)):02d}", f"{mo[m2.group(2).lower()]:02d}", m2.group(3)
+    else:
+        dd, mm_, yy = m.group(1), m.group(2), m.group(3)
+    body = txt[m.start():]
+    cut = min([i for i in (body.find("Zusammensetzung des Fondsvermögens"), body.find("Devisenkurse"), body.find("Während des Berichtszeitraumes"),
+                           body.find("Summe Wertpapiervermögen"))
+               if i > 0] or [len(body)])
+    body = body[:cut]
+    items, buf, grp = [], "", "Aktien"
+    tranchen = []
+    for mt in re.finditer(r"\b(AT[A-Z0-9]{9}[0-9])\b", txt[:m.start()]):
+        if isin_ok(mt.group(1)) and mt.group(1) not in tranchen:
+            tranchen.append(mt.group(1))
+    for ln in body.splitlines():
+        s = ln.rstrip()
+        st = s.strip()
+        if not st:
+            continue
+        if not _KEP_END.search(st) and len(st) < 90 and not re.search(r"\d{2,}", st):
+            if re.search(r"Investmentzertifikat|OGAW|Investmentfonds|Investmentanteil", st):
+                grp, buf = "Investmentzertifikate", ""
+                continue
+            if re.search(r"Anleihe|Schuldverschreibung|Pfandbrief|Obligation", st):
+                grp, buf = "Anleihen", ""
+                continue
+            if re.match(r"^(Aktien|Genussscheine|Partizipationsscheine|REITs?)\b", st):
+                grp, buf = "Aktien", ""
+                continue
+        if st.startswith(("Summe", "lautend auf", "Bankguthaben", "Sonstiges", "Fondsvermögen", "Wertpapiervermögen", "Zum amtlichen", "Seite ", "KEPLER-FONDS", "Kapitalanlagegesellschaft")):
+            buf = ""
+            continue
+        cand = (buf + ("" if buf and buf[-1].isdigit() and st[:1].isdigit() else " ") + st).strip() if buf else st
+        me = _KEP_END.search(cand)
+        if me and isin_ok(me.group(2)):
+            pre = cand[:me.start()].rstrip()
+            name = re.split(r"\s{2,}\d|\s+\d[\d\.]*\s", pre)[0]
+            name = re.sub(r"\s+(DL|EO|SF|LS|NK|DK|SK|YN|HD|CD|AD|O\.N\.|-,|,\d)[^A-Za-z]*$", "", name).strip()
+            items.append({"isin": me.group(2), "name": re.sub(r"\s{2,}", " ", name), "tick": "", "code": "", "cur": "",
+                          "w": float(me.group(1).replace(",", ".")), "grp": grp})
+            buf = ""
+        else:
+            buf = cand if len(cand) < 200 else ""
+    if len(items) < 5:  # neues Layout (ab 2026): ISIN am Zeilenanfang, Anteil am Zeilenende
+        items, grp = [], "Aktien"
+        for ln in txt.splitlines():
+            st = ln.strip()
+            if not _KEP_NEW.match(st) and len(st) < 90 and not re.search(r"\d{2,}", st):
+                if re.search(r"Investmentzertifikat|OGAW|Investmentfonds", st):
+                    grp = "Investmentzertifikate"
+                elif re.search(r"Anleihe|Schuldverschreibung|Pfandbrief", st):
+                    grp = "Anleihen"
+                elif re.match(r"^(Aktien|Genussscheine|Partizipationsscheine|REITs?)\b", st):
+                    grp = "Aktien"
+                elif re.search(r"Zertifikat", st):
+                    grp = "Zertifikate"
+                continue
+            mn = _KEP_NEW.match(st)
+            if mn and isin_ok(mn.group(1)):
+                name = re.split(r"\s+\d[\d\.]*\s", mn.group(2) + " ")[0].strip()
+                items.append({"isin": mn.group(1), "name": name, "tick": "", "code": "", "cur": "",
+                              "w": float(mn.group(3).replace(",", ".")), "grp": grp})
+    return {"stichtag": f"{dd}.{mm_}.{yy}", "items": items, "tranchen": tranchen}
+
+
+def parse_any_report(pdf: bytes) -> dict:
+    """Raiffeisen- oder KEPLER-Format erkennen und die Vermögensaufstellung lesen."""
+    import pypdf
+    r = pypdf.PdfReader(io.BytesIO(pdf))
+    txt = "\n".join((p.extract_text() or "") for p in r.pages)
+    if "KEPLER-FONDS" in txt[:6000]:
+        rep = parse_kepler_text(txt)
+        if rep.get("items"):
+            rep["typ"] = "Halbjahresbericht" if "Halbjahresbericht" in txt[:3000] else "Rechenschaftsbericht"
+            return rep
+    rep = parse_fund_report(pdf)
+    rep["typ"] = "Halbjahresbericht" if "Halbjahresbericht" in txt[:3000] else "Rechenschaftsbericht"
+    return rep
+
+
 def load_fund_reports() -> dict:
     """Berichte aller Fonds mit ISIN laden (Cache: nur neue Berichte werden geladen und gelesen)."""
     from concurrent.futures import ThreadPoolExecutor
@@ -1583,9 +1674,41 @@ def load_fund_reports() -> dict:
         for name, val in ex.map(one, todo):
             if val:
                 cache[name] = val
+    # Fonds mit hinterlegten Bericht-Links (z. B. KEPLER) und PDFs in manual/berichte/
+    pcache = load(DATA / "report_pdfs.json") or {}
+    cand: dict[str, list[dict]] = {}
+    srcs = [(f["name"], u) for f in fonds for u in (f.get("berichte") or [])]
+    for p_ in sorted((ROOT / "manual" / "berichte").glob("*.pdf")) if (ROOT / "manual" / "berichte").exists() else []:
+        srcs.append((None, "file:" + p_.name))
+    for fname, u in srcs:
+        if u not in pcache:
+            try:
+                raw = (ROOT / "manual" / "berichte" / u[5:]).read_bytes() if u.startswith("file:") else HTTP.get(u, timeout=90).content
+                rp = parse_any_report(raw)
+                pcache[u] = {k: rp.get(k) for k in ("stichtag", "items", "tranchen", "typ")}
+            except Exception as ex:
+                log(f"  Bericht {u.rsplit('/', 1)[-1]}: nicht lesbar ({ex})")
+                pcache[u] = {"items": []}
+        rp = pcache[u]
+        if not rp.get("items"):
+            continue
+        if not fname:  # PDF aus dem Ordner: Fonds über Tranchen-ISINs zuordnen
+            tr = set(rp.get("tranchen") or [])
+            fname = next((f["name"] for f in fonds if tr & set(f.get("isins") or [])), None)
+        if fname:
+            cand.setdefault(fname, []).append({**rp, "url": u if not u.startswith("file:") else "manual/berichte/" + u[5:]})
+    d_ = lambda x: datetime.strptime(x, "%d.%m.%Y") if x else datetime(1900, 1, 1)  # noqa: E731
+    for fname, lst in cand.items():
+        best = max(lst, key=lambda r_: d_(r_.get("stichtag")))
+        cur = cache.get(fname) or {}
+        if not cur.get("items") or d_(best["stichtag"]) >= d_(cur.get("stichtag")):
+            f = next(x for x in fonds if x["name"] == fname)
+            cache[fname] = {"url": best["url"], "typ": best.get("typ") or "Bericht", "stichtag": best["stichtag"], "items": best["items"],
+                            "tranchen": sorted(set((best.get("tranchen") or []) + (f.get("isins") or []))), "checked": NOW.isoformat()}
+    save(DATA / "report_pdfs.json", pcache, quiet=True)
     save(DATA / "fund_reports.json", cache, quiet=True)
     n = sum(1 for v in cache.values() if v.get("items"))
-    log(f"  Fondsberichte: {n} von {len(todo)} Fonds mit Vermögensaufstellung")
+    log(f"  Fondsberichte: {n} Fonds mit Vermögensaufstellung (Raiffeisen automatisch, {len(cand)} über Links/Ordner)")
     return cache
 
 

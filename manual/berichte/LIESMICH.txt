@@ -1,0 +1,3 @@
+Hier können öffentliche Halbjahres- und Rechenschaftsberichte (PDF) von Fonds abgelegt werden.
+Die Pipeline liest die Vermögensaufstellung und ordnet den Fonds über die Tranchen-ISINs zu.
+Nur öffentliche Fondsberichte – keine Kundendaten!
