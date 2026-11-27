@@ -1307,7 +1307,7 @@ def build_holdings(uni_rows: list[dict], fund: dict):
     _SYMC.clear()
     _SYMC.update(load(DATA / "fund_symbols.json") or {})
     _SEARCH_LEFT[0] = 250 if MODE == "nightly" else 120
-    _RES_LEFT[0] = 500 if MODE == "nightly" else 200
+    _RES_LEFT[0] = 700 if MODE == "nightly" else 200
     _EXTRA.clear()
     cfg = json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8"))
     keys: dict[str, str] = {}
@@ -1370,7 +1370,7 @@ def build_holdings(uni_rows: list[dict], fund: dict):
                 elif _SEARCH_LEFT[0] > 0:
                     _SEARCH_LEFT[0] -= 1
                     sym = search_symbol(n, {})
-                    _SYMC[fisin] = [sym or "", NOW.isoformat()]
+                    _SYMC[fisin] = [sym or "", NOW.isoformat(), 1]
                 if sym:
                     _EXTRA.add(sym)
             if sym:
@@ -1404,7 +1404,7 @@ def build_holdings(uni_rows: list[dict], fund: dict):
     xrows = safe(lambda: extra_rows(extra, {r["s"] for r in uni_rows}), [], "Zusatztitel") or []
     log(f"  ISIN-Zuordnung Aktien: {len(isin_map)}")
     save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta, "isin": isin_map,
-                                  "extra": xrows, "v": 4, "berichte": sum(1 for k in meta if k.startswith("F:"))})
+                                  "extra": xrows, "v": 5, "berichte": sum(1 for k in meta if k.startswith("F:"))})
 
 
 # ----------------------------------------------------------------- Fondsberichte & Factsheets (echte Bestände)
@@ -1583,7 +1583,7 @@ def resolve_positions(items: list[dict], keys: dict, first: dict, isin_map: dict
             out[isin] = keys[k]
             continue
         c = cache.get(isin)
-        if c and (c[0] or (NOW - datetime.fromisoformat(c[1])).days < 30):
+        if c and (c[0] or (len(c) > 2 and (NOW - datetime.fromisoformat(c[1])).days < 30)):
             if c[0]:
                 out[isin] = c[0]
             continue
@@ -1595,17 +1595,20 @@ def resolve_positions(items: list[dict], keys: dict, first: dict, isin_map: dict
         have = history_block(allc, period="5d", interval="1d") if allc else {}
         ok = {s for s, v in have.items() if v is not None and len(v)}
         searched = 0
-        for isin, it in pending.items():
+        for isin, it in sorted(pending.items(), key=lambda x: -(x[1].get("w") or 0)):
             sym = next((s for s in cands[isin] if s in ok), None)
+            tried = bool(cands[isin])
             if not sym and _RES_LEFT[0] > 0:
                 _RES_LEFT[0] -= 1
+                tried = True
                 searched += 1
                 try:
                     q = [x for x in (yf.Search(it["name"][:40], max_results=5).quotes or []) if x.get("quoteType") == "EQUITY"]
                     sym = q[0]["symbol"] if q else None
                 except Exception:
                     sym = None
-            cache[isin] = [sym or "", NOW.isoformat()]
+            if sym or tried:
+                cache[isin] = [sym or "", NOW.isoformat(), 1]
             if sym:
                 out[isin] = sym
         save(DATA / "fund_symbols.json", cache, quiet=True)
@@ -1697,7 +1700,7 @@ def search_symbol(name: str, cache: dict) -> str | None:
         sym = q[0]["symbol"] if q else None
     except Exception:
         sym = None
-    cache[k] = [sym or "", NOW.isoformat()]
+    cache[k] = [sym or "", NOW.isoformat(), 1]
     return sym
 
 
@@ -2411,7 +2414,7 @@ def main():
         safe(build_long_history, None, "Langfrist-Historie")
     _h = load(DATA / "holdings.json") or {}
     _need = {e["isin"] for e in json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8")).get("etfs", []) if e.get("holdings")}
-    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 4 or not _need <= set(_h.get("meta", {})):
+    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 5 or not _need <= set(_h.get("meta", {})):
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
 
     # --- News + Stimmung
