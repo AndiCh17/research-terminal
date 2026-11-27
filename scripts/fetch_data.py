@@ -489,6 +489,39 @@ def yahoo_news(t: yf.Ticker, sym: str, n: int):
     return items
 
 
+def write_briefing(market: dict, movers: list, calendar: dict, rows: list[dict]):
+    """Kompakte Datei fürs Morgen-Briefing: ausschließlich öffentliche Marktdaten (keine Kunden-, keine RR-Inhalte).
+    Liegt unverschlüsselt unter data/public/briefing.json, damit die geplante Claude-Aufgabe sie lesen kann."""
+    today = NOW.astimezone(timezone(timedelta(hours=1))).date()
+    days = {today.isoformat(), (today + timedelta(days=1)).isoformat()}
+    by = {r["s"]: r for r in rows}
+    ev = [e for e in (calendar or {}).get("events", []) if e.get("d") in days and
+          (e.get("t") in ("cb", "mkt") or (e.get("t") == "earn" and (e.get("mcap") or 0) >= 2e10))]
+    ra = (load(DATA / "analyst_recent.json", {}) or {}).get("items", [])
+    cut = (today - timedelta(days=3)).isoformat()
+    big = []
+    for a in ra:
+        r = by.get(a["s"]) or {}
+        ch = (a["pt"] / a["ppt"] - 1) * 100 if a.get("pt") and a.get("ppt") else None
+        if a.get("d", "") >= cut and (r.get("mcap") or 0) >= 2e10 and (a.get("act") in ("up", "down") or (ch is not None and abs(ch) >= 10)):
+            big.append({**a, "n": a.get("n") or r.get("n"), "chgPt": rnd(ch, 1), "mcapEUR": r.get("mcap")})
+    big.sort(key=lambda a: (a.get("d", ""), abs(a.get("chgPt") or 0)), reverse=True)
+    out = {
+        "updated": NOW.isoformat(), "hinweis": "Öffentliche Marktdaten aus dem Research-Terminal (Yahoo Finance u. a.), verzögert.",
+        "indices": [{k: q.get(k) for k in ("sym", "name", "price", "chgPct", "ytd", "date")} for q in market.get("indices", [])],
+        "markets": [{k: q.get(k) for k in ("sym", "name", "price", "chgPct", "ytd", "date")} for q in market.get("markets", [])],
+        "movers": [{"s": m["s"], "n": m.get("n"), "chg": m.get("chg"), "dir": m.get("dir"),
+                    "news": [{"title": x["title"], "source": x.get("source"), "link": x.get("link")} for x in (m.get("news") or [])[:3]]}
+                   for m in movers or []],
+        "termine": ev[:25],
+        "analysten": big[:15],
+    }
+    path = DATA / "public" / "briefing.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    log(f"  Briefing: {len(out['termine'])} Termine, {len(out['analysten'])} Analystenmeldungen")
+
+
 def mover_news(rows: list[dict], sent: "Sentiment", k=3, min_mcap=5e9) -> list[dict]:
     """Die je 3 stärksten Gewinner und Verlierer des Tages (ab 5 Mrd. € Marktwert) mit ihren Schlagzeilen."""
     cand = [r for r in rows if r.get("chg") is not None and (r.get("mcap") or 0) >= min_mcap]
@@ -1098,6 +1131,9 @@ def build_etfs():
             row["hist5y"] = series_pairs(w)
         out.append(row)
     save(DATA / "etfs.json", {"updated": NOW.isoformat(), "geprueft": cfg.get("geprueft"), "hinweis": cfg.get("_hinweis"), "etfs": out})
+    fk = ROOT / "manual" / "fonds.json"
+    if fk.exists():
+        save(DATA / "fonds.json", json.loads(fk.read_text(encoding="utf-8")))
     log(f"ETFs: {len(out)}, mit Kurs {sum(1 for r in out if r.get('px'))}")
 
 
@@ -1275,6 +1311,7 @@ def build_holdings(uni_rows: list[dict], fund: dict):
     by_sym: dict[str, list] = {}
     tops = {}
     meta: dict[str, dict] = {}
+    isin_map: dict[str, str] = {}
     for e in cfg.get("etfs", []):
         src = e.get("holdings") or {}
         if src.get("index"):
@@ -1301,13 +1338,14 @@ def build_holdings(uni_rows: list[dict], fund: dict):
             continue
         if not src.get("anbieter"):
             continue
-        rows = safe(lambda: read_holdings(e), [], f"Positionen {e.get('ticker') or e['isin']}")
+        full = safe(lambda: read_holdings_full(e), [], f"Positionen {e.get('ticker') or e['isin']}")
+        rows = [(r["name"], r["w"]) for r in full]
         if not rows:
             continue
         tops[e["isin"]] = [[n, rnd(w, 2)] for n, w in sorted(rows, key=lambda x: -x[1])[:10]]
         agg: dict[str, float] = {}
         hit = 0
-        for n, w in rows:
+        for (n, w), fr in zip(rows, full):
             k = name_key(n)
             sym = keys.get(k)
             if not sym and k:
@@ -1316,13 +1354,17 @@ def build_holdings(uni_rows: list[dict], fund: dict):
             if sym:
                 agg[sym] = agg.get(sym, 0) + w
                 hit += 1
+                isin = (fr.get("isin") or "").strip().upper()
+                if len(isin) == 12:
+                    isin_map.setdefault(isin, sym)
         for sym, w in agg.items():
             by_sym.setdefault(sym, []).append([e["isin"], rnd(w, 3)])
         meta[e["isin"]] = {"art": "liste", "quelle": src.get("quelle") or "Positionsliste des Anbieters",
                            "naeherung": bool(src.get("isin") or src.get("ticker")), "n": len(rows), "hit": hit,
                            "wsum": rnd(sum(agg.values()), 1), "wall": rnd(sum(w for _, w in rows), 1)}
         log(f"  Positionen {e.get('ticker') or e['isin']}: {len(rows)} Titel, {hit} im Universum zugeordnet")
-    save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta})
+    log(f"  ISIN-Zuordnung Aktien: {len(isin_map)}")
+    save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta, "isin": isin_map})
 
 
 # ----------------------------------------------------------------- Langfrist-Historie (Beratung)
@@ -1605,6 +1647,7 @@ def main():
                                                            key=lambda s: fund[s].get("upd") or "")
         log(f"Detailseiten: bis zu {batch} von {len(todo)} offenen Titeln (Zeitbudget {budget:.0f} Min.)")
         done = fails = na = npt = 0
+        recent_actions: list[dict] = []
         for s in todo[:batch]:
             if elapsed_min() > budget:
                 log("Zeitbudget erreicht – Rest folgt in der nächsten Nacht")
@@ -1616,6 +1659,10 @@ def main():
                 done += 1
                 na += bool(d.get("actions"))
                 npt += any(a.get("pt") for a in d.get("actions") or [])
+                cut = (NOW - timedelta(days=10)).strftime("%Y-%m-%d")
+                for a in d.get("actions") or []:
+                    if a.get("d", "") >= cut:
+                        recent_actions.append({**a, "s": s, "n": p.get("n"), "cur": p.get("cur")})
                 fails = 0
             except Exception as e:  # noqa: BLE001
                 fails += 1
@@ -1629,6 +1676,11 @@ def main():
             time.sleep(0.4)
         log(f"Detailseiten erstellt: {done}")
         log(f"  Analystenmeinungen: {na} Titel mit Einzelmeldungen, davon {npt} mit Kurszielen")
+        old_ra = [a for a in (load(DATA / "analyst_recent.json", {}) or {}).get("items", [])
+                  if a.get("d", "") >= (NOW - timedelta(days=10)).strftime("%Y-%m-%d")]
+        seen = {(a["s"], a["d"], a.get("firm")) for a in recent_actions}
+        save(DATA / "analyst_recent.json", {"updated": NOW.isoformat(),
+             "items": recent_actions + [a for a in old_ra if (a["s"], a["d"], a.get("firm")) not in seen]})
 
     # --- Indizes, Märkte, Watchlist
     log("Kurse Indizes/Märkte/Watchlist …")
@@ -1702,7 +1754,8 @@ def main():
                                   "sources": sorted({x for r in rows for x in r["src"]})})
     save(DATA / "fundamentals.json", fund, quiet=True)
     editions = safe(build_marktupdate, [], "Marktupdate") or []
-    save(DATA / "calendar.json", build_calendar(fund, watch, editions))
+    calendar = build_calendar(fund, watch, editions)
+    save(DATA / "calendar.json", calendar)
 
     # --- Makro (nachts oder wenn noch nicht vorhanden)
     macro_old = load(DATA / "macro.json", None)
@@ -1721,7 +1774,7 @@ def main():
         safe(build_long_history, None, "Langfrist-Historie")
     _h = load(DATA / "holdings.json") or {}
     _need = {e["isin"] for e in json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8")).get("etfs", []) if e.get("holdings")}
-    if MODE == "nightly" or "meta" not in _h or not _need <= set(_h.get("meta", {})):
+    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or not _need <= set(_h.get("meta", {})):
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
 
     # --- News + Stimmung
@@ -1742,6 +1795,7 @@ def main():
         "tickers": sorted([n for d in details.values() for n in d["news"]], key=by_date, reverse=True)[:250],
         "summary": summary, "movers": movers,
     })
+    safe(lambda: write_briefing(market, movers, calendar, rows), None, "Briefing-Datei")
     save(DATA / "meta.json", {"updated": NOW.isoformat(), "mode": MODE, "tickers": meta_map,
                               "universe": len(rows), "details": len(meta_map), "marktupdate": len(editions)})
     log(f"Fertig nach {elapsed_min():.1f} Min. · Universum {len(rows)} · Detailseiten {len(meta_map)}")

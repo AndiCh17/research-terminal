@@ -1,0 +1,1004 @@
+{
+ "_hinweis": "Fondskatalog für die Depotanalyse. Erkennung über ISIN oder Fondsname. 'aktien' = Aktienanteil in % (bei Mischfonds strategische Richtgröße laut Fondsunterlagen, Näherung). 'proxy' = ETF aus etfs.json, dessen Zusammensetzung für den Aktienteil als Näherung dient. ISINs nach Belieben ergänzen.",
+ "fonds": [
+  {
+   "name": "Raiffeisen-Active-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Active-Aktien"
+  },
+  {
+   "name": "Raiffeisen-Asia Opportunities-ESG-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BKM4GZ66",
+   "isins": [
+    "AT0000745864"
+   ],
+   "region": "Asien",
+   "match": "Raiffeisen-Asia Opportunities-ESG-Aktien"
+  },
+  {
+   "name": "Raiffeisen-GlobalDividend-ESG-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BK5BR626",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-GlobalDividend-ESG-Aktien"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BZ02LR44",
+   "isins": [
+    "AT0000A1U693"
+   ],
+   "region": null,
+   "match": "Raiffeisen-Nachhaltigkeit-Aktien"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-EmergingMarkets-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BYVJRP78",
+   "isins": [],
+   "region": "Schwellenländer",
+   "match": "Raiffeisen-Nachhaltigkeit-EmergingMarkets-Aktien"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-Europa-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B52VJ196",
+   "isins": [],
+   "region": "Europa",
+   "match": "Raiffeisen-Nachhaltigkeit-Europa-Aktien"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-Momentum",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BZ02LR44",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Nachhaltigkeit-Momentum"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-ÖsterreichPlus-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "LU0659579063",
+   "isins": [],
+   "region": "Österreich",
+   "match": "Raiffeisen-Nachhaltigkeit-Osterreich"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-US-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BYVJRR92",
+   "isins": [],
+   "region": "USA",
+   "match": "Raiffeisen-Nachhaltigkeit-US-Aktien"
+  },
+  {
+   "name": "Raiffeisen-Zentraleuropa-ESG-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": null,
+   "isins": [],
+   "region": "Zentral- und Osteuropa",
+   "match": "Raiffeisen-Zentraleuropa-ESG-Aktien"
+  },
+  {
+   "name": "Raiffeisen-Energie-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Energie-Aktien"
+  },
+  {
+   "name": "Raiffeisen European Resilience and Security Equity",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B1YZSC51",
+   "isins": [],
+   "region": "Europa",
+   "match": "Raiffeisen European Resilience and Security Equity"
+  },
+  {
+   "name": "Raiffeisen-Health and Wellbeing-ESG-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BM67HK77",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Health and Wellbeing-ESG-Aktien"
+  },
+  {
+   "name": "Raiffeisen-HighTech-ESG-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BM67HT60",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-HighTech-ESG-Aktien"
+  },
+  {
+   "name": "Raiffeisen-MegaTrends-ESG-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BZ02LR44",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-MegaTrends-ESG-Aktien"
+  },
+  {
+   "name": "Raiffeisen-NewInfrastructure-ESG-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-NewInfrastructure-ESG-Aktien"
+  },
+  {
+   "name": "Raiffeisen-SmartEnergy-ESG-Aktien",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE000U58J0M1",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-SmartEnergy-ESG-Aktien"
+  },
+  {
+   "name": "Index-Selection-Equity",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Index-Selection-Equity"
+  },
+  {
+   "name": "Raiffeisen Systematic Core All Country Equity",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B6R52259",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen Systematic Core All Country Equity"
+  },
+  {
+   "name": "Raiffeisen Systematic Core Global Equity",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen Systematic Core Global Equity"
+  },
+  {
+   "name": "Raiffeisen Systematic Core Europe Equity",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B1YZSC51",
+   "isins": [],
+   "region": "Europa",
+   "match": "Raiffeisen Systematic Core Europe Equity"
+  },
+  {
+   "name": "Raiffeisen Systematic Core Pacific Equity",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": null,
+   "isins": [],
+   "region": "Pazifik",
+   "match": "Raiffeisen Systematic Core Pacific Equity"
+  },
+  {
+   "name": "Raiffeisen Systematic Core US Equity",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B5BMR087",
+   "isins": [],
+   "region": "USA",
+   "match": "Raiffeisen Systematic Core US Equity"
+  },
+  {
+   "name": "Raiffeisen Systematic Global Equity",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen Systematic Global Equity"
+  },
+  {
+   "name": "Raiffeisen Systematic Europe Equity",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B1YZSC51",
+   "isins": [],
+   "region": "Europa",
+   "match": "Raiffeisen Systematic Europe Equity"
+  },
+  {
+   "name": "Raiffeisen Systematic Pacific Equity",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": null,
+   "isins": [],
+   "region": "Pazifik",
+   "match": "Raiffeisen Systematic Pacific Equity"
+  },
+  {
+   "name": "Raiffeisen Systematic US Equity",
+   "kag": "Raiffeisen KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B5BMR087",
+   "isins": [],
+   "region": "USA",
+   "match": "Raiffeisen Systematic US Equity"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-Diversified",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 40,
+   "proxy": "IE00BZ02LR44",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Nachhaltigkeit-Diversified"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-Solide",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 25,
+   "proxy": "IE00BZ02LR44",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Nachhaltigkeit-Solide"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-Mix",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 50,
+   "proxy": "IE00BZ02LR44",
+   "isins": [
+    "AT0000859517",
+    "AT0000805361",
+    "AT0000785381",
+    "AT0000A1G2L0",
+    "AT0000A1VG68",
+    "AT0000A2SL08",
+    "AT0000A2SL16"
+   ],
+   "region": null,
+   "match": "Raiffeisen-Nachhaltigkeit-Mix"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-Wachstum",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 75,
+   "proxy": "IE00BZ02LR44",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Nachhaltigkeit-Wachstum"
+  },
+  {
+   "name": "Raiffeisenfonds-Sicherheit",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 25,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisenfonds-Sicherheit"
+  },
+  {
+   "name": "Raiffeisenfonds-Ertrag",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 50,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisenfonds-Ertrag"
+  },
+  {
+   "name": "Raiffeisenfonds-Wachstum",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 75,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisenfonds-Wachstum"
+  },
+  {
+   "name": "Raiffeisen-FondsPension-Sicherheit",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 25,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-FondsPension-Sicherheit"
+  },
+  {
+   "name": "Raiffeisen-FondsPension-Ertrag",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 50,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-FondsPension-Ertrag"
+  },
+  {
+   "name": "Raiffeisen-FondsPension-Wachstum",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 75,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-FondsPension-Wachstum"
+  },
+  {
+   "name": "Raiffeisen-Portfolio-Solide",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 30,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Portfolio-Solide"
+  },
+  {
+   "name": "Raiffeisen-Portfolio-Balanced",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 50,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Portfolio-Balanced"
+  },
+  {
+   "name": "Raiffeisen-Portfolio-Growth",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 75,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Portfolio-Growth"
+  },
+  {
+   "name": "Raiffeisen Global Income",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 35,
+   "proxy": "IE00BK5BR626",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen Global Income"
+  },
+  {
+   "name": "Raiffeisen Global Income II",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 35,
+   "proxy": "IE00BK5BR626",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen Global Income II"
+  },
+  {
+   "name": "Raiffeisen Global Strategic Opportunities",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 50,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen Global Strategic Opportunities"
+  },
+  {
+   "name": "Raiffeisen Gewinnfreibetrag Mix",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 50,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen Gewinnfreibetrag Mix"
+  },
+  {
+   "name": "Raiffeisen Gewinnfreibetrag Solide",
+   "kag": "Raiffeisen KAG",
+   "kat": "Misch",
+   "aktien": 25,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen Gewinnfreibetrag Solide"
+  },
+  {
+   "name": "Raiffeisen-EmergingMarkets-ESG-Transformation-Rent",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-EmergingMarkets-ESG-Transformation-Rent"
+  },
+  {
+   "name": "Raiffeisen-ESG-Euro-Corporates",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-ESG-Euro-Corporates"
+  },
+  {
+   "name": "Raiffeisen-ESG-Euro-Rendite",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-ESG-Euro-Rendite"
+  },
+  {
+   "name": "Raiffeisen-ESG-Euro-Rent",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-ESG-Euro-Rent"
+  },
+  {
+   "name": "Raiffeisen-ESG-Global-Rent",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-ESG-Global-Rent"
+  },
+  {
+   "name": "Raiffeisen-Europa-HighYield",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Europa-HighYield"
+  },
+  {
+   "name": "Raiffeisen-Euro-ShortTerm-Rent",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Euro-ShortTerm-Rent"
+  },
+  {
+   "name": "Raiffeisen-Global-Fundamental-Rent",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Global-Fundamental-Rent"
+  },
+  {
+   "name": "Raiffeisen-GreenBonds",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-GreenBonds"
+  },
+  {
+   "name": "Raiffeisen-Inflationsschutz-Anleihen",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Inflationsschutz-Anleihen"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-Dollar-ShortTerm-Rent",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Nachhaltigkeit-Dollar-ShortTerm-Rent"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-EmergingMarkets-LocalBonds",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Nachhaltigkeit-EmergingMarkets-LocalBonds"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-Rent",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Nachhaltigkeit-Rent"
+  },
+  {
+   "name": "Raiffeisen-Nachhaltigkeit-ShortTerm",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Nachhaltigkeit-ShortTerm"
+  },
+  {
+   "name": "Raiffeisen-Osteuropa-Rent",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Osteuropa-Rent"
+  },
+  {
+   "name": "Raiffeisen-Österreich-Rent",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Österreich-Rent"
+  },
+  {
+   "name": "Raiffeisen-Rent-Flexibel",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Rent-Flexibel"
+  },
+  {
+   "name": "Raiffeisen Gewinnfreibetrag Anleihen",
+   "kag": "Raiffeisen KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen Gewinnfreibetrag Anleihen"
+  },
+  {
+   "name": "Raiffeisen-Active-Commodities",
+   "kag": "Raiffeisen KAG",
+   "kat": "Rohstoffe",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "Raiffeisen-Active-Commodities"
+  },
+  {
+   "name": "KEPLER Ethik Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BZ02LR44",
+   "isins": [
+    "AT0000675657",
+    "AT0000675665",
+    "AT0000A1HSG2",
+    "AT0000A1A1E3",
+    "AT0000A2AXL5",
+    "AT0000A25PK9",
+    "AT0000A3R547"
+   ],
+   "region": null,
+   "match": "KEPLER Ethik Aktienfonds"
+  },
+  {
+   "name": "KEPLER Ethik Quality Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BP3QZ601",
+   "isins": [
+    "AT0000722657"
+   ],
+   "region": null,
+   "match": "KEPLER Ethik Quality Aktienfonds"
+  },
+  {
+   "name": "KEPLER Growth Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B4L5Y983",
+   "isins": [
+    "AT0000607387",
+    "AT0000A28C64",
+    "AT0000A2AXA8",
+    "AT0000A2YCQ8",
+    "AT0000A3R562"
+   ],
+   "region": null,
+   "match": "KEPLER Growth Aktienfonds"
+  },
+  {
+   "name": "KEPLER Value Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BP3QZB59",
+   "isins": [
+    "AT0000A0AGZ4",
+    "AT0000A0AH06",
+    "AT0000A21BG6",
+    "AT0000A2AXC4",
+    "AT0000A2YCP0",
+    "AT0000A3R554"
+   ],
+   "region": null,
+   "match": "KEPLER Value Aktienfonds"
+  },
+  {
+   "name": "KEPLER Small Cap Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B4L5Y983",
+   "isins": [
+    "AT0000653670"
+   ],
+   "region": null,
+   "match": "KEPLER Small Cap Aktienfonds"
+  },
+  {
+   "name": "KEPLER US Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B5BMR087",
+   "isins": [
+    "AT0000825484",
+    "AT0000722574"
+   ],
+   "region": "USA",
+   "match": "KEPLER US Aktienfonds"
+  },
+  {
+   "name": "KEPLER Europa Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B1YZSC51",
+   "isins": [
+    "AT0000722681",
+    "AT0000817788"
+   ],
+   "region": "Europa",
+   "match": "KEPLER Europa Aktienfonds"
+  },
+  {
+   "name": "KEPLER D-A-CH Plus Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "DE0005933931",
+   "isins": [
+    "AT0000647680",
+    "AT0000647698"
+   ],
+   "region": "D-A-CH",
+   "match": "KEPLER D-A-CH Plus Aktienfonds"
+  },
+  {
+   "name": "KEPLER Emerging Markets Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BKM4GZ66",
+   "isins": [],
+   "region": "Schwellenländer",
+   "match": "KEPLER Emerging Markets Aktienfonds"
+  },
+  {
+   "name": "KEPLER Global Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "KEPLER Global Aktienfonds"
+  },
+  {
+   "name": "KEPLER Ethik Mix Ausgewogen",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 50,
+   "proxy": "IE00BZ02LR44",
+   "isins": [
+    "AT000ETHIKT8",
+    "AT000ETHIKA8",
+    "AT0000A26Z93",
+    "AT0000A26ZA7"
+   ],
+   "region": null,
+   "match": "KEPLER Ethik Mix Ausgewogen"
+  },
+  {
+   "name": "KEPLER Mix Solide",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 20,
+   "proxy": "IE00B4L5Y983",
+   "isins": [
+    "AT0000825468"
+   ],
+   "region": null,
+   "match": "KEPLER Mix Solide"
+  },
+  {
+   "name": "KEPLER Mix Ausgewogen",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 50,
+   "proxy": "IE00B4L5Y983",
+   "isins": [
+    "AT0000825476"
+   ],
+   "region": null,
+   "match": "KEPLER Mix Ausgewogen"
+  },
+  {
+   "name": "KEPLER Mix Dynamisch",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 75,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "KEPLER Mix Dynamisch"
+  },
+  {
+   "name": "Starmix Ausgewogen",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 50,
+   "proxy": "IE00B4L5Y983",
+   "isins": [
+    "AT0000637889",
+    "AT0000711585"
+   ],
+   "region": null,
+   "match": "Starmix Ausgewogen"
+  },
+  {
+   "name": "Starmix Solide",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 25,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Starmix Solide"
+  },
+  {
+   "name": "Starmix Dynamisch",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 75,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Starmix Dynamisch"
+  },
+  {
+   "name": "Portefeuille I - Sicherheit Plus",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 15,
+   "proxy": "IE00B4L5Y983",
+   "isins": [],
+   "region": null,
+   "match": "Portefeuille I - Sicherheit Plus"
+  },
+  {
+   "name": "KEPLER Ethik Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000642632"
+   ],
+   "region": null,
+   "match": "KEPLER Ethik Rentenfonds"
+  },
+  {
+   "name": "KEPLER Vorsorge Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000722566"
+   ],
+   "region": null,
+   "match": "KEPLER Vorsorge Rentenfonds"
+  },
+  {
+   "name": "KEPLER High Grade Corporate Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000653696"
+   ],
+   "region": null,
+   "match": "KEPLER High Grade Corporate Rentenfonds"
+  },
+  {
+   "name": "KEPLER High Yield Corporate Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000722541"
+   ],
+   "region": null,
+   "match": "KEPLER High Yield Corporate Rentenfonds"
+  },
+  {
+   "name": "KEPLER Europa Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000799846",
+    "AT0000A1CTD8"
+   ],
+   "region": null,
+   "match": "KEPLER Europa Rentenfonds"
+  },
+  {
+   "name": "KEPLER Euro Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "KEPLER Euro Rentenfonds"
+  },
+  {
+   "name": "KEPLER Realzins Plus Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "KEPLER Realzins Plus Rentenfonds"
+  },
+  {
+   "name": "KEPLER Euro Plus Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "KEPLER Euro Plus Rentenfonds"
+  },
+  {
+   "name": "KEPLER Liquid Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Geldmarkt",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "KEPLER Liquid Rentenfonds"
+  },
+  {
+   "name": "KEPLER Emerging Markets Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "KEPLER Emerging Markets Rentenfonds"
+  },
+  {
+   "name": "KEPLER Global Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [],
+   "region": null,
+   "match": "KEPLER Global Rentenfonds"
+  }
+ ]
+}
