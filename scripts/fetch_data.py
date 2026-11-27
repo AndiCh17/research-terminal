@@ -1032,7 +1032,7 @@ def resolve_etf_tickers(etfs: list[dict]):
     for e in etfs:
         if e.get("ticker"):
             continue
-        if cache.get(e["isin"]):
+        if cache.get(e["isin"]) and (not e.get("try") or cache[e["isin"]] in e["try"]):
             e["ticker"] = cache[e["isin"]]
             continue
         def find():

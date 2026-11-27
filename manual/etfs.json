@@ -392,8 +392,8 @@
     },
     {
       "isin": "IE00BYVQ9F29",
-      "ticker": null,
-      "name": "iShares NASDAQ 100 UCITS ETF",
+      "ticker": "NQSE.DE",
+      "name": "iShares NASDAQ 100 UCITS ETF EUR Hedged (Acc)",
       "kategorie": "Aktien USA",
       "meldefonds": null,
       "vertreter": null,
@@ -403,63 +403,47 @@
         "anbieter": "xtrackers",
         "isin": "IE00BMFKG444",
         "quelle": "Positionsliste Xtrackers Nasdaq 100 (gleicher Index)"
-      },
-      "try": [
-        "NQSE.DE",
-        "NQSE.F"
-      ]
+      }
     },
     {
       "isin": "DE0006289382",
-      "ticker": null,
+      "ticker": "EXI2.DE",
       "name": "iShares Dow Jones Global Titans 50 UCITS ETF (DE)",
       "kategorie": "Aktien Welt",
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "ausschüttend",
-      "letzteMeldung": null,
-      "try": [
-        "EXI2.DE"
-      ]
+      "letzteMeldung": null
     },
     {
       "isin": "IE00BYVJRR92",
-      "ticker": null,
+      "ticker": "QDVR.DE",
       "name": "iShares MSCI USA SRI UCITS ETF",
       "kategorie": "Aktien USA",
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "try": [
-        "QDVR.DE"
-      ]
+      "letzteMeldung": null
     },
     {
       "isin": "IE00B52VJ196",
-      "ticker": null,
+      "ticker": "IUSK.DE",
       "name": "iShares MSCI Europe SRI UCITS ETF",
       "kategorie": "Aktien Europa",
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "try": [
-        "IUSK.DE"
-      ]
+      "letzteMeldung": null
     },
     {
       "isin": "IE00BYVJRP78",
-      "ticker": null,
+      "ticker": "QDVS.DE",
       "name": "iShares MSCI EM SRI UCITS ETF",
       "kategorie": "Aktien Schwellenländer",
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "try": [
-        "QDVS.DE"
-      ]
+      "letzteMeldung": null
     },
     {
       "isin": "IE000CVOSY02",
@@ -476,30 +460,25 @@
         "quelle": "Näherung über Xtrackers MSCI World (FTSE Developed ≈ MSCI World)"
       },
       "try": [
-        "FLXD.DE",
         "DWLD.DE",
+        "DWLD.F",
         "WORLD.MI",
-        "FLXD.L"
+        "WORLD.PA"
       ]
     },
     {
       "isin": "IE000U58J0M1",
-      "ticker": null,
+      "ticker": "INRA.AS",
       "name": "iShares Global Clean Energy Transition UCITS ETF USD Acc",
       "kategorie": "Thema",
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "try": [
-        "INRA.AS",
-        "INRA.DE",
-        "INRA.L"
-      ]
+      "letzteMeldung": null
     },
     {
       "isin": "LU0659579063",
-      "ticker": null,
+      "ticker": "XB4A.DE",
       "name": "Xtrackers ATX UCITS ETF 1C",
       "kategorie": "Aktien Österreich",
       "meldefonds": null,
@@ -508,14 +487,11 @@
       "letzteMeldung": null,
       "holdings": {
         "anbieter": "xtrackers"
-      },
-      "try": [
-        "XB4A.DE"
-      ]
+      }
     },
     {
       "isin": "IE00B53L3W79",
-      "ticker": null,
+      "ticker": "SXRT.DE",
       "name": "iShares Core EURO STOXX 50 UCITS ETF EUR Acc",
       "kategorie": "Aktien Europa",
       "meldefonds": null,
@@ -524,39 +500,27 @@
       "letzteMeldung": null,
       "holdings": {
         "index": "Euro Stoxx 50"
-      },
-      "try": [
-        "SXRT.DE",
-        "CSX5.AS"
-      ]
+      }
     },
     {
       "isin": "IE00BK5BR626",
-      "ticker": null,
+      "ticker": "VGWE.DE",
       "name": "Vanguard FTSE All-World High Dividend Yield UCITS ETF USD Acc",
       "kategorie": "Dividende",
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "try": [
-        "VGWE.DE"
-      ]
+      "letzteMeldung": null
     },
     {
       "isin": "IE00BYZK4883",
-      "ticker": null,
+      "ticker": "2B79.DE",
       "name": "iShares Digitalisation UCITS ETF USD Acc",
       "kategorie": "Thema",
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "try": [
-        "2B79.DE",
-        "DGTL.L",
-        "DGTL.AS"
-      ]
+      "letzteMeldung": null
     }
   ],
   "_holdings_hinweis": "Positionslisten: Xtrackers und SPDR direkt vom Anbieter (täglich), S&P-500-, DAX- und Euro-Stoxx-50-ETFs über die Indexzusammensetzung. iShares und Vanguard geben ihre Listen nicht automatisiert heraus."
