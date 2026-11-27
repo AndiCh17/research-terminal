@@ -1042,8 +1042,11 @@ def resolve_etf_tickers(etfs: list[dict]):
             except Exception:
                 pass
             for sym in dict.fromkeys(syms):  # Reihenfolge der Kandidaten aus etfs.json zuerst
-                h = history_block([sym], period="1mo").get(sym)
-                if h is not None and len(h) > 5:
+                try:
+                    h = yf.Ticker(sym).history(period="1mo")["Close"].dropna()
+                except Exception:
+                    continue
+                if len(h) > 5:
                     return sym
             return None
         sym = safe(find, None, f"Tickersuche {e['isin']}")
