@@ -820,92 +820,405 @@
    "match": "Raiffeisen-Active-Commodities"
   },
   {
-   "name": "KEPLER Ethik Aktienfonds",
+   "name": "KEPLER Short Invest Rentenfonds",
    "kag": "KEPLER-FONDS KAG",
-   "kat": "Aktien",
-   "aktien": 100,
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000618723",
+    "AT0000A044U8"
+   ],
+   "region": "Euro kurz",
+   "match": "KEPLER Short Invest Rentenfonds"
+  },
+  {
+   "name": "KEPLER Liquid Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Geldmarkt",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000754668",
+    "AT0000722632"
+   ],
+   "region": "Euro",
+   "match": "KEPLER Liquid Rentenfonds"
+  },
+  {
+   "name": "KEPLER Vorsorge Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000799861",
+    "AT0000722566",
+    "AT0000A1CTC0",
+    "AT0000A1HN34",
+    "AT0000A2AXJ9"
+   ],
+   "region": "Euro",
+   "match": "KEPLER Vorsorge Rentenfonds"
+  },
+  {
+   "name": "KEPLER Euro Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000A2MHG3"
+   ],
+   "region": "Euro",
+   "match": "KEPLER Euro Rentenfonds"
+  },
+  {
+   "name": "KEPLER Euro Plus Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000784756",
+    "AT0000722558",
+    "AT0000A2MKV6"
+   ],
+   "region": "Euro",
+   "match": "KEPLER Euro Plus Rentenfonds"
+  },
+  {
+   "name": "KEPLER Ethik Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000815006",
+    "AT0000642632",
+    "AT0000A1A1F0",
+    "AT0000A25PL7",
+    "AT0000A2AXM3"
+   ],
+   "region": "Euro",
+   "match": "KEPLER Ethik Rentenfonds"
+  },
+  {
+   "name": "KEPLER Realzins Plus Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000600663",
+    "AT0000600671",
+    "AT0000A21BH4",
+    "AT0000A2AX79"
+   ],
+   "region": "Inflationsgeschützt",
+   "match": "KEPLER Realzins Plus Rentenfonds"
+  },
+  {
+   "name": "KEPLER Europa Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000799846",
+    "AT0000A1CTD8",
+    "AT0000A20D95",
+    "AT0000A2AX61"
+   ],
+   "region": "Europa",
+   "match": "KEPLER Europa Rentenfonds"
+  },
+  {
+   "name": "KEPLER High Grade Corporate Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000653688",
+    "AT0000653696",
+    "AT0000A1CTE6",
+    "AT0000A2AX87"
+   ],
+   "region": "Euro Unternehmen",
+   "match": "KEPLER High Grade Corporate Rentenfonds"
+  },
+  {
+   "name": "KEPLER High Yield Corporate Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000737085",
+    "AT0000722541",
+    "AT0000A1CTH9",
+    "AT0000A2AXF7"
+   ],
+   "region": "Hochzins",
+   "match": "KEPLER High Yield Corporate Rentenfonds"
+  },
+  {
+   "name": "KEPLER Emerging Markets Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000718580",
+    "AT0000718598",
+    "AT0000A1CTF3",
+    "AT0000A2AX95"
+   ],
+   "region": "Schwellenländer",
+   "match": "KEPLER Emerging Markets Rentenfonds"
+  },
+  {
+   "name": "KEPLER Osteuropa Plus Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000A066H8",
+    "AT0000A066J4",
+    "AT0000A1CTG1",
+    "AT0000A2AXG5"
+   ],
+   "region": "Osteuropa",
+   "match": "KEPLER Osteuropa Plus Rentenfonds"
+  },
+  {
+   "name": "KEPLER Dollar Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000799804",
+    "AT0000722665"
+   ],
+   "region": "USD",
+   "match": "KEPLER Dollar Rentenfonds"
+  },
+  {
+   "name": "KEPLER Optima Rentenfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000A066K2",
+    "AT0000A066L0"
+   ],
+   "region": "Euro",
+   "match": "KEPLER Optima Rentenfonds"
+  },
+  {
+   "name": "KEPLER Rent 2026",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT00RENT26A7",
+    "AT00RENT26T7",
+    "AT0000A28DX2"
+   ],
+   "region": "Laufzeitfonds",
+   "match": "KEPLER Rent 2026"
+  },
+  {
+   "name": "KEPLER Rent 2028",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT00RENT28A3",
+    "AT00RENT28T3",
+    "AT0000A2TMW5"
+   ],
+   "region": "Laufzeitfonds",
+   "match": "KEPLER Rent 2028"
+  },
+  {
+   "name": "KEPLER Rent Select 2030",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Anleihen",
+   "aktien": 0,
+   "proxy": null,
+   "isins": [
+    "AT0000A326E3",
+    "AT00RENT30A9",
+    "AT00RENT30T9"
+   ],
+   "region": "Laufzeitfonds",
+   "match": "KEPLER Rent Select 2030"
+  },
+  {
+   "name": "KEPLER Ethik Mix Solide",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 25,
    "proxy": "IE00BZ02LR44",
    "isins": [
-    "AT0000675657",
-    "AT0000675665",
-    "AT0000A1HSG2",
-    "AT0000A1A1E3",
-    "AT0000A2AXL5",
-    "AT0000A25PK9",
-    "AT0000A3R547"
+    "AT0000A19288",
+    "AT0000A19296",
+    "AT0000A192A7",
+    "AT0000A192B5",
+    "AT0000A1X3M5"
    ],
-   "region": null,
-   "match": "KEPLER Ethik Aktienfonds"
+   "region": "Global",
+   "match": "KEPLER Ethik Mix Solide"
   },
   {
-   "name": "KEPLER Ethik Quality Aktienfonds",
+   "name": "KEPLER Ethik Mix Ausgewogen",
    "kag": "KEPLER-FONDS KAG",
-   "kat": "Aktien",
-   "aktien": 100,
-   "proxy": "IE00BP3QZ601",
+   "kat": "Misch",
+   "aktien": 50,
+   "proxy": "IE00BZ02LR44",
    "isins": [
-    "AT0000722657"
+    "AT000ETHIKA8",
+    "AT000ETHIKT8",
+    "AT0000A26Z85",
+    "AT0000A26Z93",
+    "AT0000A26ZA7"
    ],
-   "region": null,
-   "match": "KEPLER Ethik Quality Aktienfonds"
+   "region": "Global",
+   "match": "KEPLER Ethik Mix Ausgewogen"
   },
   {
-   "name": "KEPLER Growth Aktienfonds",
+   "name": "KEPLER Ethik Mix Dynamisch",
    "kag": "KEPLER-FONDS KAG",
-   "kat": "Aktien",
-   "aktien": 100,
+   "kat": "Misch",
+   "aktien": 75,
+   "proxy": "IE00BZ02LR44",
+   "isins": [
+    "AT0000A2RJ45",
+    "AT0000A2RJ52"
+   ],
+   "region": "Global",
+   "match": "KEPLER Ethik Mix Dynamisch"
+  },
+  {
+   "name": "KEPLER Mix Solide",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 25,
    "proxy": "IE00B4L5Y983",
    "isins": [
-    "AT0000607387",
-    "AT0000A28C64",
-    "AT0000A2AXA8",
-    "AT0000A2YCQ8",
-    "AT0000A3R562"
+    "AT0000825468",
+    "AT0000722582"
    ],
-   "region": null,
-   "match": "KEPLER Growth Aktienfonds"
+   "region": "Global",
+   "match": "KEPLER Mix Solide"
   },
   {
-   "name": "KEPLER Value Aktienfonds",
+   "name": "KEPLER Mix Ausgewogen",
    "kag": "KEPLER-FONDS KAG",
-   "kat": "Aktien",
-   "aktien": 100,
-   "proxy": "IE00BP3QZB59",
-   "isins": [
-    "AT0000A0AGZ4",
-    "AT0000A0AH06",
-    "AT0000A21BG6",
-    "AT0000A2AXC4",
-    "AT0000A2YCP0",
-    "AT0000A3R554"
-   ],
-   "region": null,
-   "match": "KEPLER Value Aktienfonds"
-  },
-  {
-   "name": "KEPLER Small Cap Aktienfonds",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Aktien",
-   "aktien": 100,
+   "kat": "Misch",
+   "aktien": 50,
    "proxy": "IE00B4L5Y983",
    "isins": [
-    "AT0000653670"
+    "AT0000825476",
+    "AT0000722590"
    ],
-   "region": null,
-   "match": "KEPLER Small Cap Aktienfonds"
+   "region": "Global",
+   "match": "KEPLER Mix Ausgewogen"
   },
   {
-   "name": "KEPLER US Aktienfonds",
+   "name": "KEPLER Mix Dynamisch",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 75,
+   "proxy": "IE00B4L5Y983",
+   "isins": [
+    "AT0000825500",
+    "AT0000722608"
+   ],
+   "region": "Global",
+   "match": "KEPLER Mix Dynamisch"
+  },
+  {
+   "name": "KEPLER Vorsorge Mixfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 35,
+   "proxy": "IE00B4L5Y983",
+   "isins": [
+    "AT0000969787",
+    "AT0000722640",
+    "AT0000A1A5N5",
+    "AT0000A20DA7",
+    "AT0000A37JJ9"
+   ],
+   "region": "Global",
+   "match": "KEPLER Vorsorge Mixfonds"
+  },
+  {
+   "name": "KEPLER Multi-Flex Portfolio",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 30,
+   "proxy": "IE00B4L5Y983",
+   "isins": [
+    "AT000MULTIA2",
+    "AT000MULTIT2",
+    "AT0000A1FPV1"
+   ],
+   "region": "Global",
+   "match": "KEPLER Multi-Flex Portfolio"
+  },
+  {
+   "name": "KEPLER Active World Portfolio",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 50,
+   "proxy": "IE00B4L5Y983",
+   "isins": [
+    "AT0000A0PDC8",
+    "AT0000A0PDD6",
+    "AT0000A1H5J6",
+    "AT0000A22KH3"
+   ],
+   "region": "Global",
+   "match": "KEPLER Active World Portfolio"
+  },
+  {
+   "name": "Portfolio Management Ausgewogen",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Misch",
+   "aktien": 50,
+   "proxy": "IE00B4L5Y983",
+   "isins": [
+    "AT0000707542",
+    "AT0000707559"
+   ],
+   "region": "Global",
+   "match": "Portfolio Management Ausgewogen"
+  },
+  {
+   "name": "KEPLER Risk Select Aktienfonds",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00B5BMR087",
+   "proxy": "IE00B8FHGS14",
    "isins": [
-    "AT0000825484",
-    "AT0000722574"
+    "AT0000A0NUV7",
+    "AT0000A0NUW5",
+    "AT0000A1CTJ5",
+    "AT0000A295F7",
+    "AT0000A2AXB6",
+    "AT0000A2YCS4"
    ],
-   "region": "USA",
-   "match": "KEPLER US Aktienfonds"
+   "region": "Global",
+   "match": "KEPLER Risk Select Aktienfonds"
   },
   {
    "name": "KEPLER Europa Aktienfonds",
@@ -914,11 +1227,28 @@
    "aktien": 100,
    "proxy": "IE00B1YZSC51",
    "isins": [
+    "AT0000817788",
     "AT0000722681",
-    "AT0000817788"
+    "AT0000A28C56",
+    "AT0000A2AXE0"
    ],
    "region": "Europa",
    "match": "KEPLER Europa Aktienfonds"
+  },
+  {
+   "name": "KEPLER Ethik Quality Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BP3QZ601",
+   "isins": [
+    "AT0000799820",
+    "AT0000722657",
+    "AT0000A2UXH1",
+    "AT0000A2UXJ7"
+   ],
+   "region": "Global",
+   "match": "KEPLER Ethik Quality Aktienfonds"
   },
   {
    "name": "KEPLER D-A-CH Plus Aktienfonds",
@@ -934,73 +1264,143 @@
    "match": "KEPLER D-A-CH Plus Aktienfonds"
   },
   {
-   "name": "KEPLER Emerging Markets Aktienfonds",
+   "name": "KEPLER Ethik Aktienfonds",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "proxy": "IE00BKM4GZ66",
-   "isins": [],
-   "region": "Schwellenländer",
-   "match": "KEPLER Emerging Markets Aktienfonds"
-  },
-  {
-   "name": "KEPLER Global Aktienfonds",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Aktien",
-   "aktien": 100,
-   "proxy": "IE00B4L5Y983",
-   "isins": [],
-   "region": null,
-   "match": "KEPLER Global Aktienfonds"
-  },
-  {
-   "name": "KEPLER Ethik Mix Ausgewogen",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Misch",
-   "aktien": 50,
    "proxy": "IE00BZ02LR44",
    "isins": [
-    "AT000ETHIKT8",
-    "AT000ETHIKA8",
-    "AT0000A26Z93",
-    "AT0000A26ZA7"
+    "AT0000675657",
+    "AT0000675665",
+    "AT0000A1A1E3",
+    "AT0000A1HSG2",
+    "AT0000A25PK9",
+    "AT0000A2AXL5",
+    "AT0000A3R547"
    ],
-   "region": null,
-   "match": "KEPLER Ethik Mix Ausgewogen"
+   "region": "Global",
+   "match": "KEPLER Ethik Aktienfonds"
   },
   {
-   "name": "KEPLER Mix Solide",
+   "name": "KEPLER US Aktienfonds",
    "kag": "KEPLER-FONDS KAG",
-   "kat": "Misch",
-   "aktien": 20,
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B5BMR087",
+   "isins": [
+    "AT0000825484",
+    "AT0000722574",
+    "AT0000A28C49",
+    "AT0000A2AXD2"
+   ],
+   "region": "USA",
+   "match": "KEPLER US Aktienfonds"
+  },
+  {
+   "name": "KEPLER Value Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BP3QZB59",
+   "isins": [
+    "AT0000A0AGZ4",
+    "AT0000A0AH06",
+    "AT0000A21BG6",
+    "AT0000A2AXC4",
+    "AT0000A2YCP0",
+    "AT0000A3R554"
+   ],
+   "region": "Global",
+   "match": "KEPLER Value Aktienfonds"
+  },
+  {
+   "name": "KEPLER Growth Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
    "proxy": "IE00B4L5Y983",
    "isins": [
-    "AT0000825468"
+    "AT0000607387",
+    "AT0000A28C64",
+    "AT0000A2AXA8",
+    "AT0000A2YCQ8",
+    "AT0000A3R562"
    ],
-   "region": null,
-   "match": "KEPLER Mix Solide"
+   "region": "Global",
+   "match": "KEPLER Growth Aktienfonds"
   },
   {
-   "name": "KEPLER Mix Ausgewogen",
+   "name": "KEPLER Small Cap Aktienfonds",
    "kag": "KEPLER-FONDS KAG",
-   "kat": "Misch",
-   "aktien": 50,
+   "kat": "Aktien",
+   "aktien": 100,
    "proxy": "IE00B4L5Y983",
    "isins": [
-    "AT0000825476"
+    "AT0000653662",
+    "AT0000653670",
+    "AT0000A1CTK3",
+    "AT0000A2AXK7"
    ],
-   "region": null,
-   "match": "KEPLER Mix Ausgewogen"
+   "region": "Global",
+   "match": "KEPLER Small Cap Aktienfonds"
   },
   {
-   "name": "KEPLER Mix Dynamisch",
+   "name": "KEPLER Umwelt Aktienfonds",
    "kag": "KEPLER-FONDS KAG",
-   "kat": "Misch",
-   "aktien": 75,
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BYVJRR92",
+   "isins": [
+    "AT000UMWELT5",
+    "AT0000A2STU6",
+    "AT0000A2YCR6"
+   ],
+   "region": "Global",
+   "match": "KEPLER Umwelt Aktienfonds"
+  },
+  {
+   "name": "KEPLER Dividend Select Aktien",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00B9CQXS71",
+   "isins": [
+    "AT0000A2YCA2",
+    "AT0000A2YCB0",
+    "AT0000A32QL1",
+    "AT0000A32QK3"
+   ],
+   "region": "Global",
+   "match": "KEPLER Dividend Select Aktien"
+  },
+  {
+   "name": "KEPLER Trend Select Aktienfonds",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
+   "proxy": "IE00BP3QZ825",
+   "isins": [
+    "AT0000A32YY8",
+    "AT0000A37JK7",
+    "AT0000A32YV4",
+    "AT0000A32YW2",
+    "AT0000A32YX0"
+   ],
+   "region": "Global",
+   "match": "KEPLER Trend Select Aktienfonds"
+  },
+  {
+   "name": "KEPLER X-250 Welt Aktien",
+   "kag": "KEPLER-FONDS KAG",
+   "kat": "Aktien",
+   "aktien": 100,
    "proxy": "IE00B4L5Y983",
-   "isins": [],
-   "region": null,
-   "match": "KEPLER Mix Dynamisch"
+   "isins": [
+    "AT0000A3BSN7",
+    "AT0000X250WT2"
+   ],
+   "region": "Global",
+   "match": "KEPLER X-250 Welt Aktien"
   },
   {
    "name": "Starmix Ausgewogen",
@@ -1016,26 +1416,6 @@
    "match": "Starmix Ausgewogen"
   },
   {
-   "name": "Starmix Solide",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Misch",
-   "aktien": 25,
-   "proxy": "IE00B4L5Y983",
-   "isins": [],
-   "region": null,
-   "match": "Starmix Solide"
-  },
-  {
-   "name": "Starmix Dynamisch",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Misch",
-   "aktien": 75,
-   "proxy": "IE00B4L5Y983",
-   "isins": [],
-   "region": null,
-   "match": "Starmix Dynamisch"
-  },
-  {
    "name": "Portefeuille I - Sicherheit Plus",
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
@@ -1044,127 +1424,6 @@
    "isins": [],
    "region": null,
    "match": "Portefeuille I - Sicherheit Plus"
-  },
-  {
-   "name": "KEPLER Ethik Rentenfonds",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Anleihen",
-   "aktien": 0,
-   "proxy": null,
-   "isins": [
-    "AT0000642632"
-   ],
-   "region": null,
-   "match": "KEPLER Ethik Rentenfonds"
-  },
-  {
-   "name": "KEPLER Vorsorge Rentenfonds",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Anleihen",
-   "aktien": 0,
-   "proxy": null,
-   "isins": [
-    "AT0000722566"
-   ],
-   "region": null,
-   "match": "KEPLER Vorsorge Rentenfonds"
-  },
-  {
-   "name": "KEPLER High Grade Corporate Rentenfonds",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Anleihen",
-   "aktien": 0,
-   "proxy": null,
-   "isins": [
-    "AT0000653696"
-   ],
-   "region": null,
-   "match": "KEPLER High Grade Corporate Rentenfonds"
-  },
-  {
-   "name": "KEPLER High Yield Corporate Rentenfonds",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Anleihen",
-   "aktien": 0,
-   "proxy": null,
-   "isins": [
-    "AT0000722541"
-   ],
-   "region": null,
-   "match": "KEPLER High Yield Corporate Rentenfonds"
-  },
-  {
-   "name": "KEPLER Europa Rentenfonds",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Anleihen",
-   "aktien": 0,
-   "proxy": null,
-   "isins": [
-    "AT0000799846",
-    "AT0000A1CTD8"
-   ],
-   "region": null,
-   "match": "KEPLER Europa Rentenfonds"
-  },
-  {
-   "name": "KEPLER Euro Rentenfonds",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Anleihen",
-   "aktien": 0,
-   "proxy": null,
-   "isins": [],
-   "region": null,
-   "match": "KEPLER Euro Rentenfonds"
-  },
-  {
-   "name": "KEPLER Realzins Plus Rentenfonds",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Anleihen",
-   "aktien": 0,
-   "proxy": null,
-   "isins": [],
-   "region": null,
-   "match": "KEPLER Realzins Plus Rentenfonds"
-  },
-  {
-   "name": "KEPLER Euro Plus Rentenfonds",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Anleihen",
-   "aktien": 0,
-   "proxy": null,
-   "isins": [],
-   "region": null,
-   "match": "KEPLER Euro Plus Rentenfonds"
-  },
-  {
-   "name": "KEPLER Liquid Rentenfonds",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Geldmarkt",
-   "aktien": 0,
-   "proxy": null,
-   "isins": [],
-   "region": null,
-   "match": "KEPLER Liquid Rentenfonds"
-  },
-  {
-   "name": "KEPLER Emerging Markets Rentenfonds",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Anleihen",
-   "aktien": 0,
-   "proxy": null,
-   "isins": [],
-   "region": null,
-   "match": "KEPLER Emerging Markets Rentenfonds"
-  },
-  {
-   "name": "KEPLER Global Rentenfonds",
-   "kag": "KEPLER-FONDS KAG",
-   "kat": "Anleihen",
-   "aktien": 0,
-   "proxy": null,
-   "isins": [],
-   "region": null,
-   "match": "KEPLER Global Rentenfonds"
   }
  ]
 }
