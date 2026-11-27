@@ -1363,8 +1363,386 @@ def build_holdings(uni_rows: list[dict], fund: dict):
                            "naeherung": bool(src.get("isin") or src.get("ticker")), "n": len(rows), "hit": hit,
                            "wsum": rnd(sum(agg.values()), 1), "wall": rnd(sum(w for _, w in rows), 1)}
         log(f"  Positionen {e.get('ticker') or e['isin']}: {len(rows)} Titel, {hit} im Universum zugeordnet")
+    extra: set[str] = set()
+    safe(lambda: add_report_holdings(cfg, keys, first, by_sym, tops, meta, isin_map, extra), None, "Fondsberichte/Factsheets")
+    xrows = safe(lambda: extra_rows(extra, {r["s"] for r in uni_rows}), [], "Zusatztitel") or []
     log(f"  ISIN-Zuordnung Aktien: {len(isin_map)}")
-    save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta, "isin": isin_map})
+    save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta, "isin": isin_map,
+                                  "extra": xrows, "berichte": sum(1 for k in meta if k.startswith("F:"))})
+
+
+# ----------------------------------------------------------------- Fondsberichte & Factsheets (echte Bestände)
+REPORT_URL = "https://dl.avl-investmentfonds.de/fds/{isin}-{typ}-DE-{d}.pdf"
+REPORT_TYP = {"HALBJAHRBER": "Halbjahresbericht", "RECHENSCHAFT": "Rechenschaftsbericht"}
+_ISIN_RE = re.compile(r"\b([A-Z]{2}[A-Z0-9]{9}[0-9])\b")
+_POS_RE = re.compile(r"^(?P<grp>.*?)\s*(?P<isin>[A-Z]{2}[A-Z0-9]{9}[0-9])\s+(?P<rest>.+?)\s+(?P<cur>[A-Z]{3})\s+"
+                     r"(?P<nums>[\d\.,\s\-]+?)\s+(?P<pct>-?\d{1,3},\d{2,3})\s*%\s*$")
+CUR_SUFFIX = {"USD": "", "CAD": ".TO", "CHF": ".SW", "DKK": ".CO", "GBP": ".L", "NOK": ".OL", "SEK": ".ST", "AUD": ".AX",
+              "INR": ".NS", "BRL": ".SA", "PLN": ".WA", "CZK": ".PR", "HUF": ".BD", "SGD": ".SI", "ZAR": ".JO", "MXN": ".MX",
+              "ILS": ".TA", "NZD": ".NZ", "IDR": ".JK", "THB": ".BK", "MYR": ".KL", "TRY": ".IS", "SAR": ".SR", "AED": ".AE"}
+EUR_SUFFIX = {"DE": ".DE", "FR": ".PA", "IT": ".MI", "ES": ".MC", "NL": ".AS", "BE": ".BR", "FI": ".HE", "AT": ".VI",
+              "PT": ".LS", "IE": ".IR", "GR": ".AT", "LU": ".AS"}
+
+
+def isin_ok(s: str) -> bool:
+    if not re.fullmatch(r"[A-Z]{2}[A-Z0-9]{9}[0-9]", s or ""):
+        return False
+    d = "".join(str(int(c, 36)) for c in s[:11])
+    t = 0
+    for i, ch in enumerate(reversed(d)):
+        n = int(ch) * (2 if i % 2 == 0 else 1)
+        t += n // 10 + n % 10
+    return (10 - t % 10) % 10 == int(s[11])
+
+
+def month_ends(n: int) -> list[str]:
+    out, y, m = [], NOW.year, NOW.month
+    for _ in range(n + 1):
+        nxt = datetime(y + (m == 12), m % 12 + 1, 1)
+        last = nxt - timedelta(days=1)
+        if last.date() < NOW.date():
+            out.append(last.strftime("%Y%m%d"))
+        y, m = (y, m - 1) if m > 1 else (y - 1, 12)
+    return out
+
+
+def parse_fund_report(pdf: bytes) -> dict:
+    """Vermögensaufstellung eines Raiffeisen-KAG-Berichts: alle Wertpapiere mit Anteil am Fondsvermögen."""
+    import pypdf
+    r = pypdf.PdfReader(io.BytesIO(pdf))
+    txt = "\n".join((p.extract_text() or "") for p in r.pages)
+    m = re.search(r"Vermögensaufstellung in \w+ per (\d\d\.\d\d\.\d{4})", txt)
+    items, grp, tranchen = [], "", []
+    for ln in txt.splitlines():
+        ln = ln.strip()
+        mt = re.match(r"^([A-Z]{2}[A-Z0-9]{9}[0-9])\s+.+\((?:I|R|RZ|RD|S|SZ)\)\s", ln)
+        if mt and isin_ok(mt.group(1)) and mt.group(1) not in tranchen:
+            tranchen.append(mt.group(1))
+        mm = _POS_RE.match(ln)
+        if not mm or not isin_ok(mm["isin"]):
+            continue
+        g = mm["grp"].strip() or grp
+        grp = g
+        rest = mm["rest"].split()
+        tick, code = "", ""
+        if len(rest) > 1 and re.fullmatch(r"\d{3,6}", rest[-1]):
+            code, rest = rest[-1], rest[:-1]
+        elif len(rest) > 1 and re.fullmatch(r"[A-Z0-9][A-Z0-9\./\-]{0,7}", rest[-1]):
+            tick, rest = rest[-1], rest[:-1]
+        items.append({"isin": mm["isin"], "name": " ".join(rest), "tick": tick, "code": code, "cur": mm["cur"],
+                      "w": float(mm["pct"].replace(",", ".")), "grp": g})
+    return {"stichtag": m.group(1) if m else None, "items": items, "tranchen": tranchen}
+
+
+def pos_kind(it: dict) -> str:
+    g = it.get("grp") or ""
+    if re.search(r"zertifikat|fonds|ETF|Investmentanteil", g, re.I):
+        return "fonds"
+    if re.search(r"Aktie|ADR|GDR|REIT|Partizipation|Genuss", g, re.I):
+        return "aktie"
+    return "anleihe"
+
+
+def find_report(isins: list[str], since: str | None) -> tuple[str, str, str] | None:
+    """Neuester Halbjahres- bzw. Rechenschaftsbericht (URL, Typ, Datum); prüft nur Stichtage nach `since`."""
+    for d in month_ends(16):
+        if since and d <= since:
+            break
+        for typ in REPORT_TYP:
+            for isin in isins[:2]:
+                url = REPORT_URL.format(isin=isin, typ=typ, d=d)
+                try:
+                    if HTTP.head(url, timeout=15, allow_redirects=True).status_code == 200:
+                        return url, typ, d
+                except Exception:
+                    pass
+    return None
+
+
+def load_fund_reports() -> dict:
+    """Berichte aller Fonds mit ISIN laden (Cache: nur neue Berichte werden geladen und gelesen)."""
+    from concurrent.futures import ThreadPoolExecutor
+    fonds = json.loads((ROOT / "manual" / "fonds.json").read_text(encoding="utf-8")).get("fonds", [])
+    cache = load(DATA / "fund_reports.json") or {}
+    todo = [f for f in fonds if f.get("isins") and f.get("kag") == "Raiffeisen KAG"]
+
+    def one(f):
+        old = cache.get(f["name"]) or {}
+        if old.get("checked") and (NOW - datetime.fromisoformat(old["checked"])).days < 6 and old.get("items") is not None:
+            return f["name"], old
+        hit = find_report(f["isins"], old.get("d"))
+        if not hit:
+            return f["name"], {**old, "checked": NOW.isoformat()}
+        url, typ, d = hit
+        try:
+            rep = parse_fund_report(HTTP.get(url, timeout=90).content)
+        except Exception as ex:
+            log(f"  Bericht {f['name']}: nicht lesbar ({ex})")
+            return f["name"], {**old, "checked": NOW.isoformat()}
+        if not rep["items"]:
+            return f["name"], {**old, "checked": NOW.isoformat()}
+        return f["name"], {"url": url, "typ": REPORT_TYP[typ], "d": d, "stichtag": rep["stichtag"] or f"{d[6:]}.{d[4:6]}.{d[:4]}",
+                           "items": rep["items"], "tranchen": rep["tranchen"], "checked": NOW.isoformat()}
+
+    with ThreadPoolExecutor(6) as ex:
+        for name, val in ex.map(one, todo):
+            if val:
+                cache[name] = val
+    save(DATA / "fund_reports.json", cache, quiet=True)
+    n = sum(1 for v in cache.values() if v.get("items"))
+    log(f"  Fondsberichte: {n} von {len(todo)} Fonds mit Vermögensaufstellung")
+    return cache
+
+
+def guess_symbols(it: dict) -> list[str]:
+    cur, t, code, isin = it.get("cur"), (it.get("tick") or "").strip("/"), it.get("code") or "", it["isin"]
+    if code:
+        if cur == "HKD":
+            return [code.zfill(4) + ".HK"]
+        if cur == "JPY":
+            return [code + ".T"]
+        if cur == "KRW":
+            return [code.zfill(6) + ".KS", code.zfill(6) + ".KQ"]
+        if cur == "TWD":
+            return [code + ".TW", code + ".TWO"]
+        if cur == "CNY":
+            return [code.zfill(6) + (".SS" if code.startswith("6") else ".SZ")]
+        if cur == "INR":
+            return []
+    if not t:
+        return []
+    t = t.replace("/", "-").replace(".", "-")
+    if cur == "EUR":
+        first = EUR_SUFFIX.get(isin[:2])
+        sufs = ([first] if first else []) + [s for s in (".DE", ".PA", ".MI", ".AS", ".MC") if s != first]
+        return [t + s for s in sufs]
+    suf = CUR_SUFFIX.get(cur)
+    if suf is None:
+        return []
+    out = [t + suf]
+    if cur in ("SEK", "DKK", "NOK") and len(t) > 3 and t[-1] in "AB" and "-" not in t:
+        out.append(t[:-1] + "-" + t[-1] + suf)
+    if cur == "GBP" and not t.endswith("-"):
+        out.append(t.rstrip("-") + ".L")
+    return list(dict.fromkeys(out))
+
+
+def resolve_positions(items: list[dict], keys: dict, first: dict, isin_map: dict) -> dict[str, str]:
+    """ISIN → Yahoo-Symbol für Aktienpositionen: ETF-Listen, Firmenname, Börsenkürzel, zuletzt Yahoo-Suche."""
+    cache = load(DATA / "fund_symbols.json") or {}
+    out: dict[str, str] = {}
+    pending: dict[str, dict] = {}
+    for it in items:
+        isin = it["isin"]
+        if isin in out or isin in pending:
+            continue
+        if isin in isin_map:
+            out[isin] = isin_map[isin]
+            continue
+        k = name_key(it["name"])
+        if k and k in keys:
+            out[isin] = keys[k]
+            continue
+        c = cache.get(isin)
+        if c and (c[0] or (NOW - datetime.fromisoformat(c[1])).days < 30):
+            if c[0]:
+                out[isin] = c[0]
+            continue
+        pending[isin] = it
+    if pending:
+        cands = {isin: guess_symbols(it) for isin, it in pending.items()}
+        allc = sorted({s for v in cands.values() for s in v})
+        have = history_block(allc, period="5d", interval="1d") if allc else {}
+        ok = {s for s, v in have.items() if v is not None and len(v)}
+        searched = 0
+        for isin, it in pending.items():
+            sym = next((s for s in cands[isin] if s in ok), None)
+            if not sym and searched < 120:
+                searched += 1
+                try:
+                    q = [x for x in (yf.Search(it["name"][:40], max_results=5).quotes or []) if x.get("quoteType") == "EQUITY"]
+                    sym = q[0]["symbol"] if q else None
+                except Exception:
+                    sym = None
+            cache[isin] = [sym or "", NOW.isoformat()]
+            if sym:
+                out[isin] = sym
+        save(DATA / "fund_symbols.json", cache, quiet=True)
+        log(f"  Fondspositionen: {len(pending)} neue ISINs geprüft, {sum(1 for i in pending if i in out)} zugeordnet ({searched} per Suche)")
+    return out
+
+
+def extra_rows(syms: set[str], have: set[str], limit=300) -> list[dict]:
+    """Kennzahlen für Fondstitel außerhalb des Universums (Cache, Auffrischung alle 14 Tage)."""
+    from concurrent.futures import ThreadPoolExecutor
+    cache = load(DATA / "fund_extra.json") or {}
+    need = [s for s in sorted(syms - have) if s not in cache or (NOW - datetime.fromisoformat(cache[s]["upd"])).days >= 14][:limit]
+
+    def info(sym):
+        try:
+            return sym, yf.Ticker(sym).info or {}
+        except Exception:
+            return sym, {}
+
+    got = {}
+    with ThreadPoolExecutor(4) as ex:
+        for sym, inf in ex.map(info, need):
+            got[sym] = inf
+    fx = fx_to_eur({(i.get("currency") or "") for i in got.values()} | {"USD"})
+    for sym, g in got.items():
+        px = g.get("currentPrice") or g.get("regularMarketPrice")
+        dy = (g["dividendRate"] / px * 100) if g.get("dividendRate") and px else (
+            g["trailingAnnualDividendYield"] * 100 if g.get("trailingAnnualDividendYield") is not None else None)
+        pct_ = lambda v: rnd(v * 100, 1) if v is not None else None  # noqa: E731
+        cache[sym] = {"upd": NOW.isoformat(), "row": {
+            "s": sym, "n": g.get("longName") or g.get("shortName") or sym, "sec": sector_de(g.get("sector")), "c": g.get("country"),
+            "cur": g.get("currency"), "mcap": rnd(to_eur(g.get("marketCap"), g.get("currency"), fx), 0) if g.get("marketCap") else None,
+            "pe": rnd(g.get("trailingPE"), 1), "fpe": rnd(g.get("forwardPE"), 1), "dy": rnd(dy, 2), "roe": pct_(g.get("returnOnEquity")),
+            "eg": pct_(g.get("earningsGrowth", g.get("earningsQuarterlyGrowth"))),
+            "feg": rnd((g["forwardEps"] / g["trailingEps"] - 1) * 100, 1) if g.get("forwardEps") and g.get("trailingEps") and g["trailingEps"] > 0 else None,
+            "up": rnd((g["targetMeanPrice"] / px - 1) * 100, 1) if g.get("targetMeanPrice") and px else None, "x": 1}}
+    save(DATA / "fund_extra.json", cache, quiet=True)
+    log(f"  Zusatztitel für Fonds: {len(need)} abgefragt, {len(syms - have)} außerhalb des Universums")
+    return [cache[s]["row"] for s in sorted(syms - have) if s in cache]
+
+
+_UP = {"AG", "SE", "SA", "NV", "PLC", "ASA", "AB", "SPA", "INC", "ADR", "LP", "CO", "KGAA", "A/S", "OYJ", "BV", "ESG", "ETF", "USA", "UK"}
+
+
+def nice_name(n: str) -> str:
+    return " ".join(w if w.upper() in _UP and len(w) <= 4 else w.capitalize() if not any(c.isdigit() for c in w) else w
+                    for w in str(n).split()).replace(" Co ", " Co. ")
+
+
+def factsheet_top10(url: str) -> tuple[str | None, list[tuple[str, float]]]:
+    import pypdf
+    r = pypdf.PdfReader(io.BytesIO(HTTP.get(url, timeout=60).content))
+    txt = "\n".join((p.extract_text() or "") for p in r.pages)
+    m = re.search(r"(?:as at|Stand)[:\s]+(\d{1,2}[-\./][A-Za-z0-9]{2,3}[-\./]\d{4})", txt)
+    i = txt.find("Top 10 Holdings")
+    out = []
+    for ln in txt[i:].splitlines()[1:16]:
+        mm = re.match(r"^(.+?)\s+(\d{1,2}\.\d{2})%\s*$", ln.strip())
+        if ln.strip().startswith("Total"):
+            break
+        if mm:
+            out.append((mm.group(1).strip(), float(mm.group(2))))
+    stand = m.group(1) if m else None
+    if stand:
+        for fmt_ in ("%d-%b-%Y", "%d.%m.%Y", "%d/%m/%Y"):
+            try:
+                stand = datetime.strptime(stand, fmt_).strftime("%d.%m.%Y")
+                break
+            except ValueError:
+                pass
+    return stand, out
+
+
+def search_symbol(name: str, cache: dict) -> str | None:
+    k = "N:" + name_key(name)
+    if k in cache:
+        return cache[k][0] or None
+    try:
+        q = [x for x in (yf.Search(name, max_results=5).quotes or []) if x.get("quoteType") == "EQUITY"]
+        sym = q[0]["symbol"] if q else None
+    except Exception:
+        sym = None
+    cache[k] = [sym or "", NOW.isoformat()]
+    return sym
+
+
+def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: dict, meta: dict, isin_map: dict, extra: set):
+    """Echte Bestände: Factsheet-Top-10 (iShares) und Vermögensaufstellungen der Halbjahres-/Rechenschaftsberichte."""
+    symc = load(DATA / "fund_symbols.json") or {}
+    for e in cfg.get("etfs", []):
+        src = e.get("holdings") or {}
+        if not src.get("factsheet"):
+            continue
+        try:
+            stand, top = factsheet_top10(src["factsheet"])
+        except Exception as ex:
+            log(f"  Factsheet {e.get('ticker')}: {ex}")
+            continue
+        if not top:
+            continue
+        hit = 0
+        for n, w in top:
+            k = name_key(n)
+            sym = keys.get(k) or search_symbol(n, symc)
+            if sym:
+                by_sym.setdefault(sym, []).append([e["isin"], w])
+                hit += 1
+                extra.add(sym)
+        tops[e["isin"]] = [[nice_name(n), w] for n, w in top]
+        meta[e["isin"]] = {"art": "factsheet", "quelle": "Factsheet des Anbieters", "stichtag": stand, "n": len(top), "hit": hit,
+                           "wsum": rnd(sum(w for _, w in top), 1), "wall": 100.0, "url": src["factsheet"]}
+        log(f"  Factsheet {e.get('ticker')}: Top {len(top)} ({sum(w for _, w in top):.1f} %), Stand {stand}")
+    save(DATA / "fund_symbols.json", symc, quiet=True)
+
+    reps = load_fund_reports()
+    by_isin = {}  # Tranchen-ISIN → Fondsname (für Dachfonds)
+    for name, r in reps.items():
+        for i in r.get("tranchen") or []:
+            by_isin[i] = name
+    allitems = [it for r in reps.values() for it in (r.get("items") or []) if pos_kind(it) == "aktie"]
+    symmap = resolve_positions(allitems, keys, first, isin_map)
+    for isin, sym in symmap.items():
+        isin_map.setdefault(isin, sym)
+    etf_w: dict[str, dict[str, float]] = {}
+    for sym, lst in by_sym.items():
+        for i, w in lst:
+            if w is not None:
+                etf_w.setdefault(i, {})[sym] = w
+
+    def equity(name, depth=0):
+        """(Aktienpositionen als {Schlüssel: [Name, Gewicht %, Symbol]}, Anteile je Art)"""
+        r = reps.get(name) or {}
+        pos, art = {}, {"aktie": 0.0, "anleihe": 0.0, "fonds": 0.0}
+        for it in r.get("items") or []:
+            kd = pos_kind(it)
+            art[kd] += it["w"]
+            if kd == "aktie":
+                p = pos.setdefault(it["isin"], [nice_name(it["name"]), 0.0, symmap.get(it["isin"])])
+                p[1] += it["w"]
+            elif kd == "fonds" and depth < 2:
+                sub = by_isin.get(it["isin"])
+                if sub and sub != name:
+                    sp, sa = equity(sub, depth + 1)
+                    tot = sum(sa.values()) or 100
+                    for k, (n, w, s) in sp.items():
+                        p = pos.setdefault(k, [n, 0.0, s])
+                        p[1] += w * it["w"] / tot
+                    art["aktie"] += sa["aktie"] * it["w"] / tot
+                    art["fonds"] -= it["w"] * (sa["aktie"] / tot)
+                elif it["isin"] in etf_w:
+                    for s, w in etf_w[it["isin"]].items():
+                        p = pos.setdefault(s, [s, 0.0, s])
+                        p[1] += w * it["w"] / 100
+                    art["aktie"] += it["w"]
+                    art["fonds"] -= it["w"]
+        return pos, art
+
+    nf = 0
+    for name, r in reps.items():
+        if not r.get("items"):
+            continue
+        key = "F:" + name
+        pos, art = equity(name)
+        agg: dict[str, float] = {}
+        hit = 0
+        for n, w, s in pos.values():
+            if s:
+                agg[s] = agg.get(s, 0) + w
+                hit += 1
+                extra.add(s)
+        for s, w in agg.items():
+            by_sym.setdefault(s, []).append([key, rnd(w, 3)])
+        tops[key] = [[n, rnd(w, 2)] for n, w, _ in sorted(pos.values(), key=lambda x: -x[1])[:10]]
+        meta[key] = {"art": "bericht", "quelle": r["typ"], "stichtag": r["stichtag"], "url": r["url"], "n": len(pos), "hit": hit,
+                     "wsum": rnd(sum(agg.values()), 1), "wall": rnd(art["aktie"], 1), "aktien": rnd(art["aktie"], 1),
+                     "anleihen": rnd(art["anleihe"], 1), "fonds": rnd(max(art["fonds"], 0), 1), "tranchen": r.get("tranchen") or []}
+        nf += 1
+    log(f"  Fondsbestände aus Berichten: {nf} Fonds")
 
 
 # ----------------------------------------------------------------- Langfrist-Historie (Beratung)
@@ -1774,7 +2152,7 @@ def main():
         safe(build_long_history, None, "Langfrist-Historie")
     _h = load(DATA / "holdings.json") or {}
     _need = {e["isin"] for e in json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8")).get("etfs", []) if e.get("holdings")}
-    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or not _need <= set(_h.get("meta", {})):
+    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or "berichte" not in _h or not _need <= set(_h.get("meta", {})):
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
 
     # --- News + Stimmung

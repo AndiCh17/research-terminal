@@ -1,625 +1,621 @@
 {
-  "_hinweis": "KESt-Meldefonds-Status laut OeKB (my.oekb.at), einzeln geprüft am 26.11.2026; Einträge mit meldefonds = null sind noch nicht geprüft. Vor einer Empfehlung im Banksystem bzw. bei der OeKB erneut prüfen. Weitere ETFs: Eintrag mit ISIN ergänzen – fehlt der Yahoo-Ticker, sucht ihn der Workflow selbst (Xetra bevorzugt).",
-  "geprueft": "2026-11-26",
-  "etfs": [
-    {
-      "isin": "IE00B4L5Y983",
-      "ticker": "EUNL.DE",
-      "name": "iShares Core MSCI World UCITS ETF USD(Acc)",
-      "kategorie": "Aktien Welt",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 18.12.2025",
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "IE00BJ0KDQ92",
-        "quelle": "Positionsliste Xtrackers MSCI World (gleicher Index)"
-      }
+ "_hinweis": "KESt-Meldefonds-Status laut OeKB (my.oekb.at), einzeln geprüft am 26.11.2026; Einträge mit meldefonds = null sind noch nicht geprüft. Vor einer Empfehlung im Banksystem bzw. bei der OeKB erneut prüfen. Weitere ETFs: Eintrag mit ISIN ergänzen – fehlt der Yahoo-Ticker, sucht ihn der Workflow selbst (Xetra bevorzugt).",
+ "geprueft": "2026-11-26",
+ "etfs": [
+  {
+   "isin": "IE00B4L5Y983",
+   "ticker": "EUNL.DE",
+   "name": "iShares Core MSCI World UCITS ETF USD(Acc)",
+   "kategorie": "Aktien Welt",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 18.12.2025",
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "IE00BJ0KDQ92",
+    "quelle": "Positionsliste Xtrackers MSCI World (gleicher Index)"
+   }
+  },
+  {
+   "isin": "IE00BK5BQT80",
+   "ticker": "VWCE.DE",
+   "name": "Vanguard FTSE All-World UCITS ETF (USD) Accumulating",
+   "kategorie": "Aktien Welt",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 16.01.2026",
+   "holdings": {
+    "anbieter": "spdr",
+    "ticker": "SPYI",
+    "quelle": "Näherung über SPDR MSCI ACWI IMI (FTSE All-World ≈ ACWI)"
+   }
+  },
+  {
+   "isin": "IE00B6R52259",
+   "ticker": "IUSQ.DE",
+   "name": "iShares MSCI ACWI UCITS ETF USD (Acc)",
+   "kategorie": "Aktien Welt",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 01.06.2026",
+   "holdings": {
+    "anbieter": "spdr",
+    "ticker": "SPYI",
+    "quelle": "Näherung über SPDR MSCI ACWI IMI"
+   }
+  },
+  {
+   "isin": "IE00B3YLTY66",
+   "ticker": "SPYI.DE",
+   "name": "SPDR MSCI ACWI IMI ETF",
+   "kategorie": "Aktien Welt",
+   "meldefonds": true,
+   "vertreter": "PwC PricewaterhouseCoopers Wirtschaftsprüfung und Steuerberatung GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 29.10.2026",
+   "holdings": {
+    "anbieter": "spdr"
+   }
+  },
+  {
+   "isin": "IE00BZ02LR44",
+   "ticker": "XZW0.DE",
+   "name": "Xtrackers MSCI World ESG UCITS ETF 1C",
+   "kategorie": "Aktien Welt",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
+   "holdings": {
+    "anbieter": "xtrackers"
+   }
+  },
+  {
+   "isin": "IE00B8FHGS14",
+   "ticker": "IQQ0.DE",
+   "name": "iShares Edge MSCI World Minimum Volatility UCITS ETF USD (Acc)",
+   "kategorie": "Aktien Welt Faktor",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 17.09.2026",
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "IE00BL25JN58",
+    "quelle": "Positionsliste Xtrackers MSCI World Minimum Volatility (gleicher Index)"
+   }
+  },
+  {
+   "isin": "IE00BP3QZB59",
+   "ticker": "IS3S.DE",
+   "name": "iShares Edge MSCI World Value Factor UCITS ETF USD (Acc)",
+   "kategorie": "Aktien Welt Faktor",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026",
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "IE00BL25JM42",
+    "quelle": "Positionsliste Xtrackers MSCI World Value (gleicher Index MSCI World Enhanced Value)"
+   }
+  },
+  {
+   "isin": "IE00BP3QZ601",
+   "ticker": "IS3Q.DE",
+   "name": "iShares Edge MSCI World Quality Factor UCITS ETF USD (Acc)",
+   "kategorie": "Aktien Welt Faktor",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026",
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "IE00BL25JL35",
+    "quelle": "Positionsliste Xtrackers MSCI World Quality (gleicher Index MSCI World Sector Neutral Quality)"
+   }
+  },
+  {
+   "isin": "IE00BP3QZ825",
+   "ticker": "IS3R.DE",
+   "name": "iShares Edge MSCI World Momentum Factor UCITS ETF USD (Acc)",
+   "kategorie": "Aktien Welt Faktor",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026",
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "IE00BL25JP72",
+    "quelle": "Positionsliste Xtrackers MSCI World Momentum (gleicher Index)"
+   }
+  },
+  {
+   "isin": "IE00B9CQXS71",
+   "ticker": "ZPRG.DE",
+   "name": "SPDR S&P GLOBAL DIVIDEND ARISTOCRATS UCITS ETF",
+   "kategorie": "Dividende",
+   "meldefonds": true,
+   "vertreter": "PwC PricewaterhouseCoopers Wirtschaftsprüfung und Steuerberatung GmbH",
+   "ertrag": "ausschüttend",
+   "letzteMeldung": "Jahresdatenmeldung vom 29.10.2026",
+   "holdings": {
+    "anbieter": "spdr"
+   }
+  },
+  {
+   "isin": "DE000A0F5UH1",
+   "ticker": "ISPA.DE",
+   "name": "iShares STOXX Global Select Dividend 100 UCITS ETF (DE)",
+   "kategorie": "Dividende",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "ausschüttend",
+   "letzteMeldung": "Ausschüttungsmeldung vom 14.10.2026",
+   "holdings": {
+    "filter": {
+     "top": 100,
+     "sort": "dy",
+     "weight": "dy",
+     "min_mcap": 3000000000.0,
+     "max_w": 4
     },
-    {
-      "isin": "IE00BK5BQT80",
-      "ticker": "VWCE.DE",
-      "name": "Vanguard FTSE All-World UCITS ETF (USD) Accumulating",
-      "kategorie": "Aktien Welt",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 16.01.2026",
-      "holdings": {
-        "anbieter": "spdr",
-        "ticker": "SPYI",
-        "quelle": "Näherung über SPDR MSCI ACWI IMI (FTSE All-World ≈ ACWI)"
-      }
+    "quelle": "Index-Näherung: 100 Titel mit der höchsten Dividendenrendite im Universum (ab 3 Mrd. €), nach Dividendenrendite gewichtet – Grundregel des STOXX Global Select Dividend 100"
+   }
+  },
+  {
+   "isin": "IE00B5M1WJ87",
+   "ticker": "SPYW.DE",
+   "name": "SPDR S&P Euro Dividend Aristocrats UCITS ETF",
+   "kategorie": "Dividende",
+   "meldefonds": true,
+   "vertreter": "PwC PricewaterhouseCoopers Wirtschaftsprüfung und Steuerberatung GmbH",
+   "ertrag": "ausschüttend",
+   "letzteMeldung": "Jahresdatenmeldung vom 29.10.2026",
+   "holdings": {
+    "anbieter": "spdr"
+   }
+  },
+  {
+   "isin": "IE00B5BMR087",
+   "ticker": "SXR8.DE",
+   "name": "iShares Core S&P 500 UCITS ETF USD(Acc)",
+   "kategorie": "Aktien USA",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 12.01.2026",
+   "holdings": {
+    "index": "S&P 500"
+   }
+  },
+  {
+   "isin": "IE00BLNMYC90",
+   "ticker": "XDEW.DE",
+   "name": "Xtrackers S&P 500 Equal Weight UCITS ETF 1C",
+   "kategorie": "Aktien USA",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
+   "holdings": {
+    "anbieter": "xtrackers"
+   }
+  },
+  {
+   "isin": "IE00B1YZSC51",
+   "ticker": "IQQY.DE",
+   "name": "iShares Core MSCI Europe UCITS ETF EUR (Dist)",
+   "kategorie": "Aktien Europa",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "ausschüttend",
+   "letzteMeldung": "Ausschüttungsmeldung vom 27.08.2026",
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "LU0274209237",
+    "quelle": "Positionsliste Xtrackers MSCI Europe (gleicher Index)"
+   }
+  },
+  {
+   "isin": "IE00B945VV12",
+   "ticker": "VGEU.DE",
+   "name": "Vanguard FTSE Developed Europe UCITS ETF (EUR) Distributing",
+   "kategorie": "Aktien Europa",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "ausschüttend",
+   "letzteMeldung": "Ausschüttungsmeldung vom 23.09.2026",
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "LU0274209237",
+    "quelle": "Näherung über Xtrackers MSCI Europe (FTSE Dev. Europe ≈ MSCI Europe)"
+   }
+  },
+  {
+   "isin": "DE0002635307",
+   "ticker": "EXSA.DE",
+   "name": "iShares STOXX Europe 600 UCITS ETF (DE)",
+   "kategorie": "Aktien Europa",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "ausschüttend",
+   "letzteMeldung": "Jahresdatenmeldung vom 20.10.2026",
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "LU0328475792",
+    "quelle": "Positionsliste Xtrackers Stoxx Europe 600 (gleicher Index)"
+   }
+  },
+  {
+   "isin": "DE0005933931",
+   "ticker": "EXS1.DE",
+   "name": "iShares Core DAX UCITS ETF (DE)",
+   "kategorie": "Aktien Europa",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 20.10.2026",
+   "holdings": {
+    "index": "DAX"
+   }
+  },
+  {
+   "isin": "IE00BKM4GZ66",
+   "ticker": "IS3N.DE",
+   "name": "iShares Core MSCI EM IMI UCITS ETF USD (Acc)",
+   "kategorie": "Aktien Schwellenländer",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 12.08.2026",
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "IE00BTJRMP35",
+    "quelle": "Näherung über Xtrackers MSCI Emerging Markets (ohne Nebenwerte)"
+   }
+  },
+  {
+   "isin": "IE00BTJRMP35",
+   "ticker": "XMME.DE",
+   "name": "Xtrackers MSCI Emerging Markets UCITS ETF 1C",
+   "kategorie": "Aktien Schwellenländer",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
+   "holdings": {
+    "anbieter": "xtrackers"
+   }
+  },
+  {
+   "isin": "IE00B3VVMM84",
+   "ticker": "VFEM.DE",
+   "name": "Vanguard FTSE Emerging Markets UCITS ETF (USD) Distributing",
+   "kategorie": "Aktien Schwellenländer",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "ausschüttend",
+   "letzteMeldung": "Ausschüttungsmeldung vom 23.09.2026",
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "IE00BTJRMP35",
+    "quelle": "Näherung über Xtrackers MSCI Emerging Markets (FTSE EM ≈ MSCI EM)"
+   }
+  },
+  {
+   "isin": "IE00BZCQB185",
+   "ticker": "QDV5.DE",
+   "name": "iShares MSCI India UCITS ETF USD (Acc)",
+   "kategorie": "Aktien Schwellenländer",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026",
+   "holdings": {
+    "index": "NIFTY 50",
+    "naeherung": true
+   }
+  },
+  {
+   "isin": "IE00B4L5YX21",
+   "ticker": "SXR5.DE",
+   "name": "iShares Core MSCI Japan IMI UCITS ETF USD (Acc)",
+   "kategorie": "Aktien Asien/Japan",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 18.12.2025"
+  },
+  {
+   "isin": "IE00B3WJKG14",
+   "ticker": "QDVE.DE",
+   "name": "iShares S&P 500 Information Technology Sector UCITS ETF USD (Acc)",
+   "kategorie": "Branche",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 01.06.2026",
+   "holdings": {
+    "index": "S&P 500",
+    "sektor": "Technologie"
+   }
+  },
+  {
+   "isin": "IE00BM67HT60",
+   "ticker": "XDWT.DE",
+   "name": "Xtrackers MSCI World Information Technology UCITS ETF 1C",
+   "kategorie": "Branche",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
+   "holdings": {
+    "anbieter": "xtrackers"
+   }
+  },
+  {
+   "isin": "IE00BM67HK77",
+   "ticker": "XDWH.DE",
+   "name": "Xtrackers MSCI World Health Care UCITS ETF 1C",
+   "kategorie": "Branche",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
+   "holdings": {
+    "anbieter": "xtrackers"
+   }
+  },
+  {
+   "isin": "DE000A0Q4R36",
+   "ticker": "EXV4.DE",
+   "name": "iShares STOXX Europe 600 Health Care UCITS ETF (DE)",
+   "kategorie": "Branche",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "ausschüttend",
+   "letzteMeldung": "Ausschüttungsmeldung vom 14.10.2026",
+   "holdings": {
+    "filter": {
+     "region": "Europa",
+     "sector": "Gesundheit",
+     "weight": "mcap",
+     "max_w": 20
     },
-    {
-      "isin": "IE00B6R52259",
-      "ticker": "IUSQ.DE",
-      "name": "iShares MSCI ACWI UCITS ETF USD (Acc)",
-      "kategorie": "Aktien Welt",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 01.06.2026",
-      "holdings": {
-        "anbieter": "spdr",
-        "ticker": "SPYI",
-        "quelle": "Näherung über SPDR MSCI ACWI IMI"
-      }
+    "quelle": "Index-Näherung: europäische Gesundheitswerte im Universum, nach Marktwert gewichtet (wie STOXX Europe 600 Health Care)"
+   }
+  },
+  {
+   "isin": "DE000A0F5UJ7",
+   "ticker": "EXV1.DE",
+   "name": "iShares STOXX Europe 600 Banks UCITS ETF (DE)",
+   "kategorie": "Branche",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "ausschüttend",
+   "letzteMeldung": "Ausschüttungsmeldung vom 20.10.2026",
+   "holdings": {
+    "filter": {
+     "region": "Europa",
+     "industry_re": "bank",
+     "weight": "mcap",
+     "max_w": 20
     },
-    {
-      "isin": "IE00B3YLTY66",
-      "ticker": "SPYI.DE",
-      "name": "SPDR MSCI ACWI IMI ETF",
-      "kategorie": "Aktien Welt",
-      "meldefonds": true,
-      "vertreter": "PwC PricewaterhouseCoopers Wirtschaftsprüfung und Steuerberatung GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 29.10.2026",
-      "holdings": {
-        "anbieter": "spdr"
-      }
+    "quelle": "Index-Näherung: europäische Banken im Universum, nach Marktwert gewichtet (wie STOXX Europe 600 Banks)"
+   }
+  },
+  {
+   "isin": "IE00BYZK4552",
+   "ticker": "2B76.DE",
+   "name": "iShares Automation & Robotics UCITS ETF USD (Acc)",
+   "kategorie": "Thema",
+   "meldefonds": true,
+   "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026"
+  },
+  {
+   "isin": "IE00BMC38736",
+   "ticker": "VVSM.DE",
+   "name": "VanEck Semiconductor UCITS ETF",
+   "kategorie": "Thema",
+   "meldefonds": true,
+   "vertreter": "KPMG Alpen-Treuhand GmbH Wirtschaftsprüfungs- und Steuerberatungsges.",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 20.07.2026",
+   "holdings": {
+    "filter": {
+     "industry_re": "semiconductor",
+     "top": 25,
+     "weight": "mcap",
+     "max_w": 10
     },
-    {
-      "isin": "IE00BZ02LR44",
-      "ticker": "XZW0.DE",
-      "name": "Xtrackers MSCI World ESG UCITS ETF 1C",
-      "kategorie": "Aktien Welt",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
-      "holdings": {
-        "anbieter": "xtrackers"
-      }
+    "quelle": "Index-Näherung: 25 größte Halbleiterwerte im Universum, nach Marktwert mit Obergrenze gewichtet (Grundregel des MVIS US Listed Semiconductor 25)"
+   }
+  },
+  {
+   "isin": "IE00BYPLS672",
+   "ticker": "USPY.DE",
+   "name": "L&G ISE Cyber Security UCITS ETF",
+   "kategorie": "Thema",
+   "meldefonds": true,
+   "vertreter": "PwC PricewaterhouseCoopers Wirtschaftsprüfung und Steuerberatung GmbH",
+   "ertrag": "thesaurierend",
+   "letzteMeldung": "Jahresdatenmeldung vom 15.01.2026"
+  },
+  {
+   "isin": "IE00BYVQ9F29",
+   "ticker": "NQSE.DE",
+   "name": "iShares NASDAQ 100 UCITS ETF EUR Hedged (Acc)",
+   "kategorie": "Aktien USA",
+   "meldefonds": null,
+   "vertreter": null,
+   "ertrag": "thesaurierend",
+   "letzteMeldung": null,
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "IE00BMFKG444",
+    "quelle": "Positionsliste Xtrackers Nasdaq 100 (gleicher Index)"
+   }
+  },
+  {
+   "isin": "DE0006289382",
+   "ticker": "EXI2.DE",
+   "name": "iShares Dow Jones Global Titans 50 UCITS ETF (DE)",
+   "kategorie": "Aktien Welt",
+   "meldefonds": null,
+   "vertreter": null,
+   "ertrag": "ausschüttend",
+   "letzteMeldung": null,
+   "holdings": {
+    "filter": {
+     "top": 50,
+     "weight": "mcap"
     },
-    {
-      "isin": "IE00B8FHGS14",
-      "ticker": "IQQ0.DE",
-      "name": "iShares Edge MSCI World Minimum Volatility UCITS ETF USD (Acc)",
-      "kategorie": "Aktien Welt Faktor",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 17.09.2026",
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "IE00BL25JN58",
-        "quelle": "Positionsliste Xtrackers MSCI World Minimum Volatility (gleicher Index)"
-      }
+    "quelle": "Index-Näherung: 50 größte Unternehmen im Universum, nach Marktwert gewichtet – Grundregel des Dow Jones Global Titans 50"
+   }
+  },
+  {
+   "isin": "IE00BYVJRR92",
+   "ticker": "QDVR.DE",
+   "name": "iShares MSCI USA SRI UCITS ETF",
+   "kategorie": "Aktien USA",
+   "meldefonds": null,
+   "vertreter": null,
+   "ertrag": "thesaurierend",
+   "letzteMeldung": null,
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "IE00BFMNPS42",
+    "quelle": "Näherung über Xtrackers MSCI USA ESG (ESG-Leaders statt SRI-Auswahl)"
+   }
+  },
+  {
+   "isin": "IE00B52VJ196",
+   "ticker": "IUSK.DE",
+   "name": "iShares MSCI Europe SRI UCITS ETF",
+   "kategorie": "Aktien Europa",
+   "meldefonds": null,
+   "vertreter": null,
+   "ertrag": "thesaurierend",
+   "letzteMeldung": null,
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "IE00BFMNHK08",
+    "quelle": "Näherung über Xtrackers MSCI Europe ESG (ESG-Leaders statt SRI-Auswahl)"
+   }
+  },
+  {
+   "isin": "IE00BYVJRP78",
+   "ticker": "QDVS.DE",
+   "name": "iShares MSCI EM SRI UCITS ETF",
+   "kategorie": "Aktien Schwellenländer",
+   "meldefonds": null,
+   "vertreter": null,
+   "ertrag": "thesaurierend",
+   "letzteMeldung": null,
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "IE00BG370F43",
+    "quelle": "Näherung über Xtrackers MSCI Emerging Markets ESG (ESG-Leaders statt SRI-Auswahl)"
+   }
+  },
+  {
+   "isin": "IE000CVOSY02",
+   "ticker": null,
+   "name": "Franklin FTSE Developed World UCITS ETF USD Acc",
+   "kategorie": "Aktien Welt",
+   "meldefonds": null,
+   "vertreter": null,
+   "ertrag": "thesaurierend",
+   "letzteMeldung": null,
+   "holdings": {
+    "anbieter": "xtrackers",
+    "isin": "IE00BJ0KDQ92",
+    "quelle": "Näherung über Xtrackers MSCI World (FTSE Developed ≈ MSCI World)"
+   },
+   "try": [
+    "DWLD.DE",
+    "DWLD.F",
+    "WORLD.MI",
+    "WORLD.PA"
+   ]
+  },
+  {
+   "isin": "IE000U58J0M1",
+   "ticker": "INRA.AS",
+   "name": "iShares Global Clean Energy Transition UCITS ETF USD Acc",
+   "kategorie": "Thema",
+   "meldefonds": null,
+   "vertreter": null,
+   "ertrag": "thesaurierend",
+   "letzteMeldung": null,
+   "holdings": {
+    "factsheet": "https://www.ishares.com/gls-download/literature/fact-sheet/inra-ishares-global-clean-energy-transition-ucits-etf-fund-fact-sheet-en-gb.pdf",
+    "quelle": "Factsheet iShares (Top 10)"
+   }
+  },
+  {
+   "isin": "LU0659579063",
+   "ticker": "XB4A.DE",
+   "name": "Xtrackers ATX UCITS ETF 1C",
+   "kategorie": "Aktien Österreich",
+   "meldefonds": null,
+   "vertreter": null,
+   "ertrag": "thesaurierend",
+   "letzteMeldung": null,
+   "holdings": {
+    "anbieter": "xtrackers"
+   }
+  },
+  {
+   "isin": "IE00B53L3W79",
+   "ticker": "SXRT.DE",
+   "name": "iShares Core EURO STOXX 50 UCITS ETF EUR Acc",
+   "kategorie": "Aktien Europa",
+   "meldefonds": null,
+   "vertreter": null,
+   "ertrag": "thesaurierend",
+   "letzteMeldung": null,
+   "holdings": {
+    "index": "Euro Stoxx 50"
+   }
+  },
+  {
+   "isin": "IE00BK5BR626",
+   "ticker": "VGWE.DE",
+   "name": "Vanguard FTSE All-World High Dividend Yield UCITS ETF USD Acc",
+   "kategorie": "Dividende",
+   "meldefonds": null,
+   "vertreter": null,
+   "ertrag": "thesaurierend",
+   "letzteMeldung": null,
+   "holdings": {
+    "filter": {
+     "dy_above_median": true,
+     "weight": "mcap",
+     "exclude_sec": [
+      "Immobilien"
+     ],
+     "min_mcap": 2000000000.0
     },
-    {
-      "isin": "IE00BP3QZB59",
-      "ticker": "IS3S.DE",
-      "name": "iShares Edge MSCI World Value Factor UCITS ETF USD (Acc)",
-      "kategorie": "Aktien Welt Faktor",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026",
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "IE00BL25JM42",
-        "quelle": "Positionsliste Xtrackers MSCI World Value (gleicher Index MSCI World Enhanced Value)"
-      }
-    },
-    {
-      "isin": "IE00BP3QZ601",
-      "ticker": "IS3Q.DE",
-      "name": "iShares Edge MSCI World Quality Factor UCITS ETF USD (Acc)",
-      "kategorie": "Aktien Welt Faktor",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026",
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "IE00BL25JL35",
-        "quelle": "Positionsliste Xtrackers MSCI World Quality (gleicher Index MSCI World Sector Neutral Quality)"
-      }
-    },
-    {
-      "isin": "IE00BP3QZ825",
-      "ticker": "IS3R.DE",
-      "name": "iShares Edge MSCI World Momentum Factor UCITS ETF USD (Acc)",
-      "kategorie": "Aktien Welt Faktor",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026",
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "IE00BL25JP72",
-        "quelle": "Positionsliste Xtrackers MSCI World Momentum (gleicher Index)"
-      }
-    },
-    {
-      "isin": "IE00B9CQXS71",
-      "ticker": "ZPRG.DE",
-      "name": "SPDR S&P GLOBAL DIVIDEND ARISTOCRATS UCITS ETF",
-      "kategorie": "Dividende",
-      "meldefonds": true,
-      "vertreter": "PwC PricewaterhouseCoopers Wirtschaftsprüfung und Steuerberatung GmbH",
-      "ertrag": "ausschüttend",
-      "letzteMeldung": "Jahresdatenmeldung vom 29.10.2026",
-      "holdings": {
-        "anbieter": "spdr"
-      }
-    },
-    {
-      "isin": "DE000A0F5UH1",
-      "ticker": "ISPA.DE",
-      "name": "iShares STOXX Global Select Dividend 100 UCITS ETF (DE)",
-      "kategorie": "Dividende",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "ausschüttend",
-      "letzteMeldung": "Ausschüttungsmeldung vom 14.10.2026",
-      "holdings": {
-        "filter": {
-          "top": 100,
-          "sort": "dy",
-          "weight": "dy",
-          "min_mcap": 3000000000.0,
-          "max_w": 4
-        },
-        "quelle": "Index-Näherung: 100 Titel mit der höchsten Dividendenrendite im Universum (ab 3 Mrd. €), nach Dividendenrendite gewichtet – Grundregel des STOXX Global Select Dividend 100"
-      }
-    },
-    {
-      "isin": "IE00B5M1WJ87",
-      "ticker": "SPYW.DE",
-      "name": "SPDR S&P Euro Dividend Aristocrats UCITS ETF",
-      "kategorie": "Dividende",
-      "meldefonds": true,
-      "vertreter": "PwC PricewaterhouseCoopers Wirtschaftsprüfung und Steuerberatung GmbH",
-      "ertrag": "ausschüttend",
-      "letzteMeldung": "Jahresdatenmeldung vom 29.10.2026",
-      "holdings": {
-        "anbieter": "spdr"
-      }
-    },
-    {
-      "isin": "IE00B5BMR087",
-      "ticker": "SXR8.DE",
-      "name": "iShares Core S&P 500 UCITS ETF USD(Acc)",
-      "kategorie": "Aktien USA",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 12.01.2026",
-      "holdings": {
-        "index": "S&P 500"
-      }
-    },
-    {
-      "isin": "IE00BLNMYC90",
-      "ticker": "XDEW.DE",
-      "name": "Xtrackers S&P 500 Equal Weight UCITS ETF 1C",
-      "kategorie": "Aktien USA",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
-      "holdings": {
-        "anbieter": "xtrackers"
-      }
-    },
-    {
-      "isin": "IE00B1YZSC51",
-      "ticker": "IQQY.DE",
-      "name": "iShares Core MSCI Europe UCITS ETF EUR (Dist)",
-      "kategorie": "Aktien Europa",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "ausschüttend",
-      "letzteMeldung": "Ausschüttungsmeldung vom 27.08.2026",
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "LU0274209237",
-        "quelle": "Positionsliste Xtrackers MSCI Europe (gleicher Index)"
-      }
-    },
-    {
-      "isin": "IE00B945VV12",
-      "ticker": "VGEU.DE",
-      "name": "Vanguard FTSE Developed Europe UCITS ETF (EUR) Distributing",
-      "kategorie": "Aktien Europa",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "ausschüttend",
-      "letzteMeldung": "Ausschüttungsmeldung vom 23.09.2026",
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "LU0274209237",
-        "quelle": "Näherung über Xtrackers MSCI Europe (FTSE Dev. Europe ≈ MSCI Europe)"
-      }
-    },
-    {
-      "isin": "DE0002635307",
-      "ticker": "EXSA.DE",
-      "name": "iShares STOXX Europe 600 UCITS ETF (DE)",
-      "kategorie": "Aktien Europa",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "ausschüttend",
-      "letzteMeldung": "Jahresdatenmeldung vom 20.10.2026",
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "LU0328475792",
-        "quelle": "Positionsliste Xtrackers Stoxx Europe 600 (gleicher Index)"
-      }
-    },
-    {
-      "isin": "DE0005933931",
-      "ticker": "EXS1.DE",
-      "name": "iShares Core DAX UCITS ETF (DE)",
-      "kategorie": "Aktien Europa",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 20.10.2026",
-      "holdings": {
-        "index": "DAX"
-      }
-    },
-    {
-      "isin": "IE00BKM4GZ66",
-      "ticker": "IS3N.DE",
-      "name": "iShares Core MSCI EM IMI UCITS ETF USD (Acc)",
-      "kategorie": "Aktien Schwellenländer",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 12.08.2026",
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "IE00BTJRMP35",
-        "quelle": "Näherung über Xtrackers MSCI Emerging Markets (ohne Nebenwerte)"
-      }
-    },
-    {
-      "isin": "IE00BTJRMP35",
-      "ticker": "XMME.DE",
-      "name": "Xtrackers MSCI Emerging Markets UCITS ETF 1C",
-      "kategorie": "Aktien Schwellenländer",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
-      "holdings": {
-        "anbieter": "xtrackers"
-      }
-    },
-    {
-      "isin": "IE00B3VVMM84",
-      "ticker": "VFEM.DE",
-      "name": "Vanguard FTSE Emerging Markets UCITS ETF (USD) Distributing",
-      "kategorie": "Aktien Schwellenländer",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "ausschüttend",
-      "letzteMeldung": "Ausschüttungsmeldung vom 23.09.2026",
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "IE00BTJRMP35",
-        "quelle": "Näherung über Xtrackers MSCI Emerging Markets (FTSE EM ≈ MSCI EM)"
-      }
-    },
-    {
-      "isin": "IE00BZCQB185",
-      "ticker": "QDV5.DE",
-      "name": "iShares MSCI India UCITS ETF USD (Acc)",
-      "kategorie": "Aktien Schwellenländer",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026",
-      "holdings": {
-        "index": "NIFTY 50",
-        "naeherung": true
-      }
-    },
-    {
-      "isin": "IE00B4L5YX21",
-      "ticker": "SXR5.DE",
-      "name": "iShares Core MSCI Japan IMI UCITS ETF USD (Acc)",
-      "kategorie": "Aktien Asien/Japan",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 18.12.2025"
-    },
-    {
-      "isin": "IE00B3WJKG14",
-      "ticker": "QDVE.DE",
-      "name": "iShares S&P 500 Information Technology Sector UCITS ETF USD (Acc)",
-      "kategorie": "Branche",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 01.06.2026",
-      "holdings": {
-        "index": "S&P 500",
-        "sektor": "Technologie"
-      }
-    },
-    {
-      "isin": "IE00BM67HT60",
-      "ticker": "XDWT.DE",
-      "name": "Xtrackers MSCI World Information Technology UCITS ETF 1C",
-      "kategorie": "Branche",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
-      "holdings": {
-        "anbieter": "xtrackers"
-      }
-    },
-    {
-      "isin": "IE00BM67HK77",
-      "ticker": "XDWH.DE",
-      "name": "Xtrackers MSCI World Health Care UCITS ETF 1C",
-      "kategorie": "Branche",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 27.07.2026",
-      "holdings": {
-        "anbieter": "xtrackers"
-      }
-    },
-    {
-      "isin": "DE000A0Q4R36",
-      "ticker": "EXV4.DE",
-      "name": "iShares STOXX Europe 600 Health Care UCITS ETF (DE)",
-      "kategorie": "Branche",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "ausschüttend",
-      "letzteMeldung": "Ausschüttungsmeldung vom 14.10.2026",
-      "holdings": {
-        "filter": {
-          "region": "Europa",
-          "sector": "Gesundheit",
-          "weight": "mcap",
-          "max_w": 20
-        },
-        "quelle": "Index-Näherung: europäische Gesundheitswerte im Universum, nach Marktwert gewichtet (wie STOXX Europe 600 Health Care)"
-      }
-    },
-    {
-      "isin": "DE000A0F5UJ7",
-      "ticker": "EXV1.DE",
-      "name": "iShares STOXX Europe 600 Banks UCITS ETF (DE)",
-      "kategorie": "Branche",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "ausschüttend",
-      "letzteMeldung": "Ausschüttungsmeldung vom 20.10.2026",
-      "holdings": {
-        "filter": {
-          "region": "Europa",
-          "industry_re": "bank",
-          "weight": "mcap",
-          "max_w": 20
-        },
-        "quelle": "Index-Näherung: europäische Banken im Universum, nach Marktwert gewichtet (wie STOXX Europe 600 Banks)"
-      }
-    },
-    {
-      "isin": "IE00BYZK4552",
-      "ticker": "2B76.DE",
-      "name": "iShares Automation & Robotics UCITS ETF USD (Acc)",
-      "kategorie": "Thema",
-      "meldefonds": true,
-      "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026"
-    },
-    {
-      "isin": "IE00BMC38736",
-      "ticker": "VVSM.DE",
-      "name": "VanEck Semiconductor UCITS ETF",
-      "kategorie": "Thema",
-      "meldefonds": true,
-      "vertreter": "KPMG Alpen-Treuhand GmbH Wirtschaftsprüfungs- und Steuerberatungsges.",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 20.07.2026",
-      "holdings": {
-        "filter": {
-          "industry_re": "semiconductor",
-          "top": 25,
-          "weight": "mcap",
-          "max_w": 10
-        },
-        "quelle": "Index-Näherung: 25 größte Halbleiterwerte im Universum, nach Marktwert mit Obergrenze gewichtet (Grundregel des MVIS US Listed Semiconductor 25)"
-      }
-    },
-    {
-      "isin": "IE00BYPLS672",
-      "ticker": "USPY.DE",
-      "name": "L&G ISE Cyber Security UCITS ETF",
-      "kategorie": "Thema",
-      "meldefonds": true,
-      "vertreter": "PwC PricewaterhouseCoopers Wirtschaftsprüfung und Steuerberatung GmbH",
-      "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 15.01.2026"
-    },
-    {
-      "isin": "IE00BYVQ9F29",
-      "ticker": "NQSE.DE",
-      "name": "iShares NASDAQ 100 UCITS ETF EUR Hedged (Acc)",
-      "kategorie": "Aktien USA",
-      "meldefonds": null,
-      "vertreter": null,
-      "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "IE00BMFKG444",
-        "quelle": "Positionsliste Xtrackers Nasdaq 100 (gleicher Index)"
-      }
-    },
-    {
-      "isin": "DE0006289382",
-      "ticker": "EXI2.DE",
-      "name": "iShares Dow Jones Global Titans 50 UCITS ETF (DE)",
-      "kategorie": "Aktien Welt",
-      "meldefonds": null,
-      "vertreter": null,
-      "ertrag": "ausschüttend",
-      "letzteMeldung": null,
-      "holdings": {
-        "filter": {
-          "top": 50,
-          "weight": "mcap"
-        },
-        "quelle": "Index-Näherung: 50 größte Unternehmen im Universum, nach Marktwert gewichtet – Grundregel des Dow Jones Global Titans 50"
-      }
-    },
-    {
-      "isin": "IE00BYVJRR92",
-      "ticker": "QDVR.DE",
-      "name": "iShares MSCI USA SRI UCITS ETF",
-      "kategorie": "Aktien USA",
-      "meldefonds": null,
-      "vertreter": null,
-      "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "IE00BFMNPS42",
-        "quelle": "Näherung über Xtrackers MSCI USA ESG (ESG-Leaders statt SRI-Auswahl)"
-      }
-    },
-    {
-      "isin": "IE00B52VJ196",
-      "ticker": "IUSK.DE",
-      "name": "iShares MSCI Europe SRI UCITS ETF",
-      "kategorie": "Aktien Europa",
-      "meldefonds": null,
-      "vertreter": null,
-      "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "IE00BFMNHK08",
-        "quelle": "Näherung über Xtrackers MSCI Europe ESG (ESG-Leaders statt SRI-Auswahl)"
-      }
-    },
-    {
-      "isin": "IE00BYVJRP78",
-      "ticker": "QDVS.DE",
-      "name": "iShares MSCI EM SRI UCITS ETF",
-      "kategorie": "Aktien Schwellenländer",
-      "meldefonds": null,
-      "vertreter": null,
-      "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "IE00BG370F43",
-        "quelle": "Näherung über Xtrackers MSCI Emerging Markets ESG (ESG-Leaders statt SRI-Auswahl)"
-      }
-    },
-    {
-      "isin": "IE000CVOSY02",
-      "ticker": null,
-      "name": "Franklin FTSE Developed World UCITS ETF USD Acc",
-      "kategorie": "Aktien Welt",
-      "meldefonds": null,
-      "vertreter": null,
-      "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "holdings": {
-        "anbieter": "xtrackers",
-        "isin": "IE00BJ0KDQ92",
-        "quelle": "Näherung über Xtrackers MSCI World (FTSE Developed ≈ MSCI World)"
-      },
-      "try": [
-        "DWLD.DE",
-        "DWLD.F",
-        "WORLD.MI",
-        "WORLD.PA"
-      ]
-    },
-    {
-      "isin": "IE000U58J0M1",
-      "ticker": "INRA.AS",
-      "name": "iShares Global Clean Energy Transition UCITS ETF USD Acc",
-      "kategorie": "Thema",
-      "meldefonds": null,
-      "vertreter": null,
-      "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "holdings": {
-        "filter": {
-          "theme": "renew",
-          "weight": "mcap",
-          "max_w": 10
-        },
-        "quelle": "Index-Näherung: Titel aus dem Themenkorb Erneuerbare Energien, nach Marktwert mit Obergrenze gewichtet"
-      }
-    },
-    {
-      "isin": "LU0659579063",
-      "ticker": "XB4A.DE",
-      "name": "Xtrackers ATX UCITS ETF 1C",
-      "kategorie": "Aktien Österreich",
-      "meldefonds": null,
-      "vertreter": null,
-      "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "holdings": {
-        "anbieter": "xtrackers"
-      }
-    },
-    {
-      "isin": "IE00B53L3W79",
-      "ticker": "SXRT.DE",
-      "name": "iShares Core EURO STOXX 50 UCITS ETF EUR Acc",
-      "kategorie": "Aktien Europa",
-      "meldefonds": null,
-      "vertreter": null,
-      "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "holdings": {
-        "index": "Euro Stoxx 50"
-      }
-    },
-    {
-      "isin": "IE00BK5BR626",
-      "ticker": "VGWE.DE",
-      "name": "Vanguard FTSE All-World High Dividend Yield UCITS ETF USD Acc",
-      "kategorie": "Dividende",
-      "meldefonds": null,
-      "vertreter": null,
-      "ertrag": "thesaurierend",
-      "letzteMeldung": null,
-      "holdings": {
-        "filter": {
-          "dy_above_median": true,
-          "weight": "mcap",
-          "exclude_sec": [
-            "Immobilien"
-          ],
-          "min_mcap": 2000000000.0
-        },
-        "quelle": "Index-Näherung: Titel mit überdurchschnittlicher Dividendenrendite (ohne Immobilien), nach Marktwert gewichtet – Grundregel des FTSE All-World High Dividend Yield"
-      }
-    },
-    {
-      "isin": "IE00BYZK4883",
-      "ticker": "2B79.DE",
-      "name": "iShares Digitalisation UCITS ETF USD Acc",
-      "kategorie": "Thema",
-      "meldefonds": null,
-      "vertreter": null,
-      "ertrag": "thesaurierend",
-      "letzteMeldung": null
-    }
-  ],
-  "_holdings_hinweis": "Positionslisten: Xtrackers und SPDR direkt vom Anbieter (täglich), S&P-500-, DAX- und Euro-Stoxx-50-ETFs über die Indexzusammensetzung. iShares und Vanguard geben ihre Listen nicht automatisiert heraus."
+    "quelle": "Index-Näherung: Titel mit überdurchschnittlicher Dividendenrendite (ohne Immobilien), nach Marktwert gewichtet – Grundregel des FTSE All-World High Dividend Yield"
+   }
+  },
+  {
+   "isin": "IE00BYZK4883",
+   "ticker": "2B79.DE",
+   "name": "iShares Digitalisation UCITS ETF USD Acc",
+   "kategorie": "Thema",
+   "meldefonds": null,
+   "vertreter": null,
+   "ertrag": "thesaurierend",
+   "letzteMeldung": null
+  }
+ ],
+ "_holdings_hinweis": "Positionslisten: Xtrackers und SPDR direkt vom Anbieter (täglich), S&P-500-, DAX- und Euro-Stoxx-50-ETFs über die Indexzusammensetzung. iShares und Vanguard geben ihre Listen nicht automatisiert heraus."
 }

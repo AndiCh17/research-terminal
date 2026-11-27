@@ -7,7 +7,13 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00B4L5Y983",
-   "isins": [],
+   "isins": [
+    "AT0000796446",
+    "AT0000A1V4N3",
+    "AT0000796453",
+    "AT0000A1V4M5",
+    "AT0000712575"
+   ],
    "region": null,
    "match": "Raiffeisen-Active-Aktien"
   },
@@ -18,7 +24,14 @@
    "aktien": 100,
    "proxy": "IE00BKM4GZ66",
    "isins": [
-    "AT0000745864"
+    "AT0000745864",
+    "AT0000745856",
+    "AT0000745872",
+    "AT0000A1TVW8",
+    "AT0000A2XMK2",
+    "AT0000A1TVV0",
+    "AT0000A0EYC8",
+    "AT0000A1TVX6"
    ],
    "region": "Asien",
    "match": "Raiffeisen-Asia Opportunities-ESG-Aktien"
@@ -29,7 +42,14 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00BK5BR626",
-   "isins": [],
+   "isins": [
+    "AT0000495288",
+    "AT0000A1U5Z5",
+    "AT0000495296",
+    "AT0000A1U5Y8",
+    "AT0000A0LST9",
+    "AT0000495304"
+   ],
    "region": null,
    "match": "Raiffeisen-GlobalDividend-ESG-Aktien"
   },
@@ -40,7 +60,17 @@
    "aktien": 100,
    "proxy": "IE00BZ02LR44",
    "isins": [
-    "AT0000A1U693"
+    "AT0000A1U693",
+    "AT0000A28LD7",
+    "AT0000677901",
+    "AT0000A1U685",
+    "AT0000A0LSJ0",
+    "AT0000677919",
+    "AT0000A1U677",
+    "AT0000A296N9",
+    "AT0000A20EZ2",
+    "AT0000A3LMC2",
+    "AT0000677927"
    ],
    "region": null,
    "match": "Raiffeisen-Nachhaltigkeit-Aktien"
@@ -51,7 +81,20 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00BYVJRP78",
-   "isins": [],
+   "isins": [
+    "AT0000A1TB42",
+    "AT0000A1TB34",
+    "AT0000A1TB59",
+    "AT0000A1TB75",
+    "AT0000A28JD1",
+    "AT0000A1TB67",
+    "AT0000A28JC3",
+    "AT0000A2B6X0",
+    "AT0000A1TB83",
+    "AT0000A2QSE6",
+    "AT0000A2QSF3",
+    "AT0000A3Q887"
+   ],
    "region": "Schwellenländer",
    "match": "Raiffeisen-Nachhaltigkeit-EmergingMarkets-Aktien"
   },
@@ -61,7 +104,14 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00B52VJ196",
-   "isins": [],
+   "isins": [
+    "AT0000986377",
+    "AT0000785225",
+    "AT0000805387",
+    "AT0000A1TWT2",
+    "AT0000A1TWU0",
+    "AT0000A1WB96"
+   ],
    "region": "Europa",
    "match": "Raiffeisen-Nachhaltigkeit-Europa-Aktien"
   },
@@ -71,7 +121,10 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00BZ02LR44",
-   "isins": [],
+   "isins": [
+    "AT0000A20EY5",
+    "AT0000A26P95"
+   ],
    "region": null,
    "match": "Raiffeisen-Nachhaltigkeit-Momentum"
   },
@@ -81,7 +134,14 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "LU0659579063",
-   "isins": [],
+   "isins": [
+    "AT0000859293",
+    "AT0000A1TMJ4",
+    "AT0000A2QAB0",
+    "AT0000805189",
+    "AT0000A1TMH8",
+    "AT0000765573"
+   ],
    "region": "Österreich",
    "match": "Raiffeisen-Nachhaltigkeit-Osterreich"
   },
@@ -91,7 +151,12 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00BYVJRR92",
-   "isins": [],
+   "isins": [
+    "AT0000764741",
+    "AT0000764758",
+    "AT0000764766",
+    "AT0000A36FY8"
+   ],
    "region": "USA",
    "match": "Raiffeisen-Nachhaltigkeit-US-Aktien"
   },
@@ -101,7 +166,16 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": null,
-   "isins": [],
+   "isins": [
+    "AT0000936513",
+    "AT0000A1TVZ1",
+    "AT0000A13K38",
+    "AT0000805460",
+    "AT0000A1TVY4",
+    "AT0000A0EY50",
+    "AT0000785241",
+    "AT0000A1TW05"
+   ],
    "region": "Zentral- und Osteuropa",
    "match": "Raiffeisen-Zentraleuropa-ESG-Aktien"
   },
@@ -111,7 +185,11 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": null,
-   "isins": [],
+   "isins": [
+    "AT0000688668",
+    "AT0000A1TWR6",
+    "AT0000688676"
+   ],
    "region": null,
    "match": "Raiffeisen-Energie-Aktien"
   },
@@ -121,7 +199,15 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00B1YZSC51",
-   "isins": [],
+   "isins": [
+    "AT0000A3U020",
+    "AT0000A3U038",
+    "AT0000A3U053",
+    "AT0000A3U061",
+    "AT0000A3U079",
+    "AT0000A3U087",
+    "AT0000A3U095"
+   ],
    "region": "Europa",
    "match": "Raiffeisen European Resilience and Security Equity"
   },
@@ -131,7 +217,13 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00BM67HK77",
-   "isins": [],
+   "isins": [
+    "AT0000714274",
+    "AT0000714282",
+    "AT0000712716",
+    "AT0000A1U644",
+    "AT0000A2XN33"
+   ],
    "region": null,
    "match": "Raiffeisen-Health and Wellbeing-ESG-Aktien"
   },
@@ -141,7 +233,14 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00BM67HT60",
-   "isins": [],
+   "isins": [
+    "AT0000688858",
+    "AT0000688866",
+    "AT0000688841",
+    "AT0000A2R8R0",
+    "AT0000A1U7J5",
+    "AT0000A1U7H9"
+   ],
    "region": null,
    "match": "Raiffeisen-HighTech-ESG-Aktien"
   },
@@ -151,7 +250,9 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00BZ02LR44",
-   "isins": [],
+   "isins": [
+    "AT0000A28LH8"
+   ],
    "region": null,
    "match": "Raiffeisen-MegaTrends-ESG-Aktien"
   },
@@ -161,7 +262,14 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00B4L5Y983",
-   "isins": [],
+   "isins": [
+    "AT0000A09ZJ4",
+    "AT0000A09ZL0",
+    "AT0000A1U5Q4",
+    "AT0000A1U5P6",
+    "AT0000A3L7N6",
+    "AT0000A3Q853"
+   ],
    "region": null,
    "match": "Raiffeisen-NewInfrastructure-ESG-Aktien"
   },
@@ -171,7 +279,19 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE000U58J0M1",
-   "isins": [],
+   "isins": [
+    "AT0000A2DFJ0",
+    "AT0000A2DFG6",
+    "AT0000A2DFL6",
+    "AT0000A2Z138",
+    "AT0000A2DFH4",
+    "AT0000A2DFF8",
+    "AT0000A2DFK8",
+    "AT0000A2DFM4",
+    "AT0000A2NYB7",
+    "AT0000A2ETT8",
+    "AT0000A2Z146"
+   ],
    "region": null,
    "match": "Raiffeisen-SmartEnergy-ESG-Aktien"
   },
@@ -201,7 +321,14 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00B4L5Y983",
-   "isins": [],
+   "isins": [
+    "AT0000A3VDT4",
+    "AT0000A3VDS6",
+    "AT0000A3VDV0",
+    "AT0000A3VDY4",
+    "AT0000A3VDZ1",
+    "AT0000A3VE01"
+   ],
    "region": null,
    "match": "Raiffeisen Systematic Core Global Equity"
   },
@@ -241,7 +368,12 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00B4L5Y983",
-   "isins": [],
+   "isins": [
+    "AT0000A3QPZ5",
+    "AT0000A3QQ04",
+    "AT0000A3QQ12",
+    "AT0000A387E5"
+   ],
    "region": null,
    "match": "Raiffeisen Systematic Global Equity"
   },
@@ -251,7 +383,13 @@
    "kat": "Aktien",
    "aktien": 100,
    "proxy": "IE00B1YZSC51",
-   "isins": [],
+   "isins": [
+    "AT0000A3EU10",
+    "AT0000A3DUS8",
+    "AT0000A3QQD0",
+    "AT0000A3QQ87",
+    "AT0000A3QQA6"
+   ],
    "region": "Europa",
    "match": "Raiffeisen Systematic Europe Equity"
   },
@@ -291,7 +429,17 @@
    "kat": "Misch",
    "aktien": 25,
    "proxy": "IE00BZ02LR44",
-   "isins": [],
+   "isins": [
+    "AT0000A1DU54",
+    "AT0000A1DU47",
+    "AT0000A1DU70",
+    "AT0000A1VP42",
+    "AT0000A1TML0",
+    "AT0000A1DU62",
+    "AT0000A1TMK2",
+    "AT0000A1YC10",
+    "AT0000A1VP59"
+   ],
    "region": null,
    "match": "Raiffeisen-Nachhaltigkeit-Solide"
   },
@@ -308,7 +456,11 @@
     "AT0000A1G2L0",
     "AT0000A1VG68",
     "AT0000A2SL08",
-    "AT0000A2SL16"
+    "AT0000A2SL16",
+    "AT0000A2E091",
+    "AT0000A1TWK1",
+    "AT0000A1TWJ3",
+    "AT0000A1TWL9"
    ],
    "region": null,
    "match": "Raiffeisen-Nachhaltigkeit-Mix"
@@ -319,7 +471,15 @@
    "kat": "Misch",
    "aktien": 75,
    "proxy": "IE00BZ02LR44",
-   "isins": [],
+   "isins": [
+    "AT0000A2CMH2",
+    "AT0000A2CMJ8",
+    "AT0000A2CMK6",
+    "AT0000A2CML4",
+    "AT0000A2CMN0",
+    "AT0000A2CMP5",
+    "AT0000A2CMQ3"
+   ],
    "region": null,
    "match": "Raiffeisen-Nachhaltigkeit-Wachstum"
   },
@@ -479,7 +639,13 @@
    "kat": "Anleihen",
    "aktien": 0,
    "proxy": null,
-   "isins": [],
+   "isins": [
+    "AT0000712526",
+    "AT0000712518",
+    "AT0000A0PG42",
+    "AT0000A1TWE4",
+    "AT0000A1TWD6"
+   ],
    "region": null,
    "match": "Raiffeisen-ESG-Euro-Corporates"
   },

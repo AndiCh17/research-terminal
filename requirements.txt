@@ -9,3 +9,4 @@ transformers>=4.40
 cryptography>=42
 openpyxl>=3.1
 # torch wird im Workflow als CPU-Version separat installiert (kleiner und schneller)
+pypdf>=4.0
