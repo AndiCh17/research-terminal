@@ -1036,10 +1036,12 @@ def resolve_etf_tickers(etfs: list[dict]):
             e["ticker"] = cache[e["isin"]]
             continue
         def find():
-            quotes = yf.Search(e["isin"], max_results=10).quotes or []
-            syms = [q["symbol"] for q in quotes if q.get("symbol")]
-            order = [s for suf in (".DE", ".F", ".VI", ".AS", ".MI", ".PA", ".L", ".SW") for s in syms if s.endswith(suf)]
-            for sym in order + [s for s in syms if s not in order]:
+            syms = list(e.get("try") or [])
+            try:
+                syms += [q["symbol"] for q in (yf.Search(e["isin"], max_results=10).quotes or []) if q.get("symbol")]
+            except Exception:
+                pass
+            for sym in dict.fromkeys(syms):  # Reihenfolge der Kandidaten aus etfs.json zuerst
                 h = history_block([sym], period="1mo").get(sym)
                 if h is not None and len(h) > 5:
                     return sym

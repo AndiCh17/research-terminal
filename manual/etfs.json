@@ -403,7 +403,11 @@
         "anbieter": "xtrackers",
         "isin": "IE00BMFKG444",
         "quelle": "Positionsliste Xtrackers Nasdaq 100 (gleicher Index)"
-      }
+      },
+      "try": [
+        "NQSE.DE",
+        "NQSE.F"
+      ]
     },
     {
       "isin": "DE0006289382",
@@ -413,7 +417,10 @@
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "ausschüttend",
-      "letzteMeldung": null
+      "letzteMeldung": null,
+      "try": [
+        "EXI2.DE"
+      ]
     },
     {
       "isin": "IE00BYVJRR92",
@@ -423,7 +430,10 @@
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null
+      "letzteMeldung": null,
+      "try": [
+        "QDVR.DE"
+      ]
     },
     {
       "isin": "IE00B52VJ196",
@@ -433,7 +443,10 @@
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null
+      "letzteMeldung": null,
+      "try": [
+        "IUSK.DE"
+      ]
     },
     {
       "isin": "IE00BYVJRP78",
@@ -443,7 +456,10 @@
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null
+      "letzteMeldung": null,
+      "try": [
+        "QDVS.DE"
+      ]
     },
     {
       "isin": "IE000CVOSY02",
@@ -458,7 +474,13 @@
         "anbieter": "xtrackers",
         "isin": "IE00BJ0KDQ92",
         "quelle": "Näherung über Xtrackers MSCI World (FTSE Developed ≈ MSCI World)"
-      }
+      },
+      "try": [
+        "FLXD.DE",
+        "DWLD.DE",
+        "WORLD.MI",
+        "FLXD.L"
+      ]
     },
     {
       "isin": "IE000U58J0M1",
@@ -468,7 +490,12 @@
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null
+      "letzteMeldung": null,
+      "try": [
+        "INRA.AS",
+        "INRA.DE",
+        "INRA.L"
+      ]
     },
     {
       "isin": "LU0659579063",
@@ -481,7 +508,10 @@
       "letzteMeldung": null,
       "holdings": {
         "anbieter": "xtrackers"
-      }
+      },
+      "try": [
+        "XB4A.DE"
+      ]
     },
     {
       "isin": "IE00B53L3W79",
@@ -494,7 +524,11 @@
       "letzteMeldung": null,
       "holdings": {
         "index": "Euro Stoxx 50"
-      }
+      },
+      "try": [
+        "SXRT.DE",
+        "CSX5.AS"
+      ]
     },
     {
       "isin": "IE00BK5BR626",
@@ -504,7 +538,10 @@
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null
+      "letzteMeldung": null,
+      "try": [
+        "VGWE.DE"
+      ]
     },
     {
       "isin": "IE00BYZK4883",
@@ -514,7 +551,12 @@
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null
+      "letzteMeldung": null,
+      "try": [
+        "2B79.DE",
+        "DGTL.L",
+        "DGTL.AS"
+      ]
     }
   ],
   "_holdings_hinweis": "Positionslisten: Xtrackers und SPDR direkt vom Anbieter (täglich), S&P-500-, DAX- und Euro-Stoxx-50-ETFs über die Indexzusammensetzung. iShares und Vanguard geben ihre Listen nicht automatisiert heraus."
