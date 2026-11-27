@@ -262,6 +262,7 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
     <button data-v="TOP"><b>·</b>News</button>
     <button data-v="CAL"><b>·</b>Kalender</button>
     <button data-v="DES"><b>›</b>Aktie</button>
+    <button data-v="STATUS"><b>·</b>Datenstatus</button>
     <button data-v="HELP"><b>?</b>Hilfe</button>
   </nav>
   <div class="ticker-tape"><div id="tape"></div></div>
@@ -636,12 +637,17 @@ V.DES = async () => {
     <div style="margin-top:10px">${panel("News", newsList(t.news, 25, false))}</div>`;
 };
 /* Steckbrief: ausgewählte Bereiche in eine helle Druckseite kopieren und drucken (Browser: "Als PDF speichern") */
-function printSheet(title, nodes){
+const PRINT_KUNDE = stand => `Diese Unterlage dient ausschließlich der Information und stellt weder eine Anlageberatung noch eine Anlageempfehlung oder ein Angebot im Sinne des Wertpapieraufsichtsgesetzes 2018 (WAG 2018) dar; sie ersetzt kein persönliches Beratungsgespräch und berücksichtigt nicht Ihre Kenntnisse und Erfahrungen, finanziellen Verhältnisse, Anlageziele und Risikobereitschaft. Die Auswertung beruht auf den von Ihnen genannten Beständen und auf öffentlich verfügbaren Daten: Vermögensaufstellungen der jeweils letzten Halbjahres- bzw. Rechenschaftsberichte (Stichtag je Fonds angegeben), Positionslisten und Berichte der ETF-Anbieter sowie Kennzahlen von Yahoo Finance (Datenstand ${stand}). Fondsbestände können sich seit dem Stichtag verändert haben; Positionen ohne veröffentlichten Bestand sind nicht durchleuchtet. Kennzahlen sind gewichtete Durchschnittswerte und können von Angaben der Anbieter abweichen. Kosten: TER laut Anbieter bzw. effektive Verwaltungsgebühr laut Fondsbericht – maßgeblich sind das Basisinformationsblatt (KID) und die Kosteninformation vor Auftragserteilung. Wertentwicklungen der Vergangenheit sind kein verlässlicher Indikator für künftige Ergebnisse. Veranlagungen in Wertpapiere sind mit Risiken verbunden, die bis zum Totalverlust des eingesetzten Kapitals reichen können.`;
+function printSheet(title, nodes, opt={}){
   let box=document.getElementById("printBox"); if(box) box.remove();
   box=document.createElement("div"); box.id="printBox";
-  box.innerHTML=`<div class="pb-head"><div><b>${esc(title)}</b><br><span>Steckbrief · Research Terminal · Stand ${new Date().toLocaleDateString("de-AT")}</span></div><img src="assets/icon.svg" width="34" height="34" alt=""></div>`;
-  nodes.filter(Boolean).forEach(n=>{ const c=n.cloneNode(true); c.querySelectorAll("button,.btns,input[type=checkbox]").forEach(x=>x.remove()); box.appendChild(c); });
-  box.insertAdjacentHTML("beforeend",`<p class="pb-foot">Quellen: Yahoo Finance, SEC EDGAR, Anbieter-Positionslisten. Kurse verzögert. Interne Arbeitsunterlage – keine Anlageempfehlung im Sinne des WAG 2018. Wertentwicklungen der Vergangenheit sind kein verlässlicher Indikator für künftige Ergebnisse.</p>`);
+  const stand=new Date().toLocaleDateString("de-AT");
+  box.innerHTML=`<div class="pb-head"><div><b>${esc(title)}</b><br><span>${opt.kunde?`${esc(opt.sub||"Depotauswertung")} · Stand ${stand}`:`Steckbrief · Research Terminal · Stand ${stand}`}</span></div><img src="assets/icon.svg" width="34" height="34" alt=""></div>`;
+  nodes.filter(Boolean).forEach(n=>{ const c=n.cloneNode(true);
+    c.querySelectorAll("input:not([type=checkbox]),select").forEach(x=>{ const sp=document.createElement("span"); sp.textContent = x.tagName==="SELECT" ? (x.value||"") : (x.type==="number"&&x.value!==""? fmt(+x.value,2) : x.value); x.replaceWith(sp); });
+    c.querySelectorAll("button,.btns,input[type=checkbox],.noprint,[data-del],[data-sdel]").forEach(x=>x.remove()); box.appendChild(c); });
+  box.insertAdjacentHTML("beforeend", opt.kunde ? `<p class="pb-foot">${PRINT_KUNDE(opt.datenstand||stand)}</p>`
+    : `<p class="pb-foot">Quellen: Yahoo Finance, SEC EDGAR, Anbieter-Positionslisten. Kurse verzögert. Interne Arbeitsunterlage – keine Anlageempfehlung im Sinne des WAG 2018. Wertentwicklungen der Vergangenheit sind kein verlässlicher Indikator für künftige Ergebnisse.</p>`);
   document.body.appendChild(box); document.body.classList.add("printing");
   const done=()=>{ document.body.classList.remove("printing"); box.remove(); window.removeEventListener("afterprint",done); };
   window.addEventListener("afterprint",done); setTimeout(()=>window.print(),150);
@@ -1506,7 +1512,8 @@ V.BER.after = el => {
 
 
 /* ===================== DEPOTANALYSE (alles bleibt im Browser) ===================== */
-let depRows = [], depMsg = "";
+let depRows = [], depMsg = "", depScen = null; /* depScen: {amt:{index:Betrag}, add:[Zeilen]} – nur im Browser */
+const depScenRows = () => depScen ? depRows.map((r,i)=>({...r, amt: depScen.amt[i]!=null ? depScen.amt[i] : r.amt})).concat(depScen.add) : null;
 const DEP_KAT = {
   "Aktien Welt":{aktien:100}, "Aktien Europa":{aktien:100}, "Aktien USA":{aktien:100},
   "Aktien Schwellenländer":{aktien:100}, "Aktien Österreich":{aktien:100}, "Aktien sonstige":{aktien:100},
@@ -1530,10 +1537,11 @@ function parseDepot(text){
     // ISIN suchen (auch mit typischen OCR-Verwechslungen O↔0 in den letzten Stellen)
     let isin=null;
     for(const w of L.split(/[\s;,\t]+/)){ let c=fixIsin(w); if(c.length===12){ if(isinOk(c)){isin=c;break;} const c2=c.slice(0,2)+c.slice(2).replace(/O/g,"0"); if(isinOk(c2)){isin=c2;break;} } }
-    const nums=(L.match(/\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?|\d+(?:[.,]\d+)?/g)||[]).map(parseNum).filter(v=>isFinite(v)&&v>0);
+    const L0=isin?L.replace(new RegExp(isin.slice(0,2)+"[^\\s;,\\t]{10}","i"),"#"):L; // ISIN-Ziffern nicht als Betrag lesen
+    const nums=(L0.match(/\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?/g)||[]).map(parseNum).filter(v=>isFinite(v)&&v>0);
     let amt = nums.length ? Math.max(...nums) : null;
     if(isin && (amt==null || amt<10)){ for(const j of [i+1,i+2]){ const n2=((lines[j]||"").match(/\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})|\d+[.,]\d{2}/g)||[]).map(parseNum).filter(v=>v>=10); if(n2.length){ amt=Math.max(...n2); break; } } }
-    let name = L.replace(isin||"#","").replace(/\d{1,3}(?:[.,]\d{3})*(?:[.,]\d+)?/g," ").replace(/\b(EUR|USD|Stk\.?|St\.|%|€)\b/gi," ").replace(/\s+/g," ").trim();
+    let name = L0.replace("#","").replace(/\d{1,3}(?:[.,]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?/g," ").replace(/[;\t]/g," ").replace(/\b(EUR|USD|Stk\.?|St\.|%|€)\b/gi," ").replace(/\s+/g," ").trim();
     if(isin || (name.length>6 && amt && amt>=50 && fundByName(name))){
       out.push({isin:isin||"", name: name.slice(0,80), amt: amt||0, kat:""});
     }
@@ -1563,8 +1571,14 @@ function depResolve(r){
   if(r.kat && DEP_KAT[r.kat]) return {typ:"Zuordnung", label:r.kat, ...DEP_KAT[r.kat]};
   return {typ:"unbekannt", label:"bitte Kategorie wählen", aktien:null};
 }
-function depAnalyse(){
-  const pos=depRows.filter(r=>r.amt>0).map(r=>({...r, res:depResolve(r)}));
+function depCost(R){ // laufende Kosten p.a. in %: ETF-TER bzw. Verwaltungsgebühr laut Fondsbericht; Einzelaktien 0
+  if(R.typ==="Aktie") return 0;
+  if(R.typ==="ETF"){ const e=((D.etfs&&D.etfs.etfs)||[]).find(x=>x.isin===R.proxy); return e&&e.ter!=null?e.ter:null; }
+  if(R.typ==="Fonds"){ const f=((D.fonds&&D.fonds.fonds)||[]).find(x=>x.name===R.label); const fe=fondsFee(f); return fe?fe.v:null; }
+  return null;
+}
+function depAnalyse(rows=depRows){
+  const pos=rows.filter(r=>r.amt>0).map(r=>({...r, res:depResolve(r)}));
   const tot=pos.reduce((a,r)=>a+r.amt,0); if(!tot) return null;
   const cls={}, add=(k,v)=>cls[k]=(cls[k]||0)+v;
   const expo=new Map(); let eqTot=0, eqLook=0;
@@ -1591,7 +1605,9 @@ function depAnalyse(){
   const ov=items.filter(e=>e.src.size>=3).sort((a,b)=>b.v-a.v).slice(0,5);
   if(ov.length) hints.push(`Mehrfach gehalten (in 3+ Positionen): ${ov.map(e=>esc(e.r.n)).join(", ")}.`);
   if(cls["nicht zugeordnet"]) hints.push(`${fmt(cls["nicht zugeordnet"],0)} € sind noch keiner Kategorie zugeordnet.`);
-  return {pos,tot,cls:Object.entries(cls).sort((a,b)=>b[1]-a[1]),eqTot,eqLook,sek,land,top,hints,pe:harm("pe"),fpe:harm("fpe"),dy,feg:wavg("feg",-50,100),up:wavg("up",-80,150)};
+  let cW=0, cV=0; pos.forEach(p=>{ const c=depCost(p.res); if(c!=null){ cW+=p.amt; cV+=p.amt*c; } });
+  return {pos,tot,cls:Object.entries(cls).sort((a,b)=>b[1]-a[1]),eqTot,eqLook,sek,land,top,hints,pe:harm("pe"),fpe:harm("fpe"),dy,feg:wavg("feg",-50,100),up:wavg("up",-80,150),
+    cost:cW?cV/cW:null, costCover:cW/tot*100, costEur:cW?cV/100*(tot/cW):null, multi:items.filter(e=>e.src.size>=2).length, top1:top[0]||null};
 }
 async function depOcr(files, msg){
   if(!files.length) return;
@@ -1617,18 +1633,46 @@ document.addEventListener("paste", ev => {
   const txt=(ev.clipboardData||window.clipboardData).getData("text");
   if (txt && txt.trim()){ ev.preventDefault(); const rows=parseDepot(txt); depRows.push(...rows); depMsg=`${rows.length} Positionen aus der Zwischenablage übernommen.`; render(); }
 });
+function depCompare(A,B){
+  const cl=(X,k)=>{ const h=X.cls.find(([c])=>c===k); return h?h[1]/X.tot*100:0; };
+  const classes=[...new Set([...A.cls,...B.cls].map(([k])=>k))];
+  const g=(X,list,k)=>{ const h=(X[list]||[]).find(([c])=>c===k); return h?h[1]:0; };
+  const sek=[...new Set([...A.sek.slice(0,6),...B.sek.slice(0,6)].map(([k])=>k))].filter(k=>k!=="ohne Angabe");
+  const land=[...new Set([...A.land.slice(0,6),...B.land.slice(0,6)].map(([k])=>k))].filter(k=>k!=="ohne Angabe");
+  const row=(l,a,b,f,d=true)=>{ const df=(a!=null&&b!=null)?b-a:null; return `<tr><td class="l">${l}</td><td>${f(a)}</td><td>${f(b)}</td><td class="${d&&df?cls(df):"dim"}">${df==null?"–":(Math.abs(df)<0.05?"±0":(df>0?"+":"")+f(df).replace(/ %$/,"")+(f(df).endsWith(" %")?" %-Pkt.":""))}</td></tr>`; };
+  const P1=v=>v==null?"–":fmt(v,1)+" %", E=v=>v==null?"–":fmt(v,0)+" €", N=v=>v==null?"–":fmt(v,1), P2=v=>v==null?"–":fmt(v,2)+" %";
+  const sec=t=>`<tr><td colspan="4" class="l" style="color:var(--amber);font-weight:600;padding-top:10px">${t}</td></tr>`;
+  return `<table><thead><tr><th class="l"></th><th>Vorher</th><th>Nachher</th><th>Veränderung</th></tr></thead><tbody>
+    ${row("Depotwert",A.tot,B.tot,E,false)}
+    ${sec("Anlageklassen (Anteil am Depot)")}${classes.map(k=>row(esc(k),cl(A,k),cl(B,k),P1,false)).join("")}
+    ${row("davon Aktien durchleuchtet",A.eqTot?A.eqLook/A.eqTot*100:null,B.eqTot?B.eqLook/B.eqTot*100:null,P1,false)}
+    ${sec("Aktienteil nach Sektoren")}${sek.map(k=>row(esc(k),g(A,"sek",k),g(B,"sek",k),P1,false)).join("")}
+    ${sec("Aktienteil nach Ländern")}${land.map(k=>row(esc(k),g(A,"land",k),g(B,"land",k),P1,false)).join("")}
+    ${sec("Kennzahlen Aktienteil")}${row("KGV",A.pe,B.pe,N,false)}${row("KGV erwartet",A.fpe,B.fpe,N,false)}${row("Dividendenrendite",A.dy,B.dy,P2)}${row("erw. EPS-Wachstum",A.feg,B.feg,P1)}
+    ${sec("Kosten & Konzentration")}${row("laufende Kosten p.a. (gewichtet)",A.cost,B.cost,P2,false)}${row("≈ Kosten p.a. in €",A.costEur,B.costEur,E,false)}
+    ${row("Kostenangabe vorhanden für",A.costCover,B.costCover,P1,false)}
+    <tr><td class="l">Größter Einzeltitel</td><td>${A.top1?`${esc(A.top1.r.n)} ${fmt(A.top1.pctDepot,1)} %`:"–"}</td><td>${B.top1?`${esc(B.top1.r.n)} ${fmt(B.top1.pctDepot,1)} %`:"–"}</td><td></td></tr>
+    ${row("Titel in mehreren Positionen",A.multi,B.multi,v=>v==null?"–":fmt(v,0),false)}
+  </tbody></table>`;
+}
 V.DEP = async () => {
   await lazy("etfs"); await lazy("holdings"); await lazy("universe"); await lazy("fonds");
   const A=depAnalyse();
   const katOpts=r=>`<select data-kat="${r._i}" style="max-width:170px"><option value="">Kategorie …</option>${Object.keys(DEP_KAT).map(k=>`<option${r.kat===k?" selected":""}>${k}</option>`).join("")}</select>`;
-  const posTbl = depRows.length ? `<div class="scroll"><table><thead><tr><th class="l">ISIN</th><th class="l">Bezeichnung</th><th>Betrag €</th><th class="l">Erkannt als</th><th class="l">Aktienanteil</th><th></th></tr></thead><tbody>
+  const posTbl = depRows.length ? `<div class="scroll"><table><thead><tr><th class="l">ISIN</th><th class="l">Bezeichnung</th><th>${depScen?"Vorher €":"Betrag €"}</th>${depScen?'<th>Nachher €</th>':""}<th class="l">Erkannt als</th><th class="l">Aktienanteil</th><th class="l">Kosten p.a.</th><th></th></tr></thead><tbody>
     ${depRows.map((r,i)=>{ r._i=i; const R=depResolve(r); return `<tr><td class="l"><input data-f="isin" data-i="${i}" value="${esc(r.isin)}" style="width:130px;font-family:var(--mono)"></td>
       <td class="l"><input data-f="name" data-i="${i}" value="${esc(r.name)}" style="width:220px"></td>
-      <td><input data-f="amt" data-i="${i}" type="number" step="0.01" value="${r.amt||""}" style="width:110px;text-align:right"></td>
+      <td><input data-f="amt" data-i="${i}" type="number" step="0.01" value="${r.amt||""}" style="width:110px;text-align:right"></td>${depScen?`<td><input data-sa="${i}" type="number" step="0.01" value="${depScen.amt[i]!=null?depScen.amt[i]:(r.amt||"")}" style="width:110px;text-align:right;border-color:var(--amber)"></td>`:""}
       <td class="l">${R.typ==="unbekannt"?katOpts(r):`<span class="chip" style="color:${R.typ==="Aktie"?"var(--blue)":R.typ==="ETF"?"var(--amber)":"var(--up)"}">${R.typ}</span> <span class="dim" style="font-size:11.5px">${esc(R.label)}</span>${R.typ==="Zuordnung"?" "+katOpts(r):""}`}</td>
-      <td class="l dim">${R.aktien!=null?fmt(R.aktien,0)+" %":"–"}${R.bericht?` <span title="laut Fondsbericht per ${esc(R.bericht)}">· Bestand ${esc(R.bericht)}</span>`:R.misch?' <span class="dim" title="Kein Bericht – Aufteilung Aktien/Anleihen unbekannt">· kein Bestand</span>':R.ohne?' <span class="dim" title="Kein Bericht – Einzeltitel unbekannt">· ohne Durchblick</span>':""}</td><td><a href="#" data-del="${i}" style="color:var(--dn)">✕</a></td></tr>`; }).join("")}
+      <td class="l dim">${R.aktien!=null?fmt(R.aktien,0)+" %":"–"}${R.bericht?` <span title="laut Fondsbericht per ${esc(R.bericht)}">· Bestand ${esc(R.bericht)}</span>`:R.misch?' <span class="dim" title="Kein Bericht – Aufteilung Aktien/Anleihen unbekannt">· kein Bestand</span>':R.ohne?' <span class="dim" title="Kein Bericht – Einzeltitel unbekannt">· ohne Durchblick</span>':""}</td><td class="dim">${(c=>c==null?"–":fmt(c,2)+" %")(depCost(R))}</td><td><a href="#" data-del="${i}" style="color:var(--dn)">✕</a></td></tr>`; }).join("")}
+    ${depScen?depScen.add.map((r,j)=>{ const R=depResolve(r); return `<tr style="background:rgba(255,159,26,.06)"><td class="l"><input data-sf="isin" data-j="${j}" value="${esc(r.isin)}" placeholder="ISIN" style="width:130px;font-family:var(--mono)"></td>
+      <td class="l"><input data-sf="name" data-j="${j}" value="${esc(r.name)}" placeholder="neue Position" style="width:220px"></td><td class="dim">–</td>
+      <td><input data-sf="amt" data-j="${j}" type="number" step="0.01" value="${r.amt||""}" style="width:110px;text-align:right;border-color:var(--amber)"></td>
+      <td class="l">${R.typ==="unbekannt"?`<span class="dim">ISIN eingeben</span>`:`<span class="chip">${R.typ}</span> <span class="dim" style="font-size:11.5px">${esc(R.label)}</span>`}</td><td class="l dim">${R.aktien!=null?fmt(R.aktien,0)+" %":"–"}</td><td class="dim">${(c=>c==null?"–":fmt(c,2)+" %")(depCost(R))}</td><td><a href="#" data-sdel="${j}" style="color:var(--dn)">✕</a></td></tr>`; }).join(""):""}
+    ${depScen?(()=>{ const a=depRows.reduce((x,r)=>x+(r.amt||0),0), b=depScenRows().reduce((x,r)=>x+(r.amt||0),0); return `<tr><td class="l" colspan="2"><b>Summe</b>${Math.abs(b-a)>0.5?` <span class="dim">· ${b>a?"Zufluss":"Entnahme"} ${fmt(Math.abs(b-a),0)} €</span>`:` <span class="dim">· reine Umschichtung</span>`}</td><td><b>${fmt(a,0)}</b></td><td><b>${fmt(b,0)}</b></td><td colspan="4"><button class="info noprint" id="scenAdd" style="padding:3px 10px;font-size:12px">+ neue Position im Szenario</button></td></tr>`; })():""}
     </tbody></table></div>` : `<div class="dim" style="padding:10px 0">Noch keine Positionen. Screenshot (z. B. mit Win+Umschalt+S) aufnehmen und hier mit <b>Strg+V</b> einfügen – oder eine Excel-Liste kopieren und ebenfalls Strg+V drücken.</div>`;
-  const res = A ? `<div class="grid g3" style="margin-top:10px">
+  const B = depScen ? depAnalyse(depScenRows()) : null;
+  const res = A ? (B ? `<div style="margin-top:10px" id="depCmp">${panel("Vorher / Nachher – Umschichtungssimulation", depCompare(A,B))}</div>` : "") + `<div class="grid g3" style="margin-top:10px" id="depRes">
       ${panel("Aufteilung nach Anlageklasse", bars(A.cls.map(([k,v])=>[k,v/A.tot*100]),8)+`<div class="dim" style="font-size:11px;margin-top:8px">Depotwert ${fmt(A.tot,0)} € · Aktienanteil ${fmt(A.eqTot/A.tot*100,0)} % · davon durchleuchtet ${fmt(A.eqTot?A.eqLook/A.eqTot*100:0,0)} %</div>`)}
       ${panel("Aktienteil nach Sektoren", A.sek.length?bars(A.sek,10):"–")}
       ${panel("Aktienteil nach Ländern", A.land.length?bars(A.land,10):"–")}
@@ -1643,14 +1687,17 @@ V.DEP = async () => {
           <div class="tile" style="cursor:default"><div class="t"><span>erw. EPS-Wachstum</span></div><div class="v ${cls(A.feg)}">${pct(A.feg,1)}</div></div></div>`)}
         ${panel("Auffälligkeiten", A.hints.length?`<ul style="margin:0;padding-left:18px;line-height:1.7">${A.hints.map(h=>`<li>${h}</li>`).join("")}</ul>`:`<div class="dim">Keine auffälligen Klumpen.</div>`)}
       </div></div>
-    <p class="dim" style="font-size:11px;margin-top:8px">Durchblick: ETFs über ihre Positionslisten bzw. Index-Näherungen, Fonds über die hinterlegte Aktienquote und einen vergleichbaren ETF (Näherung, kein tagesaktueller Fondsbestand). Kennzahlen laut Yahoo Finance. Internes Analysewerkzeug, keine Anlageempfehlung.</p>` : "";
+    <p class="dim" style="font-size:11px;margin-top:8px">${B?"Die Bereiche unter dem Vergleich zeigen das Depot <b>vorher</b>. ":""}Durchblick: ETFs über Positionslisten bzw. Berichte der Anbieter, Fonds ausschließlich über die Vermögensaufstellung des letzten Halbjahres-/Rechenschaftsberichts (Stichtag je Fonds); Fonds ohne veröffentlichten Bestand werden nicht durchleuchtet. Kosten: TER bzw. effektive Verwaltungsgebühr laut Fondsbericht. Kennzahlen laut Yahoo Finance. Keine Anlageempfehlung.</p>` : "";
   return panel("Depotanalyse", `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
       <span class="chip" style="color:var(--amber);border-color:var(--amber);padding:5px 12px;font-size:12.5px">📋 Screenshot kopieren und hier <b>Strg+V</b> drücken</span>
       <label class="info" style="cursor:pointer;padding:6px 12px;font-size:12.5px">📷 Bilddatei wählen<input type="file" id="depImg" accept="image/*" multiple hidden></label>
       <button class="info" id="depPasteBtn" style="padding:6px 12px;font-size:12.5px">Text / Excel einfügen</button>
       <button class="info" id="depAdd" style="padding:6px 12px;font-size:12.5px">+ Zeile</button>
       <button class="info" id="depClear" style="padding:6px 12px;font-size:12.5px;color:var(--dn)">Alles löschen</button>
+      <button class="info" id="depScen" style="padding:6px 12px;font-size:12.5px;${depScen?"color:var(--amber);border-color:var(--amber)":""}">${depScen?"Simulation beenden":"⇄ Umschichtung simulieren"}</button>
       <button class="info" id="depPrint" style="padding:6px 12px;font-size:12.5px">Drucken / PDF</button>
+      <button class="info" id="depKunde" style="padding:6px 12px;font-size:12.5px" title="Helle Kundenversion mit Hinweisen nach WAG 2018">📄 Kunden-PDF</button>
+      <input id="depKname" placeholder="Name für den Ausdruck (optional)" style="width:200px;font-size:12px" title="Wird nur für den Ausdruck verwendet und nirgends gespeichert">
       <span class="dim" id="depMsg" style="font-size:12px">${esc(depMsg)}</span></div>
     <div id="depPaste" style="display:none;margin-bottom:8px"><textarea id="depTxt" rows="6" style="width:100%;font-family:var(--mono);font-size:12px" placeholder="Je Zeile ISIN und Betrag, z. B. aus Excel kopiert:&#10;IE00B4L5Y983;25000&#10;AT0000859517 Raiffeisen-Nachhaltigkeit-Mix 18.450,00"></textarea><button class="info" id="depParse" style="margin-top:6px;padding:5px 12px">Übernehmen</button></div>
     <p class="dim" style="font-size:11px;margin:0 0 8px">🔒 Alles bleibt in diesem Browserfenster: Die Texterkennung läuft lokal, nichts wird hochgeladen oder gespeichert. Nach dem Neuladen ist das Depot weg. Bitte erkannte Positionen kurz prüfen.</p>
@@ -1662,12 +1709,66 @@ V.DEP.after = el => {
   el.querySelector("#depPasteBtn").onclick=()=>{ const b=el.querySelector("#depPaste"); b.style.display=b.style.display==="none"?"block":"none"; };
   el.querySelector("#depParse").onclick=()=>{ const rows=parseDepot(el.querySelector("#depTxt").value); depRows.push(...rows); depMsg=`${rows.length} Positionen übernommen.`; render(); };
   el.querySelector("#depAdd").onclick=()=>{ depRows.push({isin:"",name:"",amt:0,kat:""}); render(); };
-  el.querySelector("#depClear").onclick=()=>{ depRows=[]; depMsg=""; render(); };
+  el.querySelector("#depClear").onclick=()=>{ depRows=[]; depMsg=""; depScen=null; render(); };
   el.querySelector("#depPrint").onclick=()=>window.print();
-  el.querySelectorAll("[data-del]").forEach(a=>a.onclick=e=>{ e.preventDefault(); depRows.splice(+a.dataset.del,1); render(); });
+  el.querySelector("#depScen").onclick=()=>{ depScen = depScen ? null : {amt:{}, add:[]}; render(); };
+  const sa=el.querySelector("#scenAdd"); if(sa) sa.onclick=()=>{ depScen.add.push({isin:"",name:"",amt:0,kat:""}); render(); };
+  el.querySelectorAll("input[data-sa]").forEach(inp=>inp.onchange=()=>{ depScen.amt[+inp.dataset.sa]=+inp.value||0; render(); });
+  el.querySelectorAll("input[data-sf]").forEach(inp=>inp.onchange=()=>{ const r=depScen.add[+inp.dataset.j], f=inp.dataset.sf; r[f]= f==="amt" ? (+inp.value||0) : f==="isin" ? inp.value.trim().toUpperCase() : inp.value; render(); });
+  el.querySelectorAll("[data-sdel]").forEach(a=>a.onclick=e=>{ e.preventDefault(); depScen.add.splice(+a.dataset.sdel,1); render(); });
+  el.querySelector("#depKunde").onclick=()=>{ const nm=el.querySelector("#depKname").value.trim();
+    const posP=el.querySelector(".panel"); const tbl=posP&&posP.querySelector(".scroll");
+    const wrap=document.createElement("div"); wrap.className="panel"; wrap.innerHTML=`<div class="ph"><h2>${depScen?"Positionen vorher / nachher":"Positionen"}</h2></div>`; if(tbl){ const b=document.createElement("div"); b.className="pb"; b.appendChild(tbl.cloneNode(true)); wrap.appendChild(b); }
+    const st=[D.etfs&&D.etfs.updated, D.fonds&&D.fonds.updated].filter(Boolean).map(x=>new Date(x)).sort((a,b)=>b-a)[0];
+    printSheet(nm?`Depotauswertung – ${nm}`:"Depotauswertung", [wrap, el.querySelector("#depCmp"), ...[...el.querySelectorAll("#depRes .panel, #depRes ~ .grid .panel")]],
+      {kunde:true, sub:depScen?"Bestandsauswertung mit Umschichtungsvariante":"Bestandsauswertung", datenstand:st?st.toLocaleDateString("de-AT"):undefined}); };
+  el.querySelectorAll("[data-del]").forEach(a=>a.onclick=e=>{ e.preventDefault(); const k=+a.dataset.del; depRows.splice(k,1);
+    if(depScen){ const m={}; Object.entries(depScen.amt).forEach(([i,v])=>{ i=+i; if(i<k) m[i]=v; else if(i>k) m[i-1]=v; }); depScen.amt=m; } render(); });
   el.querySelectorAll("input[data-f]").forEach(inp=>inp.onchange=()=>{ const r=depRows[+inp.dataset.i]; const f=inp.dataset.f; r[f]= f==="amt" ? (+inp.value||0) : f==="isin" ? inp.value.trim().toUpperCase() : inp.value; render(); });
   el.querySelectorAll("select[data-kat]").forEach(s=>s.onchange=()=>{ depRows[+s.dataset.kat].kat=s.value; render(); });
 };
+/* --- Datenstatus: Stand je Datenquelle, Positions-Stichtage, Fonds-Kurse/-Kosten, Warnungen --- */
+let statTab = "quellen";
+V.STATUS = async () => {
+  const st = await lazy("status");
+  if (!st) return panel("Datenstatus", noData("Statusdaten (erscheinen nach dem nächsten Lauf)"));
+  const now = Date.now(), ageH = t => t ? (now - new Date(t).getTime())/36e5 : null;
+  const ageTxt = h => h==null ? "–" : h<1 ? `${Math.round(h*60)} Min.` : h<48 ? `${fmt(h,1)} Std.` : `${fmt(h/24,0)} Tage`;
+  const dmy = x => { const m=/^(\d\d)\.(\d\d)\.(\d{4})$/.exec(x||""); return m ? new Date(+m[3], +m[2]-1, +m[1]) : null; };
+  const mon = x => { const d=dmy(x); return d ? (now-d.getTime())/(30.44*864e5) : null; };
+  const amp = (v, warn, bad) => v==null ? "neutral" : v>bad ? "negative" : v>warn ? "neutral" : "positive";
+  const tag = (txt, a) => `<span class="sent ${a}">${txt}</span>`;
+  const FN = {market:"Märkte & Watchlist",universe:"Aktienuniversum",news:"News & Stimmung",calendar:"Kalender",macro:"Makrodaten",bonds:"Bundesanleihen",etfs:"ETFs (Kurse, TER)",fonds:"Fonds (NAV, Gebühren)",holdings:"Positionen ETFs/Fonds",history:"Kursverläufe",long:"Langfrist-Historie",marktupdate:"Marktupdate"};
+  const LIM = {market:[1.5,26],news:[1.5,26],universe:[26,60],etfs:[1.5,26],fonds:[1.5,26],history:[26,60],holdings:[26,60],calendar:[26,60],macro:[26,72],bonds:[26,72],long:[200,400],marktupdate:[200,400]};
+  const tabs = `<div class="btns" id="stT" style="margin-bottom:8px">${[["quellen","Quellen & Läufe"],["etf","ETF-Positionen"],["fonds","Fonds"]].map(([k,l])=>`<button data-t="${k}" class="${k===statTab?"on":""}" style="padding:4px 12px;font-size:12px">${l}</button>`).join("")}</div>`;
+  const head = `<div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:10px">
+    <div class="tile" style="cursor:default"><div class="t"><span>Letzter Lauf</span></div><div class="v" style="font-size:16px">${ageTxt(ageH(st.updated))}</div><div class="dim" style="font-size:11px">${st.mode==="nightly"?"Nachtlauf":"Schnelllauf"} · ${fmt(st.min,1)} Min.</div></div>
+    <div class="tile" style="cursor:default"><div class="t"><span>Letzter Nachtlauf</span></div><div class="v" style="font-size:16px">${st.nightly&&st.nightly.t?ageTxt(ageH(st.nightly.t)):"–"}</div><div class="dim" style="font-size:11px">${st.nightly&&st.nightly.min?fmt(st.nightly.min,0)+" Min.":""}</div></div>
+    <div class="tile" style="cursor:default"><div class="t"><span>Aktienuniversum</span></div><div class="v" style="font-size:16px">${fmt(st.universe,0)}</div><div class="dim" style="font-size:11px">${fmt(st.details,0)} Detailseiten · ${fmt(st.extra,0)} Zusatztitel</div></div>
+    <div class="tile" style="cursor:default"><div class="t"><span>Warnungen (letzter Lauf)</span></div><div class="v" style="font-size:16px;color:${(st.warn||[]).length?"var(--amber)":"var(--up)"}">${(st.warn||[]).length}</div></div></div>`;
+  let body = "";
+  if (statTab==="quellen") {
+    body = `<div class="grid g32"><div>${panel("Datenquellen", `<table><thead><tr><th class="l">Bereich</th><th class="l">Stand</th><th>Alter</th><th></th></tr></thead><tbody>${Object.entries(st.files||{}).map(([k,t])=>{ const h=ageH(t), l=LIM[k]||[26,72];
+        return `<tr><td class="l">${esc(FN[k]||k)}</td><td class="l dim">${t?new Date(t).toLocaleString("de-AT"):"–"}</td><td>${ageTxt(h)}</td><td>${tag(h==null?"?":h>l[1]?"ALT":h>l[0]?"OK*":"AKTUELL", amp(h,l[0],l[1]))}</td></tr>`; }).join("")}</tbody></table>
+        <p class="dim" style="font-size:11px;margin-top:6px">Schnelllauf werktags alle 30 Minuten (6–22 Uhr UTC), Wochenende 2×, Nachtlauf täglich 01:15 UTC. OK* = noch im Rahmen (z. B. außerhalb der Handelszeiten).</p>`)}</div>
+      <div>${panel("Letzte Läufe", `<table><thead><tr><th class="l">Zeit</th><th class="l">Art</th><th>Dauer</th><th>Warn.</th></tr></thead><tbody>${(st.runs||[]).slice(-12).reverse().map(r=>`<tr><td class="l dim">${new Date(r.t).toLocaleString("de-AT")}</td><td class="l">${r.mode==="nightly"?"Nacht":"schnell"}</td><td>${fmt(r.min,1)} Min.</td><td class="${r.warn?"dn":""}">${r.warn}</td></tr>`).join("")}</tbody></table>`)}
+      ${panel("Warnungen", (st.warn||[]).length ? `<ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.6">${st.warn.map(w=>`<li><b>${esc(w.bereich)}</b>: ${esc(w.fehler)}</li>`).join("")}</ul>` : `<div class="dim">Keine Warnungen im letzten Lauf.</div>`)}</div></div>`;
+  } else if (statTab==="etf") {
+    const E = st.etfs||[], ART = {bericht:"Bericht (vollständig)", "factsheet+bericht":"Factsheet + Bericht", factsheet:"Factsheet (Top 10)", liste:"Positionsliste Anbieter", index:"Indexliste"};
+    body = panel(`ETF-Positionen <span class="dim">· ${E.length} ETFs</span>`, `<div class="scroll"><table><thead><tr><th class="l">ETF</th><th class="l">Grundlage</th><th class="l">Stichtag</th><th>Alter</th><th>Positionen</th><th>zugeordnet</th><th>Kurs</th><th>TER</th><th class="l">Meldefonds</th></tr></thead><tbody>${E.map(e=>{ const m=mon(e.stichtag);
+      return `<tr><td class="l nm" style="max-width:300px">${esc(e.n)}<br><span class="dim" style="font-size:11px">${esc(e.t||"")} · ${esc(e.isin)}</span></td><td class="l dim">${esc(ART[e.art]||e.art||"keine")}${e.quelle&&!ART[e.art]?"":""}</td><td class="l dim">${esc(e.stichtag||(e.art==="liste"||e.art==="index"?"laufend":"–"))}</td>
+        <td>${m!=null?tag(fmt(m,0)+" M.", amp(m,8,13)):"–"}</td><td>${e.pos?fmt(e.pos,0):"–"}</td><td>${e.hit?fmt(e.hit,0):"–"}</td><td>${e.px?"✓":'<span class="dn">✗</span>'}</td><td>${e.ter!=null?fmt(e.ter,2):'<span class="dim">–</span>'}</td>
+        <td class="l">${e.melde===true?tag("JA","positive"):e.melde===false?tag("NEIN","negative"):tag("OFFEN","neutral")}</td></tr>`; }).join("")}</tbody></table></div>
+      <p class="dim" style="font-size:11px;margin-top:6px">Alter = Monate seit Stichtag der Positionen (grün bis 8, gelb bis 13 Monate). Berichte werden wöchentlich auf neue Ausgaben geprüft.</p>`);
+  } else {
+    const F = st.fonds||[];
+    body = panel(`Fonds <span class="dim">· ${F.length} Fonds · ${F.filter(f=>f.stichtag).length} mit Bestand · ${F.filter(f=>f.nav).length} mit Kurs · ${F.filter(f=>f.geb).length} mit Gebühr</span>`, `<div class="scroll"><table><thead><tr><th class="l">Fonds</th><th class="l">Gesellschaft</th><th class="l">Bestand laut</th><th class="l">Stichtag</th><th>Alter</th><th class="l">Kurs (NAV)</th><th>Gebühr</th></tr></thead><tbody>${F.map(f=>{ const m=mon(f.stichtag);
+      return `<tr><td class="l nm" style="max-width:320px">${esc(f.n)}${f.isins?"":' <span class="dim">(ISIN fehlt)</span>'}</td><td class="l dim">${esc(f.kag||"")}</td><td class="l dim">${esc(f.quelle||"–")}</td><td class="l dim">${esc(f.stichtag||"–")}</td><td>${m!=null?tag(fmt(m,0)+" M.", amp(m,8,13)):"–"}</td>
+        <td class="l dim">${f.nav?`${esc(f.nav)} · ${esc(f.pxd||"")}`:"–"}</td><td>${f.geb?"✓":'<span class="dim">–</span>'}</td></tr>`; }).join("")}</tbody></table></div>`);
+  }
+  return panel("Datenstatus", tabs + head) + body;
+};
+V.STATUS.after = el => el.querySelectorAll("#stT button").forEach(b=>b.onclick=()=>{ statTab=b.dataset.t; render(); });
 V.HELP = () => panel("Befehle", `<table class="help"><tbody><tr><td><b>ISIN</b></td><td>z. B. AT0000937503 – öffnet die Aktie, den ETF oder den Fonds (alle Tranchen) mit dieser ISIN</td></tr>
   <tr><td>AAPL · VOE.VI · Apple</td><td>Ticker oder Name eingeben + GO → Detailseite. Funktioniert für alle Titel im Universum (S&amp;P 500, europäische Leitindizes, MSCI World, MSCI EM, ATX).</td></tr>
   <tr><td>DAX · Gold · ^GSPC</td><td>Index oder Markt eingeben → großer Chart (GP)</td></tr>
@@ -1804,7 +1905,7 @@ document.addEventListener("click", ev => { const c=ev.target.closest&&ev.target.
 document.addEventListener("click", ev => { const a=ev.target.closest&&ev.target.closest("[data-kzv]"); if(!a) return; ev.preventDefault(); kzvAdd(a.dataset.kzv); go("KZV"); });
 
 /* ============================================================ Befehlszeile */
-const ALIAS={HOME:"HOME",WEI:"WEI",W:"HOME",WL:"HOME",MOV:"HOME",MOVER:"HOME",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",CMP:"CMP",COMP:"CMP",BRA:"BRA",BRANCHEN:"BRA",IND:"BRA",ETF:"ETF",ETFS:"ETF",KZV:"KZV",KENNZAHLEN:"KZV",KENNZAHLENVERGLEICH:"KZV",FONDS:"ETF",FUND:"ETF",VERGLEICH:"CMP",GOVT:"GOVT",BOND:"GOVT",DEP:"DEP",DEPOT:"DEP",BER:"BER",BERATUNG:"BER",ZINS:"BER",DURATION:"BER",NET:"NET",NETTO:"NET",RENDITE:"NET",FESTGELD:"NET",ANLEIHEN:"GOVT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP"};
+const ALIAS={HOME:"HOME",WEI:"WEI",W:"HOME",WL:"HOME",MOV:"HOME",MOVER:"HOME",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",CMP:"CMP",COMP:"CMP",BRA:"BRA",BRANCHEN:"BRA",IND:"BRA",ETF:"ETF",ETFS:"ETF",KZV:"KZV",KENNZAHLEN:"KZV",KENNZAHLENVERGLEICH:"KZV",FONDS:"ETF",FUND:"ETF",VERGLEICH:"CMP",GOVT:"GOVT",BOND:"GOVT",DEP:"DEP",DEPOT:"DEP",BER:"BER",BERATUNG:"BER",ZINS:"BER",DURATION:"BER",NET:"NET",NETTO:"NET",RENDITE:"NET",FESTGELD:"NET",ANLEIHEN:"GOVT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP",STATUS:"STATUS",STAT:"STATUS",DATEN:"STATUS",DATENSTATUS:"STATUS"};
 const ISIN_RE=/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
 function isinOf(sym){ const r=((D.universe&&D.universe.rows)||[]).find(x=>x.s===sym); if(r&&r.i) return r.i; const m=(D.holdings&&D.holdings.isin)||{}; for(const k in m){ if(m[k]===sym && !k.startsWith("N:")) return k; } return null; }
 let isinMiss=null;

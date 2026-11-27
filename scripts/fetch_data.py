@@ -61,11 +61,15 @@ def clean(x):
     return x
 
 
+WARNINGS: list[dict] = []
+
+
 def safe(fn, default=None, label=""):
     try:
         return fn()
     except Exception as e:  # noqa: BLE001
         log(f"WARNUNG {label}: {str(e)[:200]}")
+        WARNINGS.append({"bereich": label, "fehler": str(e)[:200]})
         return default
 
 
@@ -1179,7 +1183,7 @@ def perf_fields(c: pd.Series | None, w: pd.Series | None) -> dict:
 def fund_symbols(fonds: list[dict]) -> dict[str, dict]:
     """Yahoo-Symbol (NAV-Reihe „0P…") je Fonds über die Tranchen-ISINs; Cache, Fehltreffer nach 30 Tagen neu suchen."""
     cache = load(DATA / "fund_yahoo.json", {}) or {}
-    left = 60 if MODE == "nightly" else 15
+    left = 200 if MODE == "nightly" else 20
     for f in fonds:
         isins = [i for i in (f.get("isins") or []) if isin_ok(i)]
         if not isins:
@@ -2237,7 +2241,7 @@ def parse_irl_report(pages: list[str], fonds: str) -> dict:
 def ish_report(src: dict, cache: dict) -> dict | None:
     key = src.get("slug") or (f"{src.get('plc') or 'invag'}:" + src.get("fonds", ""))
     old = cache.get(key) or {}
-    if old.get("checked") and (NOW - datetime.fromisoformat(old["checked"])).days < 6 and old.get("items"):
+    if old.get("rv") == 2 and old.get("checked") and (NOW - datetime.fromisoformat(old["checked"])).days < 6 and old.get("items"):
         return old
     best = old if old.get("items") else None
     seen = set(old.get("seen") or [])
@@ -2261,6 +2265,7 @@ def ish_report(src: dict, cache: dict) -> dict | None:
             break
     if best:
         best["checked"] = NOW.isoformat()
+        best["rv"] = 2  # datierte Umbrella-Berichte berücksichtigt
         best["seen"] = sorted(seen)
         cache[key] = best
     return best
@@ -2750,7 +2755,37 @@ def main():
     safe(lambda: write_briefing(market, movers, calendar, rows), None, "Briefing-Datei")
     save(DATA / "meta.json", {"updated": NOW.isoformat(), "mode": MODE, "tickers": meta_map,
                               "universe": len(rows), "details": len(meta_map), "marktupdate": len(editions)})
+    safe(lambda: build_status(len(rows), len(meta_map)), None, "Datenstatus")
     log(f"Fertig nach {elapsed_min():.1f} Min. · Universum {len(rows)} · Detailseiten {len(meta_map)}")
+
+
+def build_status(uni_n: int, details_n: int):
+    """Datenstatus für die Ansicht STATUS: Stand je Datei, Abdeckung der Positionen, Fonds-Kurse/-Kosten, Warnungen dieses Laufs."""
+    files = {}
+    for k in ("market", "universe", "news", "calendar", "macro", "bonds", "etfs", "fonds", "holdings", "history", "long", "marktupdate"):
+        d = load(DATA / f"{k}.json")
+        if isinstance(d, dict):
+            files[k] = d.get("updated") or d.get("stand")
+    h = load(DATA / "holdings.json") or {}
+    meta = h.get("meta") or {}
+    etfs = (load(DATA / "etfs.json") or {}).get("etfs", [])
+    fonds = (load(DATA / "fonds.json") or {}).get("fonds", [])
+    old = load(DATA / "status.json") or {}
+    runs = [r for r in (old.get("runs") or []) if r.get("mode")][-29:]
+    runs.append({"t": NOW.isoformat(), "mode": MODE, "min": rnd(elapsed_min(), 1), "warn": len(WARNINGS)})
+    last_n = old.get("nightly") or {}
+    if MODE == "nightly":
+        last_n = {"t": NOW.isoformat(), "min": rnd(elapsed_min(), 1), "warn": WARNINGS[:40]}
+    et = [{"isin": e["isin"], "t": e.get("ticker"), "n": e.get("name"), "px": bool(e.get("px")), "ter": e.get("ter"),
+           "melde": e.get("meldefonds"), "art": (meta.get(e["isin"]) or {}).get("art"), "quelle": (meta.get(e["isin"]) or {}).get("quelle"),
+           "stichtag": (meta.get(e["isin"]) or {}).get("stichtag") or (meta.get(e["isin"]) or {}).get("rest_stichtag"),
+           "pos": (meta.get(e["isin"]) or {}).get("n"), "hit": (meta.get(e["isin"]) or {}).get("hit")} for e in etfs]
+    fo = [{"n": f["name"], "kag": f.get("kag"), "nav": f.get("nav_sym"), "pxd": f.get("pxd"), "geb": bool(f.get("gebuehr")),
+           "stichtag": (meta.get("F:" + f["name"]) or {}).get("stichtag"), "quelle": (meta.get("F:" + f["name"]) or {}).get("quelle"),
+           "isins": len(f.get("isins") or [])} for f in fonds]
+    save(DATA / "status.json", {"updated": NOW.isoformat(), "mode": MODE, "min": rnd(elapsed_min(), 1), "files": files,
+                                "universe": uni_n, "details": details_n, "extra": len(h.get("extra") or []), "warn": WARNINGS[:40],
+                                "nightly": last_n, "runs": runs, "etfs": et, "fonds": fo}, quiet=True)
 
 
 if __name__ == "__main__":
