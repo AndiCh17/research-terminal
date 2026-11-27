@@ -1205,6 +1205,63 @@ def em_korea_taiwan(min_weight=0.02) -> list[dict]:
     return out
 
 
+EUROPE = {"Germany", "France", "United Kingdom", "Switzerland", "Netherlands", "Spain", "Italy", "Sweden", "Denmark", "Finland",
+          "Norway", "Belgium", "Ireland", "Austria", "Portugal", "Luxembourg", "Poland"}
+RENEW_RE = re.compile(r"\b(vestas|[oø]rsted|nordex|siemens energy|edp renov|verbund|enphase|first solar|solaredge|sma solar|nextera|"
+                      r"acciona energ|neoen|scatec|brookfield renew|plug power|array tech|nextracker|iberdrola|encavis|grenergy|"
+                      r"solaria|voltalia|china longyuan|xinyi solar|sungrow|longi|adani green|suzlon|ormat|clearway|bloom energy)", re.I)
+
+
+def filter_holdings(f: dict, uni_rows: list[dict], fund: dict) -> list[tuple[str, float]]:
+    """Index-Näherung aus dem Universum: Auswahl und Gewichtung nach den Grundregeln des Index."""
+    rows = []
+    for r in uni_rows:
+        d = {**r, **(fund.get(r["s"]) or {})}
+        cap = d.get("mcapEUR")
+        if not cap or cap < f.get("min_mcap", 0):
+            continue
+        if f.get("region") == "Europa" and d.get("c") not in EUROPE:
+            continue
+        if f.get("sector") and d.get("sec") != f["sector"]:
+            continue
+        if f.get("exclude_sec") and d.get("sec") in f["exclude_sec"]:
+            continue
+        if f.get("industry_re") and not re.search(f["industry_re"], str(d.get("ind") or ""), re.I):
+            continue
+        if f.get("theme") == "renew" and not (re.search(r"renewable|solar|wind", str(d.get("ind") or ""), re.I)
+                                              or RENEW_RE.search(str(d.get("n") or ""))):
+            continue
+        if f.get("sort") == "dy" or f.get("weight") == "dy" or f.get("dy_above_median"):
+            if not d.get("dy"):
+                continue
+        rows.append(d)
+    if f.get("dy_above_median") and rows:
+        med = sorted(r["dy"] for r in rows)[len(rows) // 2]
+        rows = [r for r in rows if r["dy"] > med]
+    key = "dy" if f.get("sort") == "dy" else "mcapEUR"
+    rows.sort(key=lambda r: -(r.get(key) or 0))
+    if f.get("top"):
+        rows = rows[: f["top"]]
+    wkey = "dy" if f.get("weight") == "dy" else "mcapEUR"
+    tot = sum(r.get(wkey) or 0 for r in rows)
+    if not tot:
+        return []
+    w = {r["s"]: (r.get(wkey) or 0) / tot * 100 for r in rows}
+    cap = f.get("max_w")
+    for _ in range(20 if cap else 0):  # Obergrenze je Titel, Überschuss anteilig verteilen
+        over = {k: v for k, v in w.items() if v > cap}
+        if not over:
+            break
+        excess = sum(v - cap for v in over.values())
+        free = {k: v for k, v in w.items() if v < cap}
+        fs = sum(free.values()) or 1
+        for k in over:
+            w[k] = cap
+        for k, v in free.items():
+            w[k] = v + excess * v / fs
+    return sorted(w.items(), key=lambda x: -x[1])
+
+
 def build_holdings(uni_rows: list[dict], fund: dict):
     cfg = json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8"))
     keys: dict[str, str] = {}
@@ -1229,6 +1286,18 @@ def build_holdings(uni_rows: list[dict], fund: dict):
                     n += 1
             meta[e["isin"]] = {"art": "index", "quelle": src["index"] + (f" · {src['sektor']}" if src.get("sektor") else ""),
                                "naeherung": bool(src.get("naeherung")), "n": n}
+            continue
+        if src.get("filter"):
+            fh = safe(lambda: filter_holdings(src["filter"], uni_rows, fund), [], f"Index-Näherung {e.get('ticker')}")
+            if not fh:
+                continue
+            for sym, w in fh:
+                by_sym.setdefault(sym, []).append([e["isin"], rnd(w, 3)])
+            names = {r["s"]: (fund.get(r["s"]) or {}).get("n") or r.get("n") or r["s"] for r in uni_rows}
+            tops[e["isin"]] = [[names.get(sym, sym), rnd(w, 2)] for sym, w in fh[:10]]
+            meta[e["isin"]] = {"art": "liste", "quelle": src.get("quelle") or "Index-Näherung aus dem Universum", "naeherung": True,
+                               "n": len(fh), "hit": len(fh), "wsum": 100.0, "wall": 100.0}
+            log(f"  Index-Näherung {e.get('ticker')}: {len(fh)} Titel")
             continue
         if not src.get("anbieter"):
             continue

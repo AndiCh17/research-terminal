@@ -81,7 +81,12 @@
       "meldefonds": true,
       "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
       "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 17.09.2026"
+      "letzteMeldung": "Jahresdatenmeldung vom 17.09.2026",
+      "holdings": {
+        "anbieter": "xtrackers",
+        "isin": "IE00BL25JN58",
+        "quelle": "Positionsliste Xtrackers MSCI World Minimum Volatility (gleicher Index)"
+      }
     },
     {
       "isin": "IE00BP3QZB59",
@@ -91,7 +96,12 @@
       "meldefonds": true,
       "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
       "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026"
+      "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026",
+      "holdings": {
+        "anbieter": "xtrackers",
+        "isin": "IE00BL25JM42",
+        "quelle": "Positionsliste Xtrackers MSCI World Value (gleicher Index MSCI World Enhanced Value)"
+      }
     },
     {
       "isin": "IE00BP3QZ601",
@@ -101,7 +111,12 @@
       "meldefonds": true,
       "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
       "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026"
+      "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026",
+      "holdings": {
+        "anbieter": "xtrackers",
+        "isin": "IE00BL25JL35",
+        "quelle": "Positionsliste Xtrackers MSCI World Quality (gleicher Index MSCI World Sector Neutral Quality)"
+      }
     },
     {
       "isin": "IE00BP3QZ825",
@@ -111,7 +126,12 @@
       "meldefonds": true,
       "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
       "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026"
+      "letzteMeldung": "Jahresdatenmeldung vom 25.11.2026",
+      "holdings": {
+        "anbieter": "xtrackers",
+        "isin": "IE00BL25JP72",
+        "quelle": "Positionsliste Xtrackers MSCI World Momentum (gleicher Index)"
+      }
     },
     {
       "isin": "IE00B9CQXS71",
@@ -134,7 +154,17 @@
       "meldefonds": true,
       "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
       "ertrag": "ausschüttend",
-      "letzteMeldung": "Ausschüttungsmeldung vom 14.10.2026"
+      "letzteMeldung": "Ausschüttungsmeldung vom 14.10.2026",
+      "holdings": {
+        "filter": {
+          "top": 100,
+          "sort": "dy",
+          "weight": "dy",
+          "min_mcap": 3000000000.0,
+          "max_w": 4
+        },
+        "quelle": "Index-Näherung: 100 Titel mit der höchsten Dividendenrendite im Universum (ab 3 Mrd. €), nach Dividendenrendite gewichtet – Grundregel des STOXX Global Select Dividend 100"
+      }
     },
     {
       "isin": "IE00B5M1WJ87",
@@ -348,7 +378,16 @@
       "meldefonds": true,
       "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
       "ertrag": "ausschüttend",
-      "letzteMeldung": "Ausschüttungsmeldung vom 14.10.2026"
+      "letzteMeldung": "Ausschüttungsmeldung vom 14.10.2026",
+      "holdings": {
+        "filter": {
+          "region": "Europa",
+          "sector": "Gesundheit",
+          "weight": "mcap",
+          "max_w": 20
+        },
+        "quelle": "Index-Näherung: europäische Gesundheitswerte im Universum, nach Marktwert gewichtet (wie STOXX Europe 600 Health Care)"
+      }
     },
     {
       "isin": "DE000A0F5UJ7",
@@ -358,7 +397,16 @@
       "meldefonds": true,
       "vertreter": "Deloitte Tax Wirtschaftsprüfungs GmbH",
       "ertrag": "ausschüttend",
-      "letzteMeldung": "Ausschüttungsmeldung vom 20.10.2026"
+      "letzteMeldung": "Ausschüttungsmeldung vom 20.10.2026",
+      "holdings": {
+        "filter": {
+          "region": "Europa",
+          "industry_re": "bank",
+          "weight": "mcap",
+          "max_w": 20
+        },
+        "quelle": "Index-Näherung: europäische Banken im Universum, nach Marktwert gewichtet (wie STOXX Europe 600 Banks)"
+      }
     },
     {
       "isin": "IE00BYZK4552",
@@ -378,7 +426,16 @@
       "meldefonds": true,
       "vertreter": "KPMG Alpen-Treuhand GmbH Wirtschaftsprüfungs- und Steuerberatungsges.",
       "ertrag": "thesaurierend",
-      "letzteMeldung": "Jahresdatenmeldung vom 20.07.2026"
+      "letzteMeldung": "Jahresdatenmeldung vom 20.07.2026",
+      "holdings": {
+        "filter": {
+          "industry_re": "semiconductor",
+          "top": 25,
+          "weight": "mcap",
+          "max_w": 10
+        },
+        "quelle": "Index-Näherung: 25 größte Halbleiterwerte im Universum, nach Marktwert mit Obergrenze gewichtet (Grundregel des MVIS US Listed Semiconductor 25)"
+      }
     },
     {
       "isin": "IE00BYPLS672",
@@ -413,7 +470,14 @@
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "ausschüttend",
-      "letzteMeldung": null
+      "letzteMeldung": null,
+      "holdings": {
+        "filter": {
+          "top": 50,
+          "weight": "mcap"
+        },
+        "quelle": "Index-Näherung: 50 größte Unternehmen im Universum, nach Marktwert gewichtet – Grundregel des Dow Jones Global Titans 50"
+      }
     },
     {
       "isin": "IE00BYVJRR92",
@@ -423,7 +487,12 @@
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null
+      "letzteMeldung": null,
+      "holdings": {
+        "anbieter": "xtrackers",
+        "isin": "IE00BFMNPS42",
+        "quelle": "Näherung über Xtrackers MSCI USA ESG (ESG-Leaders statt SRI-Auswahl)"
+      }
     },
     {
       "isin": "IE00B52VJ196",
@@ -433,7 +502,12 @@
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null
+      "letzteMeldung": null,
+      "holdings": {
+        "anbieter": "xtrackers",
+        "isin": "IE00BFMNHK08",
+        "quelle": "Näherung über Xtrackers MSCI Europe ESG (ESG-Leaders statt SRI-Auswahl)"
+      }
     },
     {
       "isin": "IE00BYVJRP78",
@@ -443,7 +517,12 @@
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null
+      "letzteMeldung": null,
+      "holdings": {
+        "anbieter": "xtrackers",
+        "isin": "IE00BG370F43",
+        "quelle": "Näherung über Xtrackers MSCI Emerging Markets ESG (ESG-Leaders statt SRI-Auswahl)"
+      }
     },
     {
       "isin": "IE000CVOSY02",
@@ -474,7 +553,15 @@
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null
+      "letzteMeldung": null,
+      "holdings": {
+        "filter": {
+          "theme": "renew",
+          "weight": "mcap",
+          "max_w": 10
+        },
+        "quelle": "Index-Näherung: Titel aus dem Themenkorb Erneuerbare Energien, nach Marktwert mit Obergrenze gewichtet"
+      }
     },
     {
       "isin": "LU0659579063",
@@ -510,7 +597,18 @@
       "meldefonds": null,
       "vertreter": null,
       "ertrag": "thesaurierend",
-      "letzteMeldung": null
+      "letzteMeldung": null,
+      "holdings": {
+        "filter": {
+          "dy_above_median": true,
+          "weight": "mcap",
+          "exclude_sec": [
+            "Immobilien"
+          ],
+          "min_mcap": 2000000000.0
+        },
+        "quelle": "Index-Näherung: Titel mit überdurchschnittlicher Dividendenrendite (ohne Immobilien), nach Marktwert gewichtet – Grundregel des FTSE All-World High Dividend Yield"
+      }
     },
     {
       "isin": "IE00BYZK4883",
