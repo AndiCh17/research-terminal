@@ -694,6 +694,28 @@
     },
     "quelle": "Bericht iShares"
    }
+  },
+  {
+   "isin": "IE000I8KRLL9",
+   "ticker": "SEC0.DE",
+   "name": "iShares MSCI Global Semiconductors UCITS ETF USD Acc",
+   "kategorie": "Thema",
+   "meldefonds": null,
+   "vertreter": null,
+   "ertrag": "thesaurierend",
+   "letzteMeldung": null,
+   "holdings": {
+    "factsheet": "https://www.ishares.com/gls-download/literature/fact-sheet/semi-ishares-msci-global-semiconductors-ucits-etf-fund-fact-sheet-en-gb.pdf",
+    "bericht": {
+     "plc": "iv",
+     "fonds": "iSHARES MSCI GLOBAL SEMICONDUCTORS UCITS ETF",
+     "rest": true
+    },
+    "quelle": "Factsheet iShares (Top 10) + Jahresbericht"
+   },
+   "try": [
+    "SEC0.DE"
+   ]
   }
  ],
  "_holdings_hinweis": "Positionslisten: Xtrackers und SPDR direkt vom Anbieter (täglich), S&P-500-, DAX- und Euro-Stoxx-50-ETFs über die Indexzusammensetzung. iShares und Vanguard geben ihre Listen nicht automatisiert heraus."
