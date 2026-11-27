@@ -1572,22 +1572,24 @@ def resolve_positions(items: list[dict], keys: dict, first: dict, isin_map: dict
     return out
 
 
-def extra_rows(syms: set[str], have: set[str], limit=300) -> list[dict]:
+def extra_rows(syms: set[str], have: set[str], limit=None) -> list[dict]:
     """Kennzahlen für Fondstitel außerhalb des Universums (Cache, Auffrischung alle 14 Tage)."""
-    from concurrent.futures import ThreadPoolExecutor
+    limit = limit or (400 if MODE == "nightly" else 150)
     cache = load(DATA / "fund_extra.json") or {}
     need = [s for s in sorted(syms - have) if s not in cache or (NOW - datetime.fromisoformat(cache[s]["upd"])).days >= 14][:limit]
-
-    def info(sym):
+    got, fail = {}, 0
+    for sym in need:
+        if elapsed_min() > (95 if MODE == "nightly" else 25):
+            break
         try:
-            return sym, yf.Ticker(sym).info or {}
+            inf = yf.Ticker(sym).info or {}
         except Exception:
-            return sym, {}
-
-    got = {}
-    with ThreadPoolExecutor(4) as ex:
-        for sym, inf in ex.map(info, need):
+            inf = {}
+        if inf.get("marketCap") or inf.get("trailingPE") or inf.get("sector"):
             got[sym] = inf
+        else:
+            fail += 1
+        time.sleep(0.15)
     fx = fx_to_eur({(i.get("currency") or "") for i in got.values()} | {"USD"})
     for sym, g in got.items():
         px = g.get("currentPrice") or g.get("regularMarketPrice")
@@ -1602,7 +1604,7 @@ def extra_rows(syms: set[str], have: set[str], limit=300) -> list[dict]:
             "feg": rnd((g["forwardEps"] / g["trailingEps"] - 1) * 100, 1) if g.get("forwardEps") and g.get("trailingEps") and g["trailingEps"] > 0 else None,
             "up": rnd((g["targetMeanPrice"] / px - 1) * 100, 1) if g.get("targetMeanPrice") and px else None, "x": 1}}
     save(DATA / "fund_extra.json", cache, quiet=True)
-    log(f"  Zusatztitel für Fonds: {len(need)} abgefragt, {len(syms - have)} außerhalb des Universums")
+    log(f"  Zusatztitel für Fonds: {len(syms - have)} außerhalb des Universums, {len(got)} neu geladen, {fail} ohne Daten, {sum(1 for s in syms - have if s in cache)} verfügbar")
     return [cache[s]["row"] for s in sorted(syms - have) if s in cache]
 
 
