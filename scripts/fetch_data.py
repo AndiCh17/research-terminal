@@ -1368,7 +1368,7 @@ def build_holdings(uni_rows: list[dict], fund: dict):
     xrows = safe(lambda: extra_rows(extra, {r["s"] for r in uni_rows}), [], "Zusatztitel") or []
     log(f"  ISIN-Zuordnung Aktien: {len(isin_map)}")
     save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta, "isin": isin_map,
-                                  "extra": xrows, "berichte": sum(1 for k in meta if k.startswith("F:"))})
+                                  "extra": xrows, "v": 2, "berichte": sum(1 for k in meta if k.startswith("F:"))})
 
 
 # ----------------------------------------------------------------- Fondsberichte & Factsheets (echte Bestände)
@@ -1575,7 +1575,7 @@ def resolve_positions(items: list[dict], keys: dict, first: dict, isin_map: dict
 def extra_rows(syms: set[str], have: set[str], limit=None) -> list[dict]:
     """Kennzahlen für Fondstitel außerhalb des Universums (Cache, Auffrischung alle 14 Tage)."""
     limit = limit or (400 if MODE == "nightly" else 150)
-    cache = load(DATA / "fund_extra.json") or {}
+    cache = load(DATA / "fund_extra2.json") or {}
     need = [s for s in sorted(syms - have) if s not in cache or (NOW - datetime.fromisoformat(cache[s]["upd"])).days >= 14][:limit]
     got, fail = {}, 0
     for sym in need:
@@ -1603,7 +1603,7 @@ def extra_rows(syms: set[str], have: set[str], limit=None) -> list[dict]:
             "eg": pct_(g.get("earningsGrowth", g.get("earningsQuarterlyGrowth"))),
             "feg": rnd((g["forwardEps"] / g["trailingEps"] - 1) * 100, 1) if g.get("forwardEps") and g.get("trailingEps") and g["trailingEps"] > 0 else None,
             "up": rnd((g["targetMeanPrice"] / px - 1) * 100, 1) if g.get("targetMeanPrice") and px else None, "x": 1}}
-    save(DATA / "fund_extra.json", cache, quiet=True)
+    save(DATA / "fund_extra2.json", cache, quiet=True)
     log(f"  Zusatztitel für Fonds: {len(syms - have)} außerhalb des Universums, {len(got)} neu geladen, {fail} ohne Daten, {sum(1 for s in syms - have if s in cache)} verfügbar")
     return [cache[s]["row"] for s in sorted(syms - have) if s in cache]
 
@@ -2154,7 +2154,7 @@ def main():
         safe(build_long_history, None, "Langfrist-Historie")
     _h = load(DATA / "holdings.json") or {}
     _need = {e["isin"] for e in json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8")).get("etfs", []) if e.get("holdings")}
-    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or "berichte" not in _h or not _need <= set(_h.get("meta", {})):
+    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 2 or not _need <= set(_h.get("meta", {})):
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
 
     # --- News + Stimmung
