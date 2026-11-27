@@ -1228,7 +1228,11 @@ def build_long_history():
             df = pd.read_csv(io.StringIO(HTTP.get(v["csv"], timeout=60).text))
             ser = pd.Series(df.iloc[:, 1].astype(float).values, index=pd.to_datetime(df.iloc[:, 0].astype(str) + "-01"))
             ser = ser[ser.index >= pd.Timestamp(v.get("from", "1970-01") + "-01")]
-            ext = history_block([v["extend"]], period="max", interval="1mo").get(v["extend"]) if v.get("extend") else None
+            ext = None
+            if v.get("extend"):
+                ext = safe(lambda: yf.Ticker(v["extend"]).history(period="2y", interval="1mo", auto_adjust=False)["Close"].dropna(),
+                           None, f"Verlängerung {v['extend']}")
+                log(f"  Langfrist: Verlängerung {v['extend']}: {0 if ext is None else len(ext)} Monate")
             if ext is not None and len(ext):
                 ext.index = pd.to_datetime(ext.index).tz_localize(None).to_period("M").to_timestamp()
                 ser = pd.concat([ser, ext[ext.index > ser.index[-1]]])
