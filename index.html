@@ -256,6 +256,7 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
     <button data-v="GOVT"><b>F8</b>Anleihen AT</button>
     <button data-v="BER"><b>F9</b>Beratung</button>
     <button data-v="CMP"><b>F10</b>Vergleich</button>
+    <button data-v="KZV"><b>·</b>Kennzahlenvergleich</button>
     <button data-v="DEP"><b>·</b>Depotanalyse</button>
     <button data-v="NET"><b>·</b>Renditevergleich</button>
     <button data-v="TOP"><b>·</b>News</button>
@@ -610,7 +611,7 @@ V.DES = async () => {
       <span class="p">${fmt(t.price)} <small class="dim">${esc(t.currency||"")}</small></span>
       <span class="${cls(t.chgPct)}">${fmt(t.chg)} (${pct(t.chgPct)})</span>
       <span class="chip">${esc(t.exchange||"")}</span><span class="chip">${esc(t.sector||"–")}</span><span class="chip">${esc(t.country||"")}</span>${(()=>{ const ui=isinOf(t.symbol||state.sym); return ui?`<span class="chip" title="ISIN">${esc(ui)}</span>`:""; })()}
-      <span class="dim" style="margin-left:auto;font-size:11px">Stand ${dt(t.updated)}</span><button class="info" id="steckbrief" style="padding:4px 10px">🖨 Steckbrief / PDF</button></div>
+      <span class="dim" style="margin-left:auto;font-size:11px">Stand ${dt(t.updated)}</span><button class="info" id="steckbrief" style="padding:4px 10px">🖨 Steckbrief / PDF</button> <button class="info" data-kzv="A:${esc(t.symbol||state.sym)}" style="padding:4px 10px">⊕ Kennzahlenvergleich</button></div>
     <div class="grid g32">
       ${panel("Kursverlauf", `<div id="pxChart"></div>`, `<div class="btns" id="dr">${["1M","3M","6M","1J","3J","5J"].map(r=>`<button data-r="${r}" class="${r===desRange?"on":""}">${r}</button>`).join("")}</div>`)}
       ${panel("Analysten & Stimmung", `<div class="kv" style="grid-template-columns:1fr">
@@ -1219,7 +1220,7 @@ function etfInsight(x){
       <div><div class="dim" style="font-size:11px;margin-bottom:6px">SEKTOREN</div>${L?bars(L.sek):"–"}</div>
       <div><div class="dim" style="font-size:11px;margin-bottom:6px">LÄNDER</div>${L?bars(L.land):"–"}</div>
     </div>
-    <button class="info" data-etfprint="${esc(x.isin)}" style="margin-top:8px;padding:4px 10px">🖨 Steckbrief / PDF</button>
+    <button class="info" data-etfprint="${esc(x.isin)}" style="margin-top:8px;padding:4px 10px">🖨 Steckbrief / PDF</button> <button class="info" data-kzv="${esc(String(x.isin).startsWith("F:")?x.isin:"E:"+x.isin)}" style="margin-top:8px;padding:4px 10px">⊕ Kennzahlenvergleich</button>
     <p class="dim" style="font-size:11px;margin:8px 0 0">${basis}. KGV als gewichtetes harmonisches Mittel über die Titel mit Gewinn (entspricht Fondskurs ÷ anteiligem Gewinn); Titel mit Verlust sind separat ausgewiesen, Dividendenrendite und Wachstum gewichtet gemittelt. Sektoren und Länder beziehen sich auf den zugeordneten Teil.</p>`;
 }
 V.ETF = async () => {
@@ -1709,8 +1710,93 @@ function fromHash(){
 }
 window.addEventListener("popstate",()=>{fromHash();render();});
 
+/* ============================================================ Kennzahlenvergleich (Aktien · ETFs · Fonds) */
+let kzvSel = (()=>{ try{ return JSON.parse(localStorage.getItem("rt_kzv")||"[]"); }catch(e){ return []; } })();
+const kzvSave = () => { try{ localStorage.setItem("rt_kzv", JSON.stringify(kzvSel)); }catch(e){} };
+function kzvAdd(key){ if(key && !kzvSel.includes(key) && kzvSel.length<6){ kzvSel.push(key); kzvSave(); } }
+function kzvItem(key){
+  const [t,...rest]=key.split(":"), id=rest.join(":");
+  const U=(D.universe&&D.universe.rows)||[], E=(D.etfs&&D.etfs.etfs)||[], F=(D.fonds&&D.fonds.fonds)||[], HM=(D.holdings&&D.holdings.meta)||{};
+  const f1=l=>{ const h=(l||[]).find(([k])=>k!=="ohne Angabe"); return h?`${h[0]} ${fmt(h[1],0)} %`:null; };
+  if(t==="A"){ const r=U.find(x=>x.s===id); if(!r) return {key, name:id, typ:"Aktie", miss:true};
+    return {key, typ:"Aktie", name:r.n, sub:r.s, isin:r.i||isinOf(r.s), kat:r.sec, land:LAND_DE[r.c]||r.c, size:r.mcap, pe:r.pe, fpe:r.fpe, pb:r.pb, dy:r.dy, feg:r.feg, eg:r.eg, up:r.up, roe:r.roe, beta:r.beta,
+      ana:r.nan?`${fmt(r.rmean,1)} (${r.nan})`:null, verlust:r.ni!=null?(r.ni<0?"ja":"nein"):null, aktien:100, m1:r.m1, ytd:r.ytd, y1:r.y1, quelle:"Yahoo Finance",
+      items:[[r,1]]}; }
+  if(t==="E"){ const x=E.find(e=>e.isin===id); if(!x) return {key, name:id, typ:"ETF", miss:true}; const L=etfLook(id), m=HM[id]||{};
+    const tops=(D.holdings&&D.holdings.top&&D.holdings.top[id])||(L?L.top.map(([r,w])=>[r.n,w]):[]);
+    return {key, typ:"ETF", name:x.name, sub:x.ticker, isin:x.isin, kat:x.kategorie, land:L?f1(L.land):null, size:x.aum, ter:x.ter, melde:x.meldefonds===true?"ja":x.meldefonds===false?"nein":"offen",
+      pe:L&&L.pe, fpe:L&&L.fpe, dy:L&&L.dy, feg:L&&L.feg, eg:L&&L.eg, up:L&&L.up, roe:L&&L.roe, verlust:L?`${L.nl} Titel · ${fmt(L.wl,1)} %`:null, aktien:100,
+      npos:m.n||(L&&L.n), cover:L&&L.cover, sek:L?f1(L.sek):null, top3:tops.slice(0,3).map(([n,w])=>`${n} ${fmt(w,1)} %`).join(", "),
+      m1:x.m1, ytd:x.ytd, y1:x.y1, y3:x.y3, y5:x.y5, vola:x.vola, mdd:x.mdd, quelle:m.stichtag?`${m.quelle||"Bericht"} ${m.stichtag}`:(m.quelle||"Positionsliste"), items:L?L.items:[]}; }
+  if(t==="F"){ const f=F.find(z=>z.name===id); const rep=HM["F:"+id]; const L=rep?etfLook("F:"+id):null;
+    const tops=(D.holdings&&D.holdings.top&&D.holdings.top["F:"+id])||[];
+    return {key, typ:"Fonds", name:id, sub:f?f.kag:"", isin:f&&f.isins[0], kat:f&&f.kat, land:L?f1(L.land):null,
+      pe:L&&L.pe, fpe:L&&L.fpe, dy:L&&L.dy, feg:L&&L.feg, eg:L&&L.eg, up:L&&L.up, roe:L&&L.roe, verlust:L?`${L.nl} Titel · ${fmt(L.wl,1)} %`:null,
+      aktien:rep?rep.aktien:null, anleihen:rep?rep.anleihen:null, npos:rep&&rep.n, cover:L&&L.cover, sek:L?f1(L.sek):null,
+      top3:tops.slice(0,3).map(([n,w])=>`${n} ${fmt(w,1)} %`).join(", "), quelle:rep?`${rep.quelle} ${rep.stichtag}`:"kein Bestand verfügbar", items:L?L.items.map(([r,w])=>[r,w*(rep.aktien||100)/100]):[]}; }
+  return {key, name:key, miss:true};
+}
+function kzvOverlap(a,b){ // Anteil, der in beiden steckt (Summe der kleineren Gewichte, bezogen auf den Aktienteil)
+  const ma=new Map(a.items.map(([r,w])=>[r.s,w])), W=x=>x.items.reduce((s,[,w])=>s+w,0)||1, wa=W(a), wb=W(b); let ov=0; const common=[];
+  b.items.forEach(([r,w])=>{ if(ma.has(r.s)){ const m=Math.min(ma.get(r.s)/wa, w/wb); ov+=m; common.push([r.n,m]); } });
+  return {ov:ov*100, common:common.sort((x,y)=>y[1]-x[1]).slice(0,5)};
+}
+V.KZV = async () => {
+  await Promise.all(["universe","etfs","fonds","holdings"].map(k=>lazy(k)));
+  const its = kzvSel.map(kzvItem);
+  const P=v=>pct(v,1), N=(v,d=1)=>fmt(v,d), Pc=v=>v!=null?fmt(v,1)+" %":"–", S=v=>v!=null&&v!==""?esc(String(v)):"–";
+  const rows = [
+    ["Typ", x=>S(x.typ)], ["ISIN", x=>S(x.isin)], ["Kategorie / Sektor", x=>S(x.kat)], ["Größtes Land", x=>S(x.land)],
+    ["Marktkap. / Volumen", x=>big(x.size)], ["TER", x=>x.ter!=null?fmt(x.ter,2)+" %":"–"], ["Meldefonds AT", x=>S(x.melde)],
+    ["__Bewertung"], ["KGV", x=>N(x.pe)], ["KGV erwartet", x=>N(x.fpe)], ["KBV", x=>N(x.pb,2)], ["Dividendenrendite", x=>x.dy!=null?fmt(x.dy,2)+" %":"–"],
+    ["__Wachstum & Qualität"], ["erw. EPS-Wachstum", x=>P(x.feg)], ["Gewinn J/J", x=>P(x.eg)], ["Eigenkapitalrendite", x=>Pc(x.roe)], ["Kursziel-Potenzial", x=>P(x.up)],
+    ["Analysten (1=Kauf … 5=Verkauf)", x=>S(x.ana)], ["Beta", x=>N(x.beta,2)], ["Titel mit Verlust", x=>S(x.verlust)],
+    ["__Zusammensetzung"], ["Aktienquote", x=>x.aktien!=null?fmt(x.aktien,0)+" %":"–"], ["Anleihenquote", x=>x.anleihen?fmt(x.anleihen,0)+" %":"–"], ["Positionen", x=>x.npos?fmt(x.npos,0):"–"],
+    ["Abdeckung Kennzahlen", x=>x.cover!=null?fmt(x.cover,0)+" %":"–"], ["Größter Sektor", x=>S(x.sek)], ["Größte Positionen", x=>`<span style="white-space:normal">${S(x.top3)}</span>`],
+    ["__Wertentwicklung"], ["1 Monat", x=>`<span class="${cls(x.m1)}">${P(x.m1)}</span>`], ["seit Jahresbeginn", x=>`<span class="${cls(x.ytd)}">${P(x.ytd)}</span>`], ["1 Jahr", x=>`<span class="${cls(x.y1)}">${P(x.y1)}</span>`],
+    ["3 Jahre p.a.", x=>`<span class="${cls(x.y3)}">${P(x.y3)}</span>`], ["5 Jahre p.a.", x=>`<span class="${cls(x.y5)}">${P(x.y5)}</span>`], ["Volatilität 1 J.", x=>x.vola!=null?fmt(x.vola,1)+" %":"–"], ["Max. Verlust 1 J.", x=>`<span class="dn">${P(x.mdd)}</span>`],
+    ["__Datengrundlage"], ["Quelle / Stand", x=>`<span style="white-space:normal">${S(x.quelle)}</span>`]
+  ];
+  const head = `<tr><th class="l" style="min-width:170px"></th>${its.map(x=>`<th class="l" style="min-width:150px;white-space:normal;vertical-align:bottom"><span style="color:var(--txt);font-weight:600">${esc(x.name)}</span><br><span class="dim">${esc(x.sub||"")}</span> <a href="#" data-krm="${esc(x.key)}" title="entfernen" style="color:var(--dn)">✕</a></th>`).join("")}</tr>`;
+  const body = rows.map(([l,f])=> l.startsWith("__") ? `<tr><td colspan="${its.length+1}" class="l" style="padding-top:10px;color:var(--amber);font-size:10.5px;font-weight:650;letter-spacing:.6px;text-transform:uppercase">${l.slice(2)}</td></tr>`
+    : `<tr><td class="l dim">${l}</td>${its.map(x=>`<td class="l">${x.miss?"–":f(x)}</td>`).join("")}</tr>`).join("");
+  const port = its.filter(x=>!x.miss && x.items && x.items.length);
+  let ovHtml = "";
+  if (port.length>=2) {
+    const pairs=[]; for(let i=0;i<port.length;i++) for(let j=i+1;j<port.length;j++) pairs.push([port[i],port[j],kzvOverlap(port[i],port[j])]);
+    ovHtml = panel("Überschneidung der Aktienpositionen", `<div class="scroll"><table><thead><tr><th class="l">Paar</th><th>Überschneidung</th><th class="l">Größte gemeinsame Titel</th></tr></thead><tbody>
+      ${pairs.map(([a,b,o])=>`<tr><td class="l nm" style="max-width:340px;white-space:normal">${esc(a.name)} ↔ ${esc(b.name)}</td><td>${fmt(o.ov,0)} %</td><td class="l dim" style="white-space:normal">${o.common.map(([n,w])=>`${esc(n)} ${fmt(w*100,1)} %`).join(", ")||"–"}</td></tr>`).join("")}
+      </tbody></table></div><p class="dim" style="font-size:11px;margin-top:6px">Überschneidung = Summe der jeweils kleineren Gewichte gemeinsamer Titel, bezogen auf den Aktienteil, der Titeln zugeordnet werden konnte. Fonds laut Berichtsstichtag.</p>`);
+  }
+  const add = `<div class="fbar" style="position:relative"><input id="kzvAdd" placeholder="Aktie, ETF oder Fonds hinzufügen – Name, Ticker oder ISIN (max. 6)" style="flex:1;min-width:220px"><div class="sugg" id="kzvSug" style="top:32px"></div>
+    ${its.length?`<button class="info" id="kzvPdf" style="padding:5px 12px">🖨 PDF / Drucken</button><button class="info" id="kzvClr" style="padding:5px 12px">Leeren</button>`:""}</div>`;
+  return panel("Kennzahlenvergleich", add + (its.length ? `<div class="scroll"><table id="kzvT">${head}${body}</table></div>
+    <p class="dim" style="font-size:11px;margin-top:8px">ETFs und Fonds: Kennzahlen aus den Einzeltiteln, gewichtet (KGV als harmonisches Mittel über Titel mit Gewinn). Fonds nur mit Bestand laut Halbjahres-/Rechenschaftsbericht – ohne Bericht bleiben die Kennzahlen leer. Keine Anlageempfehlung.</p>`
+    : `<div class="empty">Noch nichts ausgewählt. Oben Aktien, ETFs oder Fonds hinzufügen – oder im Einblick eines ETFs/Fonds bzw. auf einer Aktienseite „⊕ Kennzahlenvergleich“ klicken.</div>`))
+    + (ovHtml?`<div style="margin-top:10px">${ovHtml}</div>`:"");
+};
+V.KZV.after = el => {
+  el.querySelectorAll("[data-krm]").forEach(a=>a.onclick=e=>{ e.preventDefault(); kzvSel=kzvSel.filter(k=>k!==a.dataset.krm); kzvSave(); render(); });
+  const clr=el.querySelector("#kzvClr"); if(clr) clr.onclick=()=>{ kzvSel=[]; kzvSave(); render(); };
+  const pdf=el.querySelector("#kzvPdf"); if(pdf) pdf.onclick=()=>{ const ps=[...el.querySelectorAll(".panel")].map(p=>{ const c=p.cloneNode(true); c.querySelectorAll(".fbar,[data-krm]").forEach(x=>x.remove()); return c; }); printSheet("Kennzahlenvergleich", ps); };
+  const inp=el.querySelector("#kzvAdd"), sg=el.querySelector("#kzvSug");
+  inp.oninput=()=>{
+    const q=inp.value.trim().toUpperCase(); if(!q){ sg.style.display="none"; return; }
+    const HM=(D.holdings&&D.holdings.meta)||{}, list=[], seen=new Set();
+    const push=(k,a,b)=>{ if(list.length<12 && !seen.has(k)){ seen.add(k); list.push([k,a,b]); } };
+    ((D.etfs&&D.etfs.etfs)||[]).forEach(x=>{ if((x.ticker||"").toUpperCase().startsWith(q)||x.isin.startsWith(q)||(q.length>2&&x.name.toUpperCase().includes(q))) push("E:"+x.isin, x.ticker||x.isin, "ETF · "+x.name); });
+    ((D.fonds&&D.fonds.fonds)||[]).forEach(f=>{ if(f.isins.some(i=>i.startsWith(q))||(q.length>2&&f.name.toUpperCase().includes(q))) push("F:"+f.name, f.isins[0]||"", "Fonds · "+f.name+(HM["F:"+f.name]?"":" (kein Bestand)")); });
+    ((D.universe&&D.universe.rows)||[]).forEach(r=>{ if(r.s.toUpperCase().startsWith(q)||(r.i&&r.i.startsWith(q))||(q.length>2&&(r.n||"").toUpperCase().includes(q))) push("A:"+r.s, r.s, "Aktie · "+(r.n||"")); });
+    sg.innerHTML=list.map(([k,a,b])=>`<div data-k="${esc(k)}"><b>${esc(a)}</b><span>${esc(b)}</span></div>`).join("")||`<div class="dim">Nichts gefunden</div>`;
+    sg.style.display="block";
+    sg.querySelectorAll("[data-k]").forEach(d=>d.onmousedown=ev=>{ ev.preventDefault(); kzvAdd(d.dataset.k); render(); });
+  };
+  inp.onblur=()=>setTimeout(()=>sg.style.display="none",150);
+};
+document.addEventListener("click", ev => { const a=ev.target.closest&&ev.target.closest("[data-kzv]"); if(!a) return; ev.preventDefault(); kzvAdd(a.dataset.kzv); go("KZV"); });
+
 /* ============================================================ Befehlszeile */
-const ALIAS={HOME:"HOME",WEI:"WEI",W:"HOME",WL:"HOME",MOV:"HOME",MOVER:"HOME",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",CMP:"CMP",COMP:"CMP",BRA:"BRA",BRANCHEN:"BRA",IND:"BRA",ETF:"ETF",ETFS:"ETF",FONDS:"ETF",FUND:"ETF",VERGLEICH:"CMP",GOVT:"GOVT",BOND:"GOVT",DEP:"DEP",DEPOT:"DEP",BER:"BER",BERATUNG:"BER",ZINS:"BER",DURATION:"BER",NET:"NET",NETTO:"NET",RENDITE:"NET",FESTGELD:"NET",ANLEIHEN:"GOVT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP"};
+const ALIAS={HOME:"HOME",WEI:"WEI",W:"HOME",WL:"HOME",MOV:"HOME",MOVER:"HOME",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",CMP:"CMP",COMP:"CMP",BRA:"BRA",BRANCHEN:"BRA",IND:"BRA",ETF:"ETF",ETFS:"ETF",KZV:"KZV",KENNZAHLEN:"KZV",KENNZAHLENVERGLEICH:"KZV",FONDS:"ETF",FUND:"ETF",VERGLEICH:"CMP",GOVT:"GOVT",BOND:"GOVT",DEP:"DEP",DEPOT:"DEP",BER:"BER",BERATUNG:"BER",ZINS:"BER",DURATION:"BER",NET:"NET",NETTO:"NET",RENDITE:"NET",FESTGELD:"NET",ANLEIHEN:"GOVT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP"};
 const ISIN_RE=/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
 function isinOf(sym){ const r=((D.universe&&D.universe.rows)||[]).find(x=>x.s===sym); if(r&&r.i) return r.i; const m=(D.holdings&&D.holdings.isin)||{}; for(const k in m){ if(m[k]===sym && !k.startsWith("N:")) return k; } return null; }
 let isinMiss=null;
@@ -1743,7 +1829,7 @@ function runCmd(raw){
 const inp=document.getElementById("cmd"), sg=document.getElementById("sugg"); let sIdx=-1;
 function suggest(){
   const q=inp.value.trim().toUpperCase(); if(!q){sg.style.display="none";return;}
-  const cmds=[["HOME","Übersicht"],["WEI","Weltindizes"],["MOV","Top-Mover (Startseite)"],["SCR","Screener"],["ECO","Makro"],["TOP","News & Stimmung"],["BRA","Branchenvergleich"],["ETF","ETFs & Meldefonds"],["CMP","Vergleichschart"],["GOVT","Bundesanleihen Österreich"],["DEP","Depotanalyse (Screenshot oder Liste)"],["BER","Beratung: Zinsänderungsrisiko, Langfrist-Chart"],["NET","Renditevergleich Anleihen & Festgeld"],["MKT","Marktupdate"],["CAL","Kalender"],["HELP","Hilfe"]];
+  const cmds=[["HOME","Übersicht"],["WEI","Weltindizes"],["MOV","Top-Mover (Startseite)"],["SCR","Screener"],["ECO","Makro"],["TOP","News & Stimmung"],["BRA","Branchenvergleich"],["ETF","ETFs & Meldefonds"],["CMP","Vergleichschart"],["KZV","Kennzahlenvergleich Aktien/ETFs/Fonds (PDF)"],["GOVT","Bundesanleihen Österreich"],["DEP","Depotanalyse (Screenshot oder Liste)"],["BER","Beratung: Zinsänderungsrisiko, Langfrist-Chart"],["NET","Renditevergleich Anleihen & Festgeld"],["MKT","Marktupdate"],["CAL","Kalender"],["HELP","Hilfe"]];
   const mk=[...((D.market||{}).indices||[]),...((D.market||{}).markets||[])].map(r=>[r.name,r.sym+" · Chart"]);
   const wl=((D.market&&D.market.watchlist)||[]).map(r=>[r.sym,r.name]);
   const un=((D.universe&&D.universe.rows)||[]).map(r=>[r.s,r.n]);
