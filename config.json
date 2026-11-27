@@ -135,7 +135,20 @@
       "KTCG.VI",
       "AMAG.VI"
     ],
-    "em_korea_taiwan": true
+    "em_korea_taiwan": true,
+    "xtrackers": [
+      {
+        "name": "MSCI World",
+        "isin": "IE00BJ0KDQ92",
+        "min_w": 0.0
+      },
+      {
+        "name": "MSCI EM",
+        "isin": "IE00BTJRMP35",
+        "min_w": 0.03
+      }
+    ],
+    "isin_search_per_night": 700
   },
   "indices": {
     "^GSPC": "S&P 500",
@@ -170,8 +183,8 @@
   ],
   "news_per_ticker": 8,
   "sentiment_model": "ProsusAI/finbert",
-  "nightly_batch": 2000,
-  "nightly_minutes": 100,
+  "nightly_batch": 2600,
+  "nightly_minutes": 115,
   "central_banks": [
     {
       "date": "2026-12-09",

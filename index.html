@@ -238,7 +238,7 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
     <a class="logo" href="#HOME" title="Übersicht"><img src="assets/icon.svg" alt="" width="28" height="28"><span>Research<br>Terminal</span></a>
     <form class="cmd" id="cmdForm" autocomplete="off">
       <span>&gt;</span>
-      <input id="cmd" placeholder="Befehl oder Ticker … z. B. AAPL, VOE.VI DES, ECO, TOP, HELP" spellcheck="false">
+      <input id="cmd" placeholder="Befehl, Ticker oder ISIN … z. B. AAPL, AT0000937503, ECO, HELP" spellcheck="false">
       <button class="go" type="submit">GO</button>
       <div class="sugg" id="sugg"></div>
     </form>
@@ -609,7 +609,7 @@ V.DES = async () => {
   return `<div class="dhead"><span class="s">${esc(t.symbol)}</span><span class="n">${esc(t.name)}</span>
       <span class="p">${fmt(t.price)} <small class="dim">${esc(t.currency||"")}</small></span>
       <span class="${cls(t.chgPct)}">${fmt(t.chg)} (${pct(t.chgPct)})</span>
-      <span class="chip">${esc(t.exchange||"")}</span><span class="chip">${esc(t.sector||"–")}</span><span class="chip">${esc(t.country||"")}</span>
+      <span class="chip">${esc(t.exchange||"")}</span><span class="chip">${esc(t.sector||"–")}</span><span class="chip">${esc(t.country||"")}</span>${(()=>{ const ui=isinOf(t.symbol||state.sym); return ui?`<span class="chip" title="ISIN">${esc(ui)}</span>`:""; })()}
       <span class="dim" style="margin-left:auto;font-size:11px">Stand ${dt(t.updated)}</span><button class="info" id="steckbrief" style="padding:4px 10px">🖨 Steckbrief / PDF</button></div>
     <div class="grid g32">
       ${panel("Kursverlauf", `<div id="pxChart"></div>`, `<div class="btns" id="dr">${["1M","3M","6M","1J","3J","5J"].map(r=>`<button data-r="${r}" class="${r===desRange?"on":""}">${r}</button>`).join("")}</div>`)}
@@ -1662,8 +1662,8 @@ V.DEP.after = el => {
   el.querySelectorAll("input[data-f]").forEach(inp=>inp.onchange=()=>{ const r=depRows[+inp.dataset.i]; const f=inp.dataset.f; r[f]= f==="amt" ? (+inp.value||0) : f==="isin" ? inp.value.trim().toUpperCase() : inp.value; render(); });
   el.querySelectorAll("select[data-kat]").forEach(s=>s.onchange=()=>{ depRows[+s.dataset.kat].kat=s.value; render(); });
 };
-V.HELP = () => panel("Befehle", `<table class="help"><tbody>
-  <tr><td>AAPL · VOE.VI · Apple</td><td>Ticker oder Name eingeben + GO → Detailseite. Funktioniert für alle Titel im Universum (MSCI ACWI, S&amp;P 500, Nasdaq 100, STOXX 600, ATX).</td></tr>
+V.HELP = () => panel("Befehle", `<table class="help"><tbody><tr><td><b>ISIN</b></td><td>z. B. AT0000937503 – öffnet die Aktie, den ETF oder den Fonds (alle Tranchen) mit dieser ISIN</td></tr>
+  <tr><td>AAPL · VOE.VI · Apple</td><td>Ticker oder Name eingeben + GO → Detailseite. Funktioniert für alle Titel im Universum (S&amp;P 500, europäische Leitindizes, MSCI World, MSCI EM, ATX).</td></tr>
   <tr><td>DAX · Gold · ^GSPC</td><td>Index oder Markt eingeben → großer Chart (GP)</td></tr>
   <tr><td>WEI</td><td>Weltindizes, Devisen, Rohstoffe – Zeile anklicken für den Chart</td></tr>
   <tr><td>HOME · MOV</td><td>Startseite mit Indizes, Top-Movern (gestiegen/gefallen, nach Zeitraum und Region), Schlagzeilen, Makro und Terminen</td></tr>
@@ -1711,8 +1711,25 @@ window.addEventListener("popstate",()=>{fromHash();render();});
 
 /* ============================================================ Befehlszeile */
 const ALIAS={HOME:"HOME",WEI:"WEI",W:"HOME",WL:"HOME",MOV:"HOME",MOVER:"HOME",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",CMP:"CMP",COMP:"CMP",BRA:"BRA",BRANCHEN:"BRA",IND:"BRA",ETF:"ETF",ETFS:"ETF",FONDS:"ETF",FUND:"ETF",VERGLEICH:"CMP",GOVT:"GOVT",BOND:"GOVT",DEP:"DEP",DEPOT:"DEP",BER:"BER",BERATUNG:"BER",ZINS:"BER",DURATION:"BER",NET:"NET",NETTO:"NET",RENDITE:"NET",FESTGELD:"NET",ANLEIHEN:"GOVT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP"};
+const ISIN_RE=/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
+function isinOf(sym){ const r=((D.universe&&D.universe.rows)||[]).find(x=>x.s===sym); if(r&&r.i) return r.i; const m=(D.holdings&&D.holdings.isin)||{}; for(const k in m){ if(m[k]===sym && !k.startsWith("N:")) return k; } return null; }
+let isinMiss=null;
+async function isinGo(isin){
+  await Promise.all(["etfs","fonds","holdings","universe"].map(k=>lazy(k)));
+  const etf=((D.etfs&&D.etfs.etfs)||[]).find(e=>e.isin===isin);
+  if(etf){ etfMode="perf"; etfCat=""; etfTopOpen=isin; return go("ETF"); }
+  const HM=(D.holdings&&D.holdings.meta)||{};
+  const f=((D.fonds&&D.fonds.fonds)||[]).find(x=>x.isins.includes(isin)||((HM["F:"+x.name]||{}).tranchen||[]).includes(isin));
+  if(f){ etfMode="fonds"; fondsKag=""; fondsKat=""; fondsOpen=f.name; return go("ETF"); }
+  const r=((D.universe&&D.universe.rows)||[]).find(x=>x.i===isin);
+  const sym=(r&&r.s)||((D.holdings&&D.holdings.isin)||{})[isin];
+  if(sym) return go("DES", sym);
+  isinMiss=isin; go("ISN");
+}
+V.ISN = () => panel("ISIN-Suche", `<div class="empty">Die ISIN <b>${esc(isinMiss||"")}</b> ist im Terminal (noch) nicht hinterlegt.<br><br>Gesucht wird in allen ETFs, den Raiffeisen- und KEPLER-Fonds (inkl. aller Tranchen aus den Berichten) und rund ${fmt(((D.universe&&D.universe.rows)||[]).length,0)} Aktien.<br>Aktien aus MSCI World und MSCI EM werden laufend ergänzt; ein fehlender Fonds lässt sich in manual/fonds.json nachtragen.<br><br>${isinOk(isinMiss||"")?"":'<span class="dn">Achtung: Die Prüfziffer dieser ISIN stimmt nicht – bitte Tippfehler prüfen.</span>'}</div>`);
 function runCmd(raw){
   const p=raw.trim().toUpperCase().split(/\s+/).filter(Boolean); if(!p.length) return;
+  if(p.length===1 && ISIN_RE.test(p[0])) return isinGo(p[0]);
   if(p.length===1 && ALIAS[p[0]]) return go(ALIAS[p[0]]);
   const last=p[p.length-1]; const sym = ALIAS[last] ? p.slice(0,-1).join(" ") : p.join(" ");
   if(!sym) return go(ALIAS[last]);
@@ -1731,6 +1748,13 @@ function suggest(){
   const wl=((D.market&&D.market.watchlist)||[]).map(r=>[r.sym,r.name]);
   const un=((D.universe&&D.universe.rows)||[]).map(r=>[r.s,r.n]);
   const seen=new Set(), list=[];
+  if(/^[A-Z]{2}[A-Z0-9]{2,}$/.test(q)){
+    if(!D.fonds||!D.etfs||!D.universe){ Promise.all(["etfs","fonds","universe","holdings"].map(k=>lazy(k))).then(()=>{ if(inp.value.trim().toUpperCase()===q) suggest(); }); }
+    const add=(i,n)=>{ if(list.length<10&&i&&i.startsWith(q)&&!seen.has(i)){ seen.add(i); list.push([i,n]); } };
+    ((D.etfs&&D.etfs.etfs)||[]).forEach(e=>add(e.isin,"ETF · "+e.name));
+    ((D.fonds&&D.fonds.fonds)||[]).forEach(f=>f.isins.forEach(i=>add(i,"Fonds · "+f.name)));
+    ((D.universe&&D.universe.rows)||[]).forEach(r=>add(r.i,"Aktie · "+(r.n||r.s)));
+  }
   for (const [a,b] of [...cmds,...mk,...wl,...un]) {
     if (list.length>=10) break;
     if (seen.has(a)) continue;

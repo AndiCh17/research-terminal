@@ -703,6 +703,61 @@ def wiki_list(url: str, label: str, suffix: str = "", country: str | None = None
     raise ValueError("Tabelle nicht gefunden")
 
 
+_REGIONAL = (".F", ".DU", ".MU", ".BE", ".SG", ".HM", ".HA", ".VI", ".MX", ".BA", ".SN", ".NE", ".CN", ".TI", ".IL")
+
+
+def isin_to_yahoo(isin: str, ex: str = "") -> str | None:
+    """Yahoo-Symbol zu einer ISIN über die Yahoo-Suche; bevorzugt den Heimatbörsenplatz."""
+    try:
+        q = [x for x in (yf.Search(isin, max_results=8).quotes or []) if x.get("quoteType") in ("EQUITY", "ETF", "MUTUALFUND")]
+    except Exception:
+        return None
+    if not q:
+        return None
+    syms = [x["symbol"] for x in q]
+    want = next((suf for k, suf in EXCHANGE_SUFFIX if k in (ex or "").lower()), None)
+    if want is not None:
+        hit = next((s_ for s_ in syms if (s_.endswith(want) if want else "." not in s_)), None)
+        if hit:
+            return hit
+    if isin.startswith("US"):
+        hit = next((s_ for s_ in syms if "." not in s_), None)
+        if hit:
+            return hit
+    return next((s_ for s_ in syms if not s_.endswith(_REGIONAL)), syms[0])
+
+
+_UNI_SEARCH = [0]
+
+
+def xtrackers_universe(src: dict, have: set[str], have_isin: set[str]) -> list[dict]:
+    """Zusätzliche Titel aus einer Xtrackers-Positionsliste (z. B. MSCI World), Symbol per ISIN-Suche (Cache)."""
+    rows = read_holdings_full({"isin": src["isin"], "ticker": "", "holdings": {"anbieter": "xtrackers"}})
+    cache = load(DATA / "isin_yahoo.json") or {}
+    out, new = [], 0
+    for r in sorted(rows, key=lambda x: -x["w"]):
+        isin = (r.get("isin") or "").upper()
+        if r["w"] < src.get("min_w", 0) or not isin_ok(isin) or isin in have_isin:
+            continue
+        c = cache.get(isin)
+        if c is None or (not c[0] and (NOW - datetime.fromisoformat(c[1])).days > 60):
+            if _UNI_SEARCH[0] <= 0:
+                continue
+            _UNI_SEARCH[0] -= 1
+            c = [isin_to_yahoo(isin, r.get("ex")) or "", NOW.isoformat()]
+            cache[isin] = c
+            new += 1
+            time.sleep(0.2)
+        if c[0] and c[0] not in have:
+            out.append({"s": c[0], "n": nice_name(r["name"]), "sec": None, "c": None, "src": [src["name"]], "i": isin})
+    save(DATA / "isin_yahoo.json", cache, quiet=True)
+    log(f"  {src['name']} (Xtrackers): {len(out)} zusätzliche Titel ({new} ISINs neu gesucht)")
+    return out
+
+
+_INV_ISIN: dict[str, str] = {}
+
+
 def build_universe_list(old: list[dict]) -> list[dict]:
     uc = CFG.get("universe", {})
     found: dict[str, dict] = {}
@@ -712,7 +767,7 @@ def build_universe_list(old: list[dict]) -> list[dict]:
             cur = found.get(it["s"])
             if cur:
                 cur["src"] = sorted(set(cur["src"]) | set(it["src"]))
-                for k in ("n", "sec", "c"):
+                for k in ("n", "sec", "c", "i"):
                     cur[k] = cur.get(k) or it.get(k)
             else:
                 found[it["s"]] = dict(it)
@@ -736,6 +791,10 @@ def build_universe_list(old: list[dict]) -> list[dict]:
                           src["name"]))
     if uc.get("em_korea_taiwan", True):
         add(with_fallback(em_korea_taiwan, "MSCI EM (Korea/Taiwan)"))
+    _UNI_SEARCH[0] = int(uc.get("isin_search_per_night", 700))
+    have_isin = set((load(DATA / "holdings.json") or {}).get("isin", {}).keys())
+    for src in uc.get("xtrackers", []):
+        add(with_fallback(lambda: xtrackers_universe(src, set(found), have_isin), src["name"]))
     add([{"s": s, "n": None, "sec": None, "c": None, "src": ["ATX"]} for s in uc.get("extra", [])])
     add([{"s": s, "n": None, "sec": None, "c": None, "src": ["Watchlist"]} for s in CFG.get("watchlist", [])])
     if len(found) < 100 and old:  # noqa: SIM102
@@ -2267,6 +2326,10 @@ def main():
         save(DATA / "universe_list.json", {"updated": NOW.isoformat(), "rows": uni_list})
     uni_syms = [r["s"] for r in uni_list]
     log(f"Universum: {len(uni_syms)} Titel")
+    _INV_ISIN.clear()
+    for _i, _s in ((load(DATA / "holdings.json") or {}).get("isin") or {}).items():
+        if not _i.startswith("N:"):
+            _INV_ISIN.setdefault(_s, _i)
 
     if MODE == "nightly" or not refs:
         log("Jahreskurse des Universums …")
@@ -2385,7 +2448,7 @@ def main():
             "up": rnd((f["tgt"] / px - 1) * 100, 1) if f.get("tgt") and px else None,
             "rmean": rnd(f.get("rmean"), 2), "nan": f.get("nan"),
             "pm": rnd((f.get("pm") or 0) * 100, 1) if f.get("pm") is not None else None,
-            "er": f.get("er"), "src": u.get("src", []), "det": det, "wl": s in watch,
+            "er": f.get("er"), "src": u.get("src", []), "det": det, "wl": s in watch, "i": u.get("i") or _INV_ISIN.get(s),
         })
     for s in wl:
         if (TICK / f"{file_safe(s)}.json").exists():
