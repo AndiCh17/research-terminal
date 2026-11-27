@@ -683,51 +683,28 @@ def build_universe_list(old: list[dict]) -> list[dict]:
 
 # ----------------------------------------------------------------- Makro
 FRED = [
-    # id, Name, Einheit, Transformation, Gruppe, Referenzlinie
+    # id, Name, Einheit, Transformation, Gruppe, Referenzlinie  – bewusst schlank gehalten
     ("FEDFUNDS", "Fed Funds Rate", "%", None, "Zinsen USA", None),
-    ("DGS2", "US-Staatsanleihe 2J", "%", None, "Zinsen USA", None),
     ("DGS10", "US-Staatsanleihe 10J", "%", None, "Zinsen USA", None),
-    ("T10Y2Y", "Zinskurve 10J–2J", "%-Pkt.", None, "Zinsen USA", 0),
-    ("BAMLH0A0HYM2", "High-Yield-Spread USA", "%-Pkt.", None, "Kredit", None),
     ("CPIAUCSL", "US-Inflation (VPI)", "% J/J", "yoy", "Inflation", 2),
-    ("PCEPILFE", "US-Kern-PCE", "% J/J", "yoy", "Inflation", 2),
+    ("PCEPILFE", "US-Kerninflation (PCE, Fed-Zielgröße)", "% J/J", "yoy", "Inflation", 2),
     ("UNRATE", "US-Arbeitslosenquote", "%", None, "Arbeitsmarkt", None),
-    ("PAYEMS", "US-Beschäftigung (Δ Monat)", "Tsd.", "diff", "Arbeitsmarkt", 0),
-    ("A191RL1Q225SBEA", "US-BIP real (annualisiert)", "% Q/Q", None, "Wachstum", 0),
-    ("INDPRO", "US-Industrieproduktion", "% J/J", "yoy", "Wachstum", 0),
-    ("GACDFSA066MSFRBPHI", "Philly-Fed Industrie (USA)", "Saldo", None, "Frühindikatoren", 0),
-    ("GACDISA066MSFRBNY", "Empire State Industrie (USA)", "Saldo", None, "Frühindikatoren", 0),
-    ("CFNAI", "Chicago Fed National Activity", "Index", None, "Frühindikatoren", 0),
-    ("UMCSENT", "Uni Michigan Konsumklima", "Index", None, "Stimmung", None),
-    ("VIXCLS", "VIX Volatilität", "Index", None, "Stimmung", 20),
-    ("DTWEXBGS", "US-Dollar-Index (breit)", "Index", None, "Währung", None),
-    ("M2SL", "Geldmenge M2 USA", "% J/J", "yoy", "Liquidität", 0),
+    ("A191RL1Q225SBEA", "US-Wirtschaftswachstum (BIP, annualisiert)", "% Q/Q", None, "Wachstum", 0),
 ]
 ECB = [
     ("FM/D.U2.EUR.4F.KR.DFR.LEV", "EZB-Einlagensatz", "%", "Zinsen Euroraum"),
-    ("FM/D.U2.EUR.4F.KR.MRR_FR.LEV", "EZB-Hauptrefinanzierungssatz", "%", "Zinsen Euroraum"),
-    ("YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y", "Euro-Rendite 10J (AAA-Kurve)", "%", "Zinsen Euroraum"),
-    ("YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_2Y", "Euro-Rendite 2J (AAA-Kurve)", "%", "Zinsen Euroraum"),
     ("FM/M.U2.EUR.RT.MM.EURIBOR3MD_.HSTA", "3M-Euribor", "%", "Zinsen Euroraum"),
-    ("IRS/M.AT.L.L40.CI.0000.EUR.N.Z", "Österreich Staatsanleihe 10J", "%", "Staatsanleihen Österreich"),
-    ("IRS/M.DE.L.L40.CI.0000.EUR.N.Z", "Deutschland Bund 10J", "%", "Staatsanleihen Österreich"),
-    ("IRS/M.IT.L.L40.CI.0000.EUR.N.Z", "Italien Staatsanleihe 10J", "%", "Staatsanleihen Österreich"),
-    ("IRS/M.FR.L.L40.CI.0000.EUR.N.Z", "Frankreich Staatsanleihe 10J", "%", "Staatsanleihen Österreich"),
+    ("IRS/M.AT.L.L40.CI.0000.EUR.N.Z", "Österreich Staatsanleihe 10J", "%", "Staatsanleihen"),
+    ("IRS/M.DE.L.L40.CI.0000.EUR.N.Z", "Deutschland Bund 10J", "%", "Staatsanleihen"),
     ("ICP/M.U2.N.000000.4.ANR", "Euroraum-Inflation (HVPI)", "% J/J", "Inflation"),
-    ("ICP/M.U2.N.XEF000.4.ANR", "Euroraum-Kerninflation", "% J/J", "Inflation"),
     ("ICP/M.AT.N.000000.4.ANR", "Österreich-Inflation (HVPI)", "% J/J", "Inflation"),
-    ("ICP/M.DE.N.000000.4.ANR", "Deutschland-Inflation (HVPI)", "% J/J", "Inflation"),
     ("LFSI/M.I9.S.UNEHRT.TOTAL0.15_74.T", "Euroraum-Arbeitslosenquote", "%", "Arbeitsmarkt"),
-    ("EXR/D.USD.EUR.SP00.A", "EUR/USD (EZB-Referenz)", "USD", "Währung"),
 ]
-# EU-Kommission (Eurostat, Datensatz ei_bssi_m_r2): Konjunkturumfragen – frei verfügbare PMI-Alternative
+# EU-Kommission (Eurostat, Datensatz ei_bssi_m_r2): Wirtschaftsstimmung als Ergänzung zu den PMIs
 EUROSTAT = [
     ("BS-ESI-I", "Wirtschaftsstimmung ESI", "Index", 100),
-    ("BS-ICI-BAL", "Industrievertrauen", "Saldo", 0),
-    ("BS-SCI-BAL", "Dienstleistungsvertrauen", "Saldo", 0),
-    ("BS-CSMCI-BAL", "Verbrauchervertrauen", "Saldo", 0),
 ]
-EUROSTAT_GEO = [("EA20", "Euroraum"), ("AT", "Österreich"), ("DE", "Deutschland")]
+EUROSTAT_GEO = [("EA20", "Euroraum"), ("AT", "Österreich")]
 
 
 FRED_STATE = {"fails": 0}
@@ -858,7 +835,7 @@ def build_macro():
     if at is not None and de is not None:
         sp = (at - de).dropna() * 100
         r = safe(lambda: series_block(sp, {"id": "SPREAD_AT_DE", "name": "Renditeaufschlag Österreich ggü. Deutschland",
-                                           "unit": "Bp.", "group": "Staatsanleihen Österreich", "region": "Österreich",
+                                           "unit": "Bp.", "group": "Staatsanleihen", "region": "Österreich",
                                            "source": "EZB (berechnet)", "ref": 0}), None, "Spread AT-DE")
         if r:
             out.append(r)
@@ -872,13 +849,15 @@ def build_macro():
                         raise
                     s = eurostat_series(indic, "EA")
                 return series_block(s, {"id": f"ESTAT:{indic}:{geo}", "name": f"{name} ({region})", "unit": unit,
-                                        "group": "Frühindikatoren", "region": region, "source": "EU-Kommission", "ref": ref})
+                                        "group": "Stimmung", "region": region, "source": "EU-Kommission", "ref": ref})
             r = safe(f, None, f"Eurostat {indic} {geo}")
             if r:
                 out.append(r)
     old = (load(DATA / "macro.json", {}) or {}).get("series", [])
     have = {s["id"] for s in out}
-    kept = [s for s in old if s.get("id") not in have and not str(s.get("id", "")).startswith("manual:")]
+    allowed = ({f[0] for f in FRED} | {e[0] for e in ECB} | {"SPREAD_AT_DE"}
+               | {f"ESTAT:{i[0]}:{g}" for i in EUROSTAT for g, _ in EUROSTAT_GEO})
+    kept = [s for s in old if s.get("id") in allowed and s.get("id") not in have]
     if kept:
         log(f"Makro: {len(kept)} Reihen aus dem letzten erfolgreichen Abruf übernommen")
     save(DATA / "macro.json", {"updated": NOW.isoformat(), "series": out + kept})

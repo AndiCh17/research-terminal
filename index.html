@@ -208,19 +208,19 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
   </div>
   <nav class="fkeys" id="fkeys">
     <button data-v="HOME"><b>F1</b>Übersicht</button>
-    <button data-v="WEI"><b>F2</b>WEI Märkte</button>
-    <button data-v="SCR"><b>F3</b>SCR Screener</button>
-    <button data-v="BRA"><b>F4</b>BRA Branchen/Regionen</button>
-    <button data-v="ETF"><b>F5</b>ETF Fonds</button>
-    <button data-v="CMP"><b>F6</b>CMP Vergleich</button>
-    <button data-v="ECO"><b>F7</b>ECO Makro</button>
-    <button data-v="GOVT"><b>F8</b>GOVT Anleihen AT</button>
-    <button data-v="MKT"><b>F9</b>MKT Marktupdate</button>
-    <button data-v="BER"><b>F10</b>BER Beratung</button>
-    <button data-v="NET"><b>·</b>NET Renditevergleich</button>
-    <button data-v="TOP"><b>·</b>TOP News</button>
-    <button data-v="CAL"><b>·</b>CAL Kalender</button>
-    <button data-v="DES"><b>›</b>DES Aktie</button>
+    <button data-v="MKT"><b>F2</b>Marktupdate</button>
+    <button data-v="ECO"><b>F3</b>Makro</button>
+    <button data-v="WEI"><b>F4</b>Märkte</button>
+    <button data-v="BRA"><b>F5</b>Branchen/Regionen</button>
+    <button data-v="SCR"><b>F6</b>Screener</button>
+    <button data-v="ETF"><b>F7</b>ETFs</button>
+    <button data-v="GOVT"><b>F8</b>Anleihen AT</button>
+    <button data-v="BER"><b>F9</b>Beratung</button>
+    <button data-v="CMP"><b>F10</b>Vergleich</button>
+    <button data-v="NET"><b>·</b>Renditevergleich</button>
+    <button data-v="TOP"><b>·</b>News</button>
+    <button data-v="CAL"><b>·</b>Kalender</button>
+    <button data-v="DES"><b>›</b>Aktie</button>
     <button data-v="HELP"><b>?</b>Hilfe</button>
   </nav>
   <div class="ticker-tape"><div id="tape"></div></div>
@@ -446,7 +446,7 @@ V.HOME = async () => {
   const m=D.market||{}, n=D.news||{};
   const today = new Date().toISOString().slice(0,10);
   const upcoming = ((cal&&cal.events)||[]).filter(e=>e.d>=today && (e.t==="cb"||e.t==="mkt"||(e.t==="earn"&&(e.mcap||0)>=1e11))).slice(0,9);
-  const keyIds=["FM/D.U2.EUR.4F.KR.DFR.LEV","ICP/M.U2.N.000000.4.ANR","ICP/M.AT.N.000000.4.ANR","YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y","FEDFUNDS","DGS10","CPIAUCSL","UNRATE"];
+  const keyIds=["FM/D.U2.EUR.4F.KR.DFR.LEV","ICP/M.U2.N.000000.4.ANR","ICP/M.AT.N.000000.4.ANR","IRS/M.AT.L.L40.CI.0000.EUR.N.Z","FEDFUNDS","DGS10","CPIAUCSL","UNRATE"];
   const ser=(D.macro&&D.macro.series)||[], keys=keyIds.map(id=>ser.find(s=>s.id===id)).filter(Boolean);
   const mv=moversData();
   const ctl=`<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
@@ -464,8 +464,8 @@ V.HOME = async () => {
   <div class="grid g32" style="margin-top:10px">
     ${panel("Top-Schlagzeilen", newsList([...(n.general||[]),...(n.tickers||[])].sort((a,b)=>(b.published||"").localeCompare(a.published||"")),14), `<small>FinBERT-Stimmung</small>`)}
     <div class="grid">
-    ${panel("Makro-Kompass", keys.length?`<div class="tiles" style="grid-template-columns:1fr 1fr">${keys.map(macroTile).join("")}</div>`:noData("Makrodaten"), `<small>F7</small>`)}
-    ${ed?panel(`Marktupdate KW ${esc(ed.kw)}`, `<div style="color:#d6dae0;max-height:190px;overflow:hidden">${rich(kern.length>600?kern.slice(0,600)+" …":kern)}</div><button class="more" onclick="go('MKT')">Ganzes Marktupdate öffnen</button>`, `<small>F9</small>`):""}
+    ${panel("Makro-Kompass", keys.length?`<div class="tiles" style="grid-template-columns:1fr 1fr">${keys.map(macroTile).join("")}</div>`:noData("Makrodaten"), `<small>F3</small>`)}
+    ${ed?panel(`Marktupdate KW ${esc(ed.kw)}`, `<div style="color:#d6dae0;max-height:190px;overflow:hidden">${rich(kern.length>600?kern.slice(0,600)+" …":kern)}</div><button class="more" onclick="go('MKT')">Ganzes Marktupdate öffnen</button>`, `<small>F2</small>`):""}
     ${panel("Nächste Termine", upcoming.length?upcoming.map(calRow).join(""):`<div class="dim">Noch keine Termine – der Kalender füllt sich nach dem Nachtlauf.</div>`, `<small>CAL</small>`)}
     </div>
   </div>`;
@@ -499,7 +499,8 @@ V.ECO = () => {
   const ser = all.filter(s=>ecoRegion==="Alle"||s.region===ecoRegion);
   if(!ecoSel || !all.find(s=>s.id===ecoSel)) ecoSel = ser[0]?.id;
   const sel = all.find(s=>s.id===ecoSel);
-  const groups=[...new Set(ser.map(s=>s.group))];
+  const ORD=["Einkaufsmanager (Marktupdate)","Zinsen Euroraum","Zinsen USA","Staatsanleihen","Inflation","Wachstum","Arbeitsmarkt","Stimmung"];
+  const groups=[...new Set(ser.map(s=>s.group))].sort((a,b)=>((ORD.indexOf(a)+1)||99)-((ORD.indexOf(b)+1)||99));
   return `${panel(sel?`${esc(sel.name)} <span class="dim">· ${esc(sel.region)} · ${esc(sel.source)}</span>`:"Chart", `<div id="ecoChart"></div>`, `<div class="btns" id="ecoRange">${["2J","5J","10J","Max"].map(r=>`<button data-r="${r}" class="${r===ecoRange?"on":""}">${r}</button>`).join("")}</div>`)}
     <div style="margin:10px 0" class="btns" id="ecoReg">${regions.map(r=>`<button data-r="${esc(r)}" class="${r===ecoRegion?"on":""}">${esc(r)}</button>`).join("")}</div>
     ${groups.map(g=>`<div class="ph" style="margin-top:8px;border:1px solid var(--line)"><h2>${esc(g)}</h2></div><div class="tiles" style="margin-top:8px">${ser.filter(s=>s.group===g).map(macroTile).join("")}</div>`).join("")}`;
@@ -520,14 +521,13 @@ V.TOP = () => {
   const n=D.news||{}; let items=[...(n.general||[]).map(x=>({...x,_g:1})),...(n.tickers||[])];
   items.sort((a,b)=>(b.published||"").localeCompare(a.published||""));
   if(newsFilter==="Allgemein") items=items.filter(i=>i._g);
-  if(newsFilter==="Watchlist") items=items.filter(i=>!i._g);
+  if(newsFilter==="Unternehmen") items=items.filter(i=>!i._g);
   if(newsFilter==="Positiv") items=items.filter(i=>i.sentiment?.label==="positive");
   if(newsFilter==="Negativ") items=items.filter(i=>i.sentiment?.label==="negative");
   const sum=Object.entries(n.summary||{}).filter(([,v])=>v.score!=null).sort((a,b)=>b[1].score-a[1].score);
   const bars = sum.length ? `<table><thead><tr><th>Titel</th><th>Score</th><th class="l" style="width:45%">Verteilung</th><th>n</th></tr></thead><tbody>${sum.map(([s,v])=>{
     const t=v.pos+v.neg+v.neu||1; return `<tr class="click" data-sym="${esc(s)}"><td class="sym">${esc(s)}</td><td>${sentScore(v.score)}</td><td class="l"><div class="bar"><i style="left:0;width:${v.pos/t*100}%;background:var(--up)"></i><i style="left:${v.pos/t*100}%;width:${v.neu/t*100}%;background:#444"></i><i style="left:${(v.pos+v.neu)/t*100}%;width:${v.neg/t*100}%;background:var(--dn)"></i></div></td><td class="dim">${v.n}</td></tr>`;}).join("")}</tbody></table>` : noData("Stimmungswerte");
-  return `<div class="grid g32">${panel("Schlagzeilen", `<div class="btns" id="nf" style="margin-bottom:8px">${["Alle","Allgemein","Watchlist","Positiv","Negativ"].map(f=>`<button data-f="${f}" class="${f===newsFilter?"on":""}">${f}</button>`).join("")}</div>${newsList(items,120)}`, `<small>${n.model?"Modell: "+esc(n.model):"Stimmung nicht verfügbar"}</small>`)}
-    ${panel("Stimmung je Titel", bars, `<button class="info" data-info="sent">ⓘ So entsteht der Wert</button>`)}</div>`;
+  return panel("Schlagzeilen", `<div class="btns" id="nf" style="margin-bottom:8px">${["Alle","Allgemein","Unternehmen","Positiv","Negativ"].map(f=>`<button data-f="${f}" class="${f===newsFilter?"on":""}">${f}</button>`).join("")}</div>${newsList(items,150)}`, `<button class="info" data-info="sent">ⓘ So entsteht die Stimmung</button>`);
 };
 V.TOP.after = el => el.querySelectorAll("#nf button").forEach(b=>b.onclick=()=>{newsFilter=b.dataset.f; render();});
 
@@ -1378,7 +1378,7 @@ V.HELP = () => panel("Befehle", `<table class="help"><tbody>
   <tr><td>WEI</td><td>Weltindizes, Devisen, Rohstoffe – Zeile anklicken für den Chart</td></tr>
   <tr><td>HOME · MOV</td><td>Startseite mit Indizes, Top-Movern (gestiegen/gefallen, nach Zeitraum und Region), Schlagzeilen, Makro und Terminen</td></tr>
   <tr><td>SCR</td><td>Screener: filtern nach Land, Sektor, Index, Marktkapitalisierung, KGV, Dividende, Momentum, Stimmung</td></tr>
-  <tr><td>ECO</td><td>Makro USA/Euroraum/Österreich: Zinsen, Inflation, Frühindikatoren, Staatsanleihen, eigene PMI-Werte</td></tr>
+  <tr><td>ECO</td><td>Makro: Einkaufsmanager aus dem Marktupdate, Leitzinsen, Staatsanleihen, Inflation, Wachstum, Arbeitsmarkt, Wirtschaftsstimmung</td></tr>
   <tr><td>TOP · N</td><td>Schlagzeilen mit FinBERT-Stimmung</td></tr>
   <tr><td>BRA</td><td>Branchen/Regionen: Gewinn, Gewinnwachstum, KGV, Analystenschätzungen, Dividende je Sektor, Branche und Region; Themenkorb Erneuerbare</td></tr>
   <tr><td>ETF</td><td>Ausgewählte ETFs mit OeKB-Meldefonds-Status, Kosten, Performance, Risiko; „Durchblick“ zeigt KGV, Dividende, Wachstum, Sektoren und Länder aus den Fondspositionen</td></tr>
@@ -1459,7 +1459,7 @@ inp.addEventListener("keydown",e=>{
 document.getElementById("cmdForm").onsubmit=e=>{e.preventDefault(); const v=inp.value; inp.value=""; sg.style.display="none"; inp.blur(); runCmd(v);};
 document.querySelectorAll("#fkeys button").forEach(b=>b.onclick=()=>go(b.dataset.v));
 document.addEventListener("keydown",e=>{
-  const m=e.key.match(/^F([1-9]|10)$/); if(m){ e.preventDefault(); go(["HOME","WEI","SCR","BRA","ETF","CMP","ECO","GOVT","MKT","BER"][+m[1]-1]); return; }
+  const m=e.key.match(/^F([1-9]|10)$/); if(m){ e.preventDefault(); go(["HOME","MKT","ECO","WEI","BRA","SCR","ETF","GOVT","BER","CMP"][+m[1]-1]); return; }
   if((e.key==="/"&&document.activeElement!==inp)||(e.key.toLowerCase()==="k"&&(e.ctrlKey||e.metaKey))){ e.preventDefault(); inp.focus(); }
   if(e.key==="Escape") inp.blur();
 });
