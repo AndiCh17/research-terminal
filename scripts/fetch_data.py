@@ -1148,6 +1148,104 @@ def resolve_etf_tickers(etfs: list[dict]):
     save(DATA / "etf_tickers.json", cache, quiet=True)
 
 
+def perf_fields(c: pd.Series | None, w: pd.Series | None) -> dict:
+    """Kurs, Tages-/Monats-/YTD-/1J-Performance, Vola, Max. Drawdown, 3J/5J p. a. und Verläufe (für ETFs und Fonds)."""
+    row = {}
+    if c is not None and len(c) > 2:
+        px = float(c.iloc[-1])
+        yb = c[c.index.year < NOW.year]
+        ret = c.pct_change().dropna()
+        peak = c.cummax()
+        row.update(px=rnd(px), chg=rnd((px / float(c.iloc[-2]) - 1) * 100, 2),
+                   m1=rnd((px / float(c.iloc[-22]) - 1) * 100, 1) if len(c) > 22 else None,
+                   ytd=rnd((px / float(yb.iloc[-1]) - 1) * 100, 1) if len(yb) else None,
+                   y1=rnd((px / float(c.iloc[0]) - 1) * 100, 1),
+                   vola=rnd(float(ret.std()) * (252 ** 0.5) * 100, 1),
+                   mdd=rnd(float((c / peak - 1).min()) * 100, 1), hist1y=series_pairs(c),
+                   pxd=iso_date(c.index[-1]))
+    if w is not None and len(w) > 60:
+        pxw = float(w.iloc[-1])
+        for yrs, key in ((3, "y3"), (5, "y5")):
+            target = w.index[-1] - pd.DateOffset(years=yrs)
+            base = w[w.index <= target]
+            if not len(base) and (w.index[0] - target).days <= 14:  # Reihe beginnt knapp nach dem Stichtag
+                base = w.iloc[:1]
+            if len(base):
+                row[key] = rnd(((pxw / float(base.iloc[-1])) ** (1 / yrs) - 1) * 100, 1)
+        row["hist5y"] = series_pairs(w)
+    return row
+
+
+def fund_symbols(fonds: list[dict]) -> dict[str, dict]:
+    """Yahoo-Symbol (NAV-Reihe „0P…") je Fonds über die Tranchen-ISINs; Cache, Fehltreffer nach 30 Tagen neu suchen."""
+    cache = load(DATA / "fund_yahoo.json", {}) or {}
+    left = 60 if MODE == "nightly" else 15
+    for f in fonds:
+        isins = [i for i in (f.get("isins") or []) if isin_ok(i)]
+        if not isins:
+            continue
+        c = cache.get(f["name"]) or {}
+        if c.get("sym") and c.get("isin") in isins:
+            continue
+        if c.get("d") and not c.get("sym") and (NOW - datetime.fromisoformat(c["d"])).days < 30:
+            continue
+        if left <= 0:
+            break
+        found = None
+        for isin in isins[:4]:
+            left -= 1
+            try:
+                qs = yf.Search(isin, max_results=10).quotes or []
+            except Exception:
+                qs = []
+            cands = [q["symbol"] for q in qs if q.get("symbol") and (q["symbol"].startswith("0P") or q.get("quoteType") == "MUTUALFUND")]
+            for sym in cands:
+                try:
+                    h = yf.Ticker(sym).history(period="1y")["Close"].dropna()
+                except Exception:
+                    continue
+                if len(h) > 150:
+                    found = {"sym": sym, "isin": isin}
+                    break
+            if found:
+                break
+            time.sleep(0.5)
+        cache[f["name"]] = {**(found or {}), "d": NOW.isoformat()}
+        log(f"  Fonds-Kurs {f['name']}: {found['sym'] + ' (' + found['isin'] + ')' if found else 'kein NAV bei Yahoo'}")
+    save(DATA / "fund_yahoo.json", cache, quiet=True)
+    return cache
+
+
+def build_funds():
+    """Fondskatalog mit NAV-Performance (Yahoo „0P…") und Verwaltungsgebühr aus dem letzten Bericht anreichern."""
+    fk = ROOT / "manual" / "fonds.json"
+    if not fk.exists():
+        return
+    cat = json.loads(fk.read_text(encoding="utf-8"))
+    fonds = cat.get("fonds", [])
+    syms = safe(lambda: fund_symbols(fonds), {}, "Fonds-Symbole") or {}
+    tick = sorted({v["sym"] for v in syms.values() if v.get("sym")})
+    d1 = history_block(tick, period="1y") if tick else {}
+    w5 = history_block(tick, period="5y", interval="1wk") if tick else {}
+    reps = load(DATA / "fund_reports.json", {}) or {}
+    n_px = n_fee = 0
+    for f in fonds:
+        y = syms.get(f["name"]) or {}
+        if y.get("sym"):
+            perf = perf_fields(d1.get(y["sym"]), w5.get(y["sym"]))
+            if perf.get("px"):
+                f.update(perf, nav_sym=y["sym"], nav_isin=y["isin"])
+                n_px += 1
+        g = (reps.get(f["name"]) or {}).get("gebuehr")
+        if g:
+            f["gebuehr"] = g
+            f["gebuehr_quelle"] = (reps.get(f["name"]) or {}).get("typ")
+            n_fee += 1
+    cat["updated"] = NOW.isoformat()
+    save(DATA / "fonds.json", cat)
+    log(f"Fonds: {len(fonds)}, mit NAV {n_px}, mit Verwaltungsgebühr {n_fee}")
+
+
 def build_etfs():
     cfg = json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8"))
     etfs = cfg.get("etfs", [])
@@ -1170,29 +1268,10 @@ def build_etfs():
                        aum=info.get("totalAssets"), cur=info.get("currency"), ydiv=rnd((info.get("yield") or 0) * 100, 2) if info.get("yield") else None)
         else:
             row.update({k: old[e["isin"]].get(k) for k in ("ter", "aum", "cur", "ydiv")})
-        if c is not None and len(c) > 2:
-            px = float(c.iloc[-1])
-            yb = c[c.index.year < NOW.year]
-            ret = c.pct_change().dropna()
-            peak = c.cummax()
-            row.update(px=rnd(px), chg=rnd((px / float(c.iloc[-2]) - 1) * 100, 2),
-                       m1=rnd((px / float(c.iloc[-22]) - 1) * 100, 1) if len(c) > 22 else None,
-                       ytd=rnd((px / float(yb.iloc[-1]) - 1) * 100, 1) if len(yb) else None,
-                       y1=rnd((px / float(c.iloc[0]) - 1) * 100, 1),
-                       vola=rnd(float(ret.std()) * (252 ** 0.5) * 100, 1),
-                       mdd=rnd(float((c / peak - 1).min()) * 100, 1), hist1y=series_pairs(c))
-        if w is not None and len(w) > 60:
-            pxw = float(w.iloc[-1])
-            for yrs, key in ((3, "y3"), (5, "y5")):
-                base = w[w.index <= w.index[-1] - pd.DateOffset(years=yrs)]
-                if len(base):
-                    row[key] = rnd(((pxw / float(base.iloc[-1])) ** (1 / yrs) - 1) * 100, 1)
-            row["hist5y"] = series_pairs(w)
+        row.update(perf_fields(c, w))
         out.append(row)
     save(DATA / "etfs.json", {"updated": NOW.isoformat(), "geprueft": cfg.get("geprueft"), "hinweis": cfg.get("_hinweis"), "etfs": out})
-    fk = ROOT / "manual" / "fonds.json"
-    if fk.exists():
-        save(DATA / "fonds.json", json.loads(fk.read_text(encoding="utf-8")))
+    safe(build_funds, None, "Fonds")
     log(f"ETFs: {len(out)}, mit Kurs {sum(1 for r in out if r.get('px'))}")
 
 
@@ -1526,7 +1605,24 @@ def parse_fund_report(pdf: bytes) -> dict:
             tick, rest = rest[-1], rest[:-1]
         items.append({"isin": mm["isin"], "name": " ".join(rest), "tick": tick, "code": code, "cur": mm["cur"],
                       "w": float(mm["pct"].replace(",", ".")), "grp": g})
-    return {"stichtag": m.group(1) if m else None, "items": items, "tranchen": tranchen}
+    return {"stichtag": m.group(1) if m else None, "items": items, "tranchen": tranchen, "gebuehr": parse_fees(txt)}
+
+
+def parse_fees(txt: str) -> dict:
+    """„effektive Verwaltungsgebühr des Fonds  I-Tranche (EUR): 1,000 % R-Tranche (EUR): 2,000 % …" -> {"I": 1.0, "R": 2.0}"""
+    i = txt.find("effektive Verwaltungsgebühr")
+    if i < 0:
+        return {}
+    seg = txt[i:i + 600]
+    seg = seg[:seg.find("Depotbank")] if "Depotbank" in seg else seg
+    out = {}
+    for t, v in re.findall(r"\b([A-Z]{1,3})-Tranche \(\w{3}\):\s*(\d{1,2},\d{1,3})\s*%", seg):
+        out.setdefault(t, float(v.replace(",", ".")))
+    if not out:
+        mm = re.search(r"effektive Verwaltungsgebühr[^\d]{0,40}(\d{1,2},\d{1,3})\s*%", seg)
+        if mm:
+            out["alle"] = float(mm.group(1).replace(",", "."))
+    return out
 
 
 def pos_kind(it: dict) -> str:
@@ -1654,6 +1750,11 @@ def load_fund_reports() -> dict:
 
     def one(f):
         old = cache.get(f["name"]) or {}
+        if old.get("url", "").startswith("https://dl.avl") and "gebuehr" not in old:  # Gebühren nachtragen (einmalig)
+            try:
+                old = {**old, "gebuehr": parse_fund_report(HTTP.get(old["url"], timeout=90).content).get("gebuehr") or {}}
+            except Exception:
+                pass
         if old.get("checked") and (NOW - datetime.fromisoformat(old["checked"])).days < 6 and old.get("items") is not None:
             return f["name"], old
         hit = find_report(f["isins"], old.get("d"))
@@ -1668,7 +1769,8 @@ def load_fund_reports() -> dict:
         if not rep["items"]:
             return f["name"], {**old, "checked": NOW.isoformat()}
         return f["name"], {"url": url, "typ": REPORT_TYP[typ], "d": d, "stichtag": rep["stichtag"] or f"{d[6:]}.{d[4:6]}.{d[:4]}",
-                           "items": rep["items"], "tranchen": rep["tranchen"], "checked": NOW.isoformat()}
+                           "items": rep["items"], "tranchen": rep["tranchen"], "gebuehr": rep.get("gebuehr") or {},
+                           "checked": NOW.isoformat()}
 
     with ThreadPoolExecutor(6) as ex:
         for name, val in ex.map(one, todo):
@@ -1998,8 +2100,30 @@ _ISH_POS = re.compile(r"^(?P<pre>.*?)\s*(?P<isin>[A-Z]{2}[A-Z0-9]{9}[0-9])\s+(?:
 _ISH_CUT = re.compile(r"\s(Registered|Reg\.|Namens-|Inhaber-|Aandelen|Actions|Act\.|Bearer|Shares|Navne|Nam\.-|Inh\.|Vorzugs|Rg\.|Shs|Ordinary|Class|Cl\.|Acções|Azioni|Aktier|Akt\.|Bonus|Port\.|Nom\.|Acciones|Accions|Bons|Andeler|Unit|Partizipationsscheine|Genussscheine|Namn-Aktier|Acç\.)(?=[\s,]|$).*$")
 
 
-def ish_candidates(src: dict) -> list[str]:
+# Geschäftsjahresende (Monat) der irischen iShares-Umbrellas: Berichte heißen
+# "{umbrella}-{annual|interim}-report-en-{tt}-{mon}-{jj}.pdf" (Jahresbericht am GJ-Ende, Halbjahresbericht 6 Monate später)
+ISH_FY = {"i": 2, "ii": 10, "iii": 6, "iv": 5, "v": 11, "vi": 3}
+_MON_ABBR = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+
+
+def ish_dated(plc: str) -> list[str]:
+    fy = ISH_FY.get(plc)
+    if not fy:
+        return []
+    n = f"ishares-{plc}-plc" if plc != "i" else "ishares-plc"
     out = []
+    for y in (NOW.year, NOW.year - 1, NOW.year - 2):
+        for kind, mon in (("annual", fy), ("interim", (fy + 5) % 12 + 1)):
+            yy = y if kind == "annual" or mon > fy else y + 1
+            end = (pd.Timestamp(year=yy, month=mon, day=1) + pd.offsets.MonthEnd(0)).to_pydatetime()
+            if end > NOW.replace(tzinfo=None):
+                continue
+            out.append((end, f"{ISH_BASE}{kind}-report/{n}-{kind}-report-en-{end.day:02d}-{_MON_ABBR[mon - 1]}-{end.year % 100:02d}.pdf"))
+    return [u for _, u in sorted(out, reverse=True)]
+
+
+def ish_candidates(src: dict) -> list[str]:
+    out = ish_dated(src["plc"]) if src.get("plc") else []
     for y in (NOW.year, NOW.year - 1):
         if src.get("plc"):
             n = f"ishares-{src['plc']}-plc" if src["plc"] != "i" else "ishares-plc"
@@ -2070,7 +2194,7 @@ def parse_irl_report(pages: list[str], fonds: str) -> dict:
     want = norm(fonds)
     sel, stichtag = [], None
     for t in pages:
-        m = re.search(r"SCHEDULE OF INVESTMENTS(?: \(continued\))?\n(.+?)\nAs at (\d{1,2}) (\w+) (\d{4})", t)
+        m = re.search(r"SCHEDULE OF INVESTMENTS(?: \(UNAUDITED\))?(?: \(continued\))?\n(.+?)\nAs at (\d{1,2}) (\w+) (\d{4})", t)
         if m and norm(m.group(1)) == want:
             sel.append(t)
             if not stichtag and m.group(3).lower() in _MON_EN:
@@ -2133,6 +2257,8 @@ def ish_report(src: dict, cache: dict) -> dict | None:
         d = lambda s: datetime.strptime(s, "%d.%m.%Y")  # noqa: E731
         if not best or d(rep["stichtag"]) > d(best["stichtag"]):
             best = {**rep, "url": url, "typ": "Halbjahresbericht" if "interim" in url else "Jahresbericht"}
+        if "-report-en-" in url:  # datierte Namen sind absteigend sortiert: der erste lesbare ist der neueste
+            break
     if best:
         best["checked"] = NOW.isoformat()
         best["seen"] = sorted(seen)
