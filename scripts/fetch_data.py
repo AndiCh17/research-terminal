@@ -1463,7 +1463,7 @@ def build_holdings(uni_rows: list[dict], fund: dict):
     xrows = safe(lambda: extra_rows(extra, {r["s"] for r in uni_rows}), [], "Zusatztitel") or []
     log(f"  ISIN-Zuordnung Aktien: {len(isin_map)}")
     save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta, "isin": isin_map,
-                                  "extra": xrows, "v": 5, "berichte": sum(1 for k in meta if k.startswith("F:"))})
+                                  "extra": xrows, "v": 6, "berichte": sum(1 for k in meta if k.startswith("F:"))})
 
 
 # ----------------------------------------------------------------- Fondsberichte & Factsheets (echte Bestände)
@@ -2600,7 +2600,7 @@ def main():
         safe(build_long_history, None, "Langfrist-Historie")
     _h = load(DATA / "holdings.json") or {}
     _need = {e["isin"] for e in json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8")).get("etfs", []) if e.get("holdings")}
-    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 5 or not _need <= set(_h.get("meta", {})):
+    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 6 or not _need <= set(_h.get("meta", {})):
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
 
     # --- News + Stimmung
