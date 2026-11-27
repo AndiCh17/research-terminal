@@ -1008,6 +1008,11 @@ V.GOVT.after = el => {
 };
 
 /* --- Hilfsfunktionen Branchenvergleich --- */
+/* Gesamt-KGV = Summe Börsenwert ÷ Summe Gewinn (Verluste mindern den Gewinn) – so rechnen Indexanbieter für das Ganze */
+const aggPE = list => { let m=0,e=0; list.forEach(r=>{ if(r.mcap>0&&r.ni!=null){ m+=r.mcap; e+=r.ni; } }); return e>0 ? m/e : (m>0&&e<=0 ? -1 : null); };
+const lossN = list => list.filter(r=>r.ni!=null&&r.ni<0).length;
+const peTxt = v => v===-1 ? '<span class="dn" title="Summe der Gewinne negativ">neg.</span>' : fmt(v,1);
+const lossTxt = (k,n) => k ? `<span class="dn" title="${k} von ${n} Titeln mit Verlust (im Median-KGV nicht enthalten)">${k}</span> <span class="dim" style="font-size:10.5px">(${fmt(k/n*100,0)} %)</span>` : '<span class="dim">0</span>';
 const median = arr => { const a = arr.filter(v=>v!=null && isFinite(v)).sort((x,y)=>x-y); if(!a.length) return null; const m=a.length>>1; return a.length%2 ? a[m] : (a[m-1]+a[m])/2; };
 const RMEAN = v => v==null ? "–" : v<=1.5 ? "Starker Kauf" : v<=2.5 ? "Kaufen" : v<=3.5 ? "Halten" : v<=4.5 ? "Verkaufen" : "Starker Verkauf";
 const REGION = {"United States":"USA","Austria":"Österreich","Japan":"Japan"};
@@ -1089,20 +1094,20 @@ function braRegionen(u){
   enrichUni(u);
   const regs=["USA","Europa","Österreich","Schwellenländer","Alle"];
   const A = list => { const pe=median(list.map(r=>r.pe>0&&r.pe<200?r.pe:null));
-    return {n:list.length, ni:list.reduce((s,r)=>s+(r.ni||0),0), eg:median(list.map(r=>r.eg)), feg:median(list.map(r=>r.feg)), rg:median(list.map(r=>r.rg)), pe, fpe:median(list.map(r=>r.fpe>0&&r.fpe<200?r.fpe:null)), dy:median(list.map(r=>r.dy)), up:median(list.map(r=>r.up)), ytd:median(list.map(r=>r.ytd)), y1:median(list.map(r=>r.y1))}; };
+    return {pa:aggPE(list), loss:lossN(list), n:list.length, ni:list.reduce((s,r)=>s+(r.ni||0),0), eg:median(list.map(r=>r.eg)), feg:median(list.map(r=>r.feg)), rg:median(list.map(r=>r.rg)), pe, fpe:median(list.map(r=>r.fpe>0&&r.fpe<200?r.fpe:null)), dy:median(list.map(r=>r.dy)), up:median(list.map(r=>r.up)), ytd:median(list.map(r=>r.ytd)), y1:median(list.map(r=>r.y1))}; };
   const data = regs.map(g=>[g, A(u.rows.filter(r=>inReg(r,g)))]);
-  const tbl1 = `<div class="scroll"><table><thead><tr><th class="l">Region</th><th>Titel</th><th>Gewinn € (Summe)</th><th>Gewinn J/J</th><th>erw. EPS-Wachst.</th><th>Umsatz J/J</th><th>KGV</th><th>KGV erw.</th><th>Div.-Rendite</th><th>Kursziel-Pot.</th><th>YTD</th><th>1 J</th></tr></thead><tbody>
-    ${data.map(([g,a])=>`<tr style="${g==="Alle"?"border-top:2px solid var(--line)":""}"><td class="l"${g==="Alle"?' style="color:var(--amber)"':""}>${g==="Alle"?"Gesamtes Universum":g}</td><td>${fmt(a.n,0)}</td><td>${big(a.ni)}</td><td class="${cls(a.eg)}">${pct(a.eg,1)}</td><td class="${cls(a.feg)}">${pct(a.feg,1)}</td><td class="${cls(a.rg)}">${pct(a.rg,1)}</td><td>${fmt(a.pe,1)}</td><td>${fmt(a.fpe,1)}</td><td>${a.dy!=null?fmt(a.dy,2)+" %":"–"}</td><td class="${cls(a.up)}">${pct(a.up,1)}</td><td class="${cls(a.ytd)}">${pct(a.ytd,1)}</td><td class="${cls(a.y1)}">${pct(a.y1,1)}</td></tr>`).join("")}
+  const tbl1 = `<div class="scroll"><table><thead><tr><th class="l">Region</th><th>Titel</th><th>Gewinn € (Summe)</th><th>Gewinn J/J</th><th>erw. EPS-Wachst.</th><th>Umsatz J/J</th><th title="Median der Einzeltitel mit Gewinn">KGV Median</th><th title="Summe Börsenwert ÷ Summe Gewinn, Verluste eingerechnet">KGV gesamt</th><th>mit Verlust</th><th>KGV erw.</th><th>Div.-Rendite</th><th>Kursziel-Pot.</th><th>YTD</th><th>1 J</th></tr></thead><tbody>
+    ${data.map(([g,a])=>`<tr style="${g==="Alle"?"border-top:2px solid var(--line)":""}"><td class="l"${g==="Alle"?' style="color:var(--amber)"':""}>${g==="Alle"?"Gesamtes Universum":g}</td><td>${fmt(a.n,0)}</td><td>${big(a.ni)}</td><td class="${cls(a.eg)}">${pct(a.eg,1)}</td><td class="${cls(a.feg)}">${pct(a.feg,1)}</td><td class="${cls(a.rg)}">${pct(a.rg,1)}</td><td>${fmt(a.pe,1)}</td><td>${peTxt(a.pa)}</td><td>${lossTxt(a.loss,a.n)}</td><td>${fmt(a.fpe,1)}</td><td>${a.dy!=null?fmt(a.dy,2)+" %":"–"}</td><td class="${cls(a.up)}">${pct(a.up,1)}</td><td class="${cls(a.ytd)}">${pct(a.ytd,1)}</td><td class="${cls(a.y1)}">${pct(a.y1,1)}</td></tr>`).join("")}
   </tbody></table></div>`;
   // Matrix Sektor × Region: aktuelles KGV, eingefärbt nach Abstand zum eigenen langfristigen Schnitt
   const secs=[...new Set(u.rows.map(r=>r.sec).filter(Boolean))].sort();
   const R4=regs.slice(0,4);
-  const cell = list => { if(list.length<3) return `<td class="dim">–</td>`; const pe=median(list.map(r=>r.pe>0&&r.pe<200?r.pe:null)); return `<td title="${list.length} Titel">${fmt(pe,1)} <span class="dim" style="font-size:10.5px">(${list.length})</span></td>`; };
+  const cell = list => { if(list.length<3) return `<td class="dim">–</td>`; const pe=median(list.map(r=>r.pe>0&&r.pe<200?r.pe:null)); const k=lossN(list); return `<td title="${list.length} Titel, davon ${k} mit Verlust · Gesamt-KGV ${aggPE(list)===-1?"neg.":fmt(aggPE(list),1)}">${fmt(pe,1)} <span class="dim" style="font-size:10.5px">(${list.length}${k?`, <span class="dn">${k} Verl.</span>`:""})</span></td>`; };
   const tbl2 = `<div class="scroll"><table><thead><tr><th class="l" style="width:220px">Sektor</th>${R4.map(g=>`<th>${g}</th>`).join("")}</tr></thead><tbody>
     ${secs.map(sec=>`<tr><td class="l">${esc(sec)}</td>${R4.map(g=>cell(u.rows.filter(r=>r.sec===sec&&inReg(r,g)))).join("")}</tr>`).join("")}
   </tbody></table></div>`;
-  return `${panel("Regionen im Vergleich", tbl1+`<p class="dim" style="font-size:11px;margin-top:8px">Mediane je Region. Europa einschließlich Österreich.</p>`)}
-    <div style="margin-top:10px">${panel("KGV nach Sektor und Region", tbl2+`<p class="dim" style="font-size:11px;margin-top:8px">Aktuelles Median-KGV je Feld, in Klammern die Zahl der Titel. Mindestens 3 Titel je Feld.</p>`)}</div>`;
+  return `${panel("Regionen im Vergleich", tbl1+`<p class="dim" style="font-size:11px;margin-top:8px">Mediane je Region; „KGV gesamt“ = Summe Börsenwert ÷ Summe Gewinn aller Titel (Verluste mindern den Gewinn, große Firmen zählen mehr). „mit Verlust“ = Titel mit negativem Jahresgewinn – sie haben kein KGV und fehlen im Median. Europa einschließlich Österreich.</p>`)}
+    <div style="margin-top:10px">${panel("KGV nach Sektor und Region", tbl2+`<p class="dim" style="font-size:11px;margin-top:8px">Aktuelles Median-KGV je Feld, in Klammern die Zahl der Titel und davon mit Verlust (Maus über das Feld: Gesamt-KGV). Mindestens 3 Titel je Feld.</p>`)}</div>`;
 }
 V.BRA = async () => {
   const u = enrichUni(await lazy("universe")); if(!u) return panel("Branchen", noData("Universums-Daten"));
@@ -1110,8 +1115,8 @@ V.BRA = async () => {
   if (braTab==="reg") return tabs + braRegionen(u);
   const rows = u.rows.filter(r => braReg==="Alle" || regionOf(r.c)===braReg);
   const by = {}; rows.forEach(r=>{ if(r.sec) (by[r.sec]=by[r.sec]||[]).push(r); });
-  const agg = list => ({n:list.length, pe:median(list.map(r=>r.pe>0&&r.pe<200?r.pe:null)), fpe:median(list.map(r=>r.fpe>0&&r.fpe<200?r.fpe:null)), dy:median(list.map(r=>r.dy)), eg:median(list.map(r=>r.eg)), feg:median(list.map(r=>r.feg)), up:median(list.map(r=>r.up)), ytd:median(list.map(r=>r.ytd)), ni:list.reduce((s,r)=>s+(r.ni||0),0)});
-  const line = (name, a, attrs="", indent=false) => `<tr ${attrs}><td class="l${indent?" dim":""}" style="${indent?"padding-left:22px":""}">${indent?"":"▸ "}${esc(name)}</td><td>${a.n}</td><td>${big(a.ni)}</td><td class="${cls(a.eg)}">${pct(a.eg,1)}</td><td class="${cls(a.feg)}">${pct(a.feg,1)}</td><td>${fmt(a.pe,1)}</td><td>${fmt(a.fpe,1)}</td><td>${a.dy!=null?fmt(a.dy,2)+" %":"–"}</td><td class="${cls(a.up)}">${pct(a.up,1)}</td><td class="${cls(a.ytd)}">${pct(a.ytd,1)}</td></tr>`;
+  const agg = list => ({pa:aggPE(list), loss:lossN(list), n:list.length, pe:median(list.map(r=>r.pe>0&&r.pe<200?r.pe:null)), fpe:median(list.map(r=>r.fpe>0&&r.fpe<200?r.fpe:null)), dy:median(list.map(r=>r.dy)), eg:median(list.map(r=>r.eg)), feg:median(list.map(r=>r.feg)), up:median(list.map(r=>r.up)), ytd:median(list.map(r=>r.ytd)), ni:list.reduce((s,r)=>s+(r.ni||0),0)});
+  const line = (name, a, attrs="", indent=false) => `<tr ${attrs}><td class="l${indent?" dim":""}" style="${indent?"padding-left:22px":""}">${indent?"":"▸ "}${esc(name)}</td><td>${a.n}</td><td>${big(a.ni)}</td><td class="${cls(a.eg)}">${pct(a.eg,1)}</td><td class="${cls(a.feg)}">${pct(a.feg,1)}</td><td>${fmt(a.pe,1)}</td><td>${peTxt(a.pa)}</td><td>${lossTxt(a.loss,a.n)}</td><td>${fmt(a.fpe,1)}</td><td>${a.dy!=null?fmt(a.dy,2)+" %":"–"}</td><td class="${cls(a.up)}">${pct(a.up,1)}</td><td class="${cls(a.ytd)}">${pct(a.ytd,1)}</td></tr>`;
   let body = "";
   Object.entries(by).sort((a,b)=>b[1].length-a[1].length).forEach(([sec,list])=>{
     body += line(sec, agg(list), `class="click" data-sec="${esc(sec)}" style="${braOpen===sec?"background:var(--hl)":""}"`);
@@ -1121,7 +1126,7 @@ V.BRA = async () => {
   // Themenkörbe quer über die Sektoren
   const themes = Object.entries(THEMES).map(([name,t])=>[name, rows.filter(t.test)]).filter(([,l])=>l.length);
   if (themes.length) {
-    body += `<tr><td colspan="11" class="l" style="padding-top:14px;color:var(--amber);font-size:10.5px;font-weight:650;letter-spacing:.6px;text-transform:uppercase">Themen (sektorübergreifend)</td></tr>`;
+    body += `<tr><td colspan="13" class="l" style="padding-top:14px;color:var(--amber);font-size:10.5px;font-weight:650;letter-spacing:.6px;text-transform:uppercase">Themen (sektorübergreifend)</td></tr>`;
     themes.forEach(([name,list])=>{
       body += line(name, agg(list), `class="click" data-theme="${esc(name)}" style="${braOpen===name?"background:var(--hl)":""}"`);
       if (braOpen===name) [...list].sort((a,b)=>(b.mcap||0)-(a.mcap||0)).forEach(r=>{ body += line(`${r.n} · ${r.ind||r.sec||""}`, agg([r]), `class="click" data-sym="${esc(r.s)}"`, true); });
@@ -1129,8 +1134,8 @@ V.BRA = async () => {
   }
   const regs = ["Alle","USA","Europa","Österreich","Schwellenländer"];
   return tabs + panel("Branchenvergleich", `<div class="btns" id="br" style="margin-bottom:8px">${regs.map(r=>`<button data-r="${r}" class="${r===braReg?"on":""}">${r}</button>`).join("")}</div>
-    <div class="scroll"><table id="bt"><thead><tr><th class="l">Sektor / Branche</th><th>Titel</th><th>Gewinn € (Summe)</th><th>Gewinnwachst. J/J</th><th>erw. EPS-Wachst.</th><th>KGV</th><th>KGV erw.</th><th>Div.-Rendite</th><th>Kursziel-Pot.</th><th>YTD</th></tr></thead><tbody>${body}</tbody></table></div>
-    <p class="dim" style="font-size:11px;margin-top:8px">Mediane je Sektor bzw. Branche (KGV nur zwischen 0 und 200). Sektor anklicken = Branchen aufklappen, Branche anklicken = alle Titel im Screener. <b>Erneuerbare Energien</b> stecken nicht im Sektor Energie (der umfasst Öl &amp; Gas), sondern verteilt in Versorger, Technologie (Solar) und Industrie (Wind- und Netztechnik) – deshalb gibt es sie unten als eigenen Themenkorb. Die Kennzahlen füllen sich mit jedem Nachtlauf.</p>`, `<small>${fmt(rows.length,0)} Titel</small>`);
+    <div class="scroll"><table id="bt"><thead><tr><th class="l">Sektor / Branche</th><th>Titel</th><th>Gewinn € (Summe)</th><th>Gewinnwachst. J/J</th><th>erw. EPS-Wachst.</th><th title="Median der Einzeltitel mit Gewinn">KGV Median</th><th title="Summe Börsenwert ÷ Summe Gewinn, Verluste eingerechnet">KGV gesamt</th><th>mit Verlust</th><th>KGV erw.</th><th>Div.-Rendite</th><th>Kursziel-Pot.</th><th>YTD</th></tr></thead><tbody>${body}</tbody></table></div>
+    <p class="dim" style="font-size:11px;margin-top:8px">Mediane je Sektor bzw. Branche (Median-KGV nur Titel mit Gewinn, KGV bis 200). „KGV gesamt“ = Summe Börsenwert ÷ Summe Gewinn inkl. Verlustbringern – entspricht dem KGV eines Index-ETFs auf den Sektor. „mit Verlust“ = Anzahl Titel mit negativem Jahresgewinn. Sektor anklicken = Branchen aufklappen, Branche anklicken = alle Titel im Screener. <b>Erneuerbare Energien</b> stecken nicht im Sektor Energie (der umfasst Öl &amp; Gas), sondern verteilt in Versorger, Technologie (Solar) und Industrie (Wind- und Netztechnik) – deshalb gibt es sie unten als eigenen Themenkorb. Die Kennzahlen füllen sich mit jedem Nachtlauf.</p>`, `<small>${fmt(rows.length,0)} Titel</small>`);
 };
 V.BRA.after = el => {
   el.querySelectorAll("#braT button").forEach(b=>b.onclick=()=>{ braTab=b.dataset.t; render(); });
@@ -1184,9 +1189,11 @@ function etfLook(isin){
   const harm = k => { let sw=0, se=0; items.forEach(([r,w])=>{ const v=r[k]; if(v!=null&&v>0&&isFinite(v)){ sw+=w; se+=w/v; } }); return sw>W*0.5&&se>0 ? sw/se : null; };
   const dy = (()=>{ let sw=0, sv=0; items.forEach(([r,w])=>{ if(r.pe!=null||r.dy!=null){ sw+=w; sv+=w*(r.dy||0); } }); return sw>W*0.5 ? sv/sw : null; })();
   const grp = f => { const m={}; items.forEach(([r,w])=>{ const k=f(r)||"ohne Angabe"; m[k]=(m[k]||0)+w; }); return Object.entries(m).map(([k,v])=>[k,v/W*100]).sort((a,b)=>b[1]-a[1]); };
+  const lossIt = items.filter(([r])=>r.ni!=null&&r.ni<0), wl = lossIt.reduce((a,[,w])=>a+w,0)/W*100;
+  const peAll = (()=>{ let sw=0, se=0; items.forEach(([r,w])=>{ if(r.mcap>0&&r.ni!=null){ sw+=w; se+=w*r.ni/r.mcap; } }); return sw>W*0.5 ? (se>0 ? sw/se : -1) : null; })();
   const meta=(H.meta||{})[isin]||{};
   const cover = capW ? 100 : (meta.wall ? Math.min(100, W/meta.wall*100) : Math.min(100, W));
-  return (_etfLook[isin] = {n:items.length, capW, cover, meta, items:items.map(([r,w])=>[r,w/W]),
+  return (_etfLook[isin] = {n:items.length, capW, cover, meta, nl:lossIt.length, wl, peAll, items:items.map(([r,w])=>[r,w/W]),
     pe:harm("pe"), fpe:harm("fpe"), dy, feg:wavg("feg",-50,100), eg:wavg("eg",-100,200), up:wavg("up",-80,150), roe:wavg("roe",-100,100),
     sek:grp(r=>r.sec), land:grp(r=>LAND_DE[r.c]||r.c), top:[...items].sort((a,b)=>b[1]-a[1]).slice(0,10).map(([r,w])=>[r,w/W*100])});
 }
@@ -1206,14 +1213,14 @@ function etfInsight(x){
   const kpi=(l,v)=>`<div class="tile" style="cursor:default;padding:8px 10px"><div class="t"><span>${l}</span></div><div class="v" style="font-size:17px">${v}</div></div>`;
   const row=(n,w,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:2px 0;border-bottom:1px solid var(--line2)"><span>${i+1}. ${esc(n)}</span><b>${fmt(w,2)} %</b></div>`;
   return `${L?`<div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr));margin-bottom:10px">
-      ${kpi("KGV",fmt(L.pe,1))}${kpi("KGV erwartet",fmt(L.fpe,1))}${kpi("Div.-Rendite Bestand",L.dy!=null?fmt(L.dy,2)+" %":"–")}${kpi("erw. EPS-Wachstum",pct(L.feg,1))}${kpi("Gewinn J/J",pct(L.eg,1))}${kpi("Kursziel-Potenzial",pct(L.up,1))}${kpi("Eigenkapitalrendite",L.roe!=null?fmt(L.roe,1)+" %":"–")}${kpi("Abdeckung",fmt(L.cover,0)+" %")}</div>`:""}
+      ${kpi("KGV (Titel mit Gewinn)",fmt(L.pe,1))}${kpi("KGV inkl. Verlustbringer",peTxt(L.peAll))}${kpi("Titel mit Verlust",L.nl?`<span class="dn">${L.nl}</span> <span style="font-size:12px" class="dim">· ${fmt(L.wl,1)} % Gewicht</span>`:"0")}${kpi("KGV erwartet",fmt(L.fpe,1))}${kpi("Div.-Rendite Bestand",L.dy!=null?fmt(L.dy,2)+" %":"–")}${kpi("erw. EPS-Wachstum",pct(L.feg,1))}${kpi("Gewinn J/J",pct(L.eg,1))}${kpi("Kursziel-Potenzial",pct(L.up,1))}${kpi("Eigenkapitalrendite",L.roe!=null?fmt(L.roe,1)+" %":"–")}${kpi("Abdeckung",fmt(L.cover,0)+" %")}</div>`:""}
     <div class="grid g3">
       <div><div class="dim" style="font-size:11px;margin-bottom:6px">GRÖSSTE POSITIONEN</div>${tops?tops.map(([n,w],i)=>row(n,w,i)).join(""):L?L.top.map(([r,w],i)=>row(r.n,w,i)).join(""):""}</div>
       <div><div class="dim" style="font-size:11px;margin-bottom:6px">SEKTOREN</div>${L?bars(L.sek):"–"}</div>
       <div><div class="dim" style="font-size:11px;margin-bottom:6px">LÄNDER</div>${L?bars(L.land):"–"}</div>
     </div>
     <button class="info" data-etfprint="${esc(x.isin)}" style="margin-top:8px;padding:4px 10px">🖨 Steckbrief / PDF</button>
-    <p class="dim" style="font-size:11px;margin:8px 0 0">${basis}. KGV als gewichtetes harmonisches Mittel (entspricht Fondskurs ÷ anteiligem Gewinn, nur Titel mit Gewinn), Dividendenrendite und Wachstum gewichtet gemittelt. Sektoren und Länder beziehen sich auf den zugeordneten Teil.</p>`;
+    <p class="dim" style="font-size:11px;margin:8px 0 0">${basis}. KGV als gewichtetes harmonisches Mittel (entspricht Fondskurs ÷ anteiligem Gewinn) – einmal nur über Titel mit Gewinn (so weisen es die Anbieter meist aus), einmal inkl. Verlustbringern (deren Verluste mindern den Gewinn), Dividendenrendite und Wachstum gewichtet gemittelt. Sektoren und Länder beziehen sich auf den zugeordneten Teil.</p>`;
 }
 V.ETF = async () => {
   const e = await lazy("etfs"); await lazy("holdings"); await lazy("universe"); if(!e || !e.etfs?.length) return panel("ETFs", noData("ETF-Daten"));

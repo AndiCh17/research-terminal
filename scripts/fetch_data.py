@@ -1298,7 +1298,16 @@ def filter_holdings(f: dict, uni_rows: list[dict], fund: dict) -> list[tuple[str
     return sorted(w.items(), key=lambda x: -x[1])
 
 
+_SYMC: dict = {}
+_SEARCH_LEFT = [0]
+_EXTRA: set = set()
+
+
 def build_holdings(uni_rows: list[dict], fund: dict):
+    _SYMC.clear()
+    _SYMC.update(load(DATA / "fund_symbols.json") or {})
+    _SEARCH_LEFT[0] = 250 if MODE == "nightly" else 120
+    _EXTRA.clear()
     cfg = json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8"))
     keys: dict[str, str] = {}
     first: dict[str, list[str]] = {}
@@ -1351,24 +1360,49 @@ def build_holdings(uni_rows: list[dict], fund: dict):
             if not sym and k:
                 cand = first.get(k.split()[0], [])
                 sym = cand[0] if len(cand) == 1 else None
+            fisin = (fr.get("isin") or "").strip().upper()
+            if not sym and fisin and w >= 0.15 and not src.get("subset"):
+                # Titel außerhalb des Universums: Yahoo-Symbol über ISIN-Cache bzw. Namenssuche (begrenzt je Lauf)
+                c = _SYMC.get(fisin)
+                if c and (c[0] or (NOW - datetime.fromisoformat(c[1])).days < 30):
+                    sym = c[0] or None
+                elif _SEARCH_LEFT[0] > 0:
+                    _SEARCH_LEFT[0] -= 1
+                    sym = search_symbol(n, {})
+                    _SYMC[fisin] = [sym or "", NOW.isoformat()]
+                if sym:
+                    _EXTRA.add(sym)
             if sym:
                 agg[sym] = agg.get(sym, 0) + w
                 hit += 1
                 isin = (fr.get("isin") or "").strip().upper()
                 if len(isin) == 12:
                     isin_map.setdefault(isin, sym)
+        sub = src.get("subset")
+        if sub:
+            # Sektor-/Branchenindex = Teilmenge des Mutterindex: Liste des Mutter-ETFs filtern und neu gewichten
+            rowmap = {r["s"]: {**r, **(fund.get(r["s"]) or {})} for r in uni_rows}
+            ok = lambda d: d and (not sub.get("sector") or d.get("sec") == sub["sector"]) and (  # noqa: E731
+                not sub.get("industry_re") or re.search(sub["industry_re"], str(d.get("ind") or ""), re.I))
+            agg = {s_: w for s_, w in agg.items() if ok(rowmap.get(s_))}
+            tot = sum(agg.values()) or 1
+            agg = {s_: w / tot * 100 for s_, w in agg.items()}
+            hit = len(agg)
+            tops[e["isin"]] = [[rowmap[s_].get("n") or s_, rnd(w, 2)] for s_, w in sorted(agg.items(), key=lambda x: -x[1])[:10]]
+            rows = [(s_, w) for s_, w in agg.items()]
         for sym, w in agg.items():
             by_sym.setdefault(sym, []).append([e["isin"], rnd(w, 3)])
         meta[e["isin"]] = {"art": "liste", "quelle": src.get("quelle") or "Positionsliste des Anbieters",
                            "naeherung": bool(src.get("isin") or src.get("ticker")), "n": len(rows), "hit": hit,
                            "wsum": rnd(sum(agg.values()), 1), "wall": rnd(sum(w for _, w in rows), 1)}
         log(f"  Positionen {e.get('ticker') or e['isin']}: {len(rows)} Titel, {hit} im Universum zugeordnet")
-    extra: set[str] = set()
-    safe(lambda: add_report_holdings(cfg, keys, first, by_sym, tops, meta, isin_map, extra), None, "Fondsberichte/Factsheets")
+    save(DATA / "fund_symbols.json", _SYMC, quiet=True)
+    extra: set[str] = set(_EXTRA)
+    safe(lambda: add_report_holdings(cfg, keys, first, by_sym, tops, meta, isin_map, extra, uni_rows, fund), None, "Fondsberichte/Factsheets")
     xrows = safe(lambda: extra_rows(extra, {r["s"] for r in uni_rows}), [], "Zusatztitel") or []
     log(f"  ISIN-Zuordnung Aktien: {len(isin_map)}")
     save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta, "isin": isin_map,
-                                  "extra": xrows, "v": 2, "berichte": sum(1 for k in meta if k.startswith("F:"))})
+                                  "extra": xrows, "v": 3, "berichte": sum(1 for k in meta if k.startswith("F:"))})
 
 
 # ----------------------------------------------------------------- Fondsberichte & Factsheets (echte Bestände)
@@ -1575,7 +1609,7 @@ def resolve_positions(items: list[dict], keys: dict, first: dict, isin_map: dict
 def extra_rows(syms: set[str], have: set[str], limit=None) -> list[dict]:
     """Kennzahlen für Fondstitel außerhalb des Universums (Cache, Auffrischung alle 14 Tage)."""
     limit = limit or (400 if MODE == "nightly" else 150)
-    cache = load(DATA / "fund_extra2.json") or {}
+    cache = load(DATA / "fund_extra3.json") or {}
     need = [s for s in sorted(syms - have) if s not in cache or (NOW - datetime.fromisoformat(cache[s]["upd"])).days >= 14][:limit]
     got, fail = {}, 0
     for sym in need:
@@ -1602,8 +1636,9 @@ def extra_rows(syms: set[str], have: set[str], limit=None) -> list[dict]:
             "pe": rnd(g.get("trailingPE"), 1), "fpe": rnd(g.get("forwardPE"), 1), "dy": rnd(dy, 2), "roe": pct_(g.get("returnOnEquity")),
             "eg": pct_(g.get("earningsGrowth", g.get("earningsQuarterlyGrowth"))),
             "feg": rnd((g["forwardEps"] / g["trailingEps"] - 1) * 100, 1) if g.get("forwardEps") and g.get("trailingEps") and g["trailingEps"] > 0 else None,
-            "up": rnd((g["targetMeanPrice"] / px - 1) * 100, 1) if g.get("targetMeanPrice") and px else None, "x": 1}}
-    save(DATA / "fund_extra2.json", cache, quiet=True)
+            "up": rnd((g["targetMeanPrice"] / px - 1) * 100, 1) if g.get("targetMeanPrice") and px else None,
+            "ni": rnd(to_eur(g.get("netIncomeToCommon"), g.get("currency"), fx), 0) if g.get("netIncomeToCommon") is not None else None, "x": 1}}
+    save(DATA / "fund_extra3.json", cache, quiet=True)
     log(f"  Zusatztitel für Fonds: {len(syms - have)} außerhalb des Universums, {len(got)} neu geladen, {fail} ohne Daten, {sum(1 for s in syms - have if s in cache)} verfügbar")
     return [cache[s]["row"] for s in sorted(syms - have) if s in cache]
 
@@ -1621,14 +1656,20 @@ def factsheet_top10(url: str) -> tuple[str | None, list[tuple[str, float]]]:
     r = pypdf.PdfReader(io.BytesIO(HTTP.get(url, timeout=60).content))
     txt = "\n".join((p.extract_text() or "") for p in r.pages)
     m = re.search(r"(?:as at|Stand)[:\s]+(\d{1,2}[-\./][A-Za-z0-9]{2,3}[-\./]\d{4})", txt)
-    i = txt.find("Top 10 Holdings")
+    if not m:
+        mg = re.search(r"zum (\d{1,2})\. ?([A-Za-zä]{3,4})\.? (\d{4})", txt)
+        mon = {"jan": 1, "feb": 2, "mär": 3, "mrz": 3, "apr": 4, "mai": 5, "jun": 6, "jul": 7, "aug": 8, "sep": 9, "sept": 9, "okt": 10, "nov": 11, "dez": 12}
+        if mg and mg.group(2).lower() in mon:
+            return_stand = f"{int(mg.group(1)):02d}.{mon[mg.group(2).lower()]:02d}.{mg.group(3)}"
+            m = re.match(r"(.*)", return_stand)
+    i = max(txt.find("Top 10 Holdings"), txt.find("Top-10-Positionen"), txt.find("Top 10 Positionen"))
     out = []
-    for ln in txt[i:].splitlines()[1:16]:
-        mm = re.match(r"^(.+?)\s+(\d{1,2}\.\d{2})%\s*$", ln.strip())
-        if ln.strip().startswith("Total"):
+    for ln in (txt[i:].splitlines()[1:16] if i >= 0 else []):
+        if re.match(r"^(Total|Summe|Gesamt|Portfolio insgesamt)", ln.strip()):
             break
+        mm = re.match(r"^(.+?)\s+(\d{1,2}[\.,]\d{2})\s?%\s*$", ln.strip())
         if mm:
-            out.append((mm.group(1).strip(), float(mm.group(2))))
+            out.append((mm.group(1).strip(), float(mm.group(2).replace(",", "."))))
     stand = m.group(1) if m else None
     if stand:
         for fmt_ in ("%d-%b-%Y", "%d.%m.%Y", "%d/%m/%Y"):
@@ -1653,7 +1694,8 @@ def search_symbol(name: str, cache: dict) -> str | None:
     return sym
 
 
-def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: dict, meta: dict, isin_map: dict, extra: set):
+def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: dict, meta: dict, isin_map: dict, extra: set,
+                        uni_rows: list | None = None, fund: dict | None = None):
     """Echte Bestände: Factsheet-Top-10 (iShares) und Vermögensaufstellungen der Halbjahres-/Rechenschaftsberichte."""
     symc = load(DATA / "fund_symbols.json") or {}
     for e in cfg.get("etfs", []):
@@ -1667,17 +1709,27 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
             continue
         if not top:
             continue
-        hit = 0
+        hit, got = 0, set()
         for n, w in top:
             k = name_key(n)
             sym = keys.get(k) or search_symbol(n, symc)
-            if sym:
+            if sym and sym not in got:
                 by_sym.setdefault(sym, []).append([e["isin"], w])
                 hit += 1
+                got.add(sym)
                 extra.add(sym)
+        ts = sum(w for _, w in top)
+        rest = []
+        if src.get("filter") and uni_rows is not None:
+            fh = [(s_, w) for s_, w in (filter_holdings(src["filter"], uni_rows, fund or {}) or []) if s_ not in got]
+            tot = sum(w for _, w in fh) or 1
+            rest = [(s_, w / tot * (100 - ts)) for s_, w in fh]
+            for s_, w in rest:
+                by_sym.setdefault(s_, []).append([e["isin"], rnd(w, 3)])
         tops[e["isin"]] = [[nice_name(n), w] for n, w in top]
         meta[e["isin"]] = {"art": "factsheet", "quelle": "Factsheet des Anbieters", "stichtag": stand, "n": len(top), "hit": hit,
-                           "wsum": rnd(sum(w for _, w in top), 1), "wall": 100.0, "url": src["factsheet"]}
+                           "wsum": rnd(ts, 1), "wall": 100.0 if not rest else rnd(ts + sum(w for _, w in rest), 1), "url": src["factsheet"],
+                           "rest": len(rest)}
         log(f"  Factsheet {e.get('ticker')}: Top {len(top)} ({sum(w for _, w in top):.1f} %), Stand {stand}")
     save(DATA / "fund_symbols.json", symc, quiet=True)
 
@@ -2154,7 +2206,7 @@ def main():
         safe(build_long_history, None, "Langfrist-Historie")
     _h = load(DATA / "holdings.json") or {}
     _need = {e["isin"] for e in json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8")).get("etfs", []) if e.get("holdings")}
-    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 2 or not _need <= set(_h.get("meta", {})):
+    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 3 or not _need <= set(_h.get("meta", {})):
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
 
     # --- News + Stimmung
