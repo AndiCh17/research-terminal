@@ -629,7 +629,16 @@ YAHOO_SUFFIXES = tuple(sorted({s for _, s in EXCHANGE_SUFFIX if s}))
 def wiki_list(url: str, label: str, suffix: str = "", country: str | None = None, min_rows: int = 15) -> list[dict]:
     """Indexmitglieder aus einer Wikipedia-Tabelle (Spalte Ticker/Symbol)."""
     clean_h = lambda c: re.sub(r"\[.*?\]", "", str(c)).strip()  # noqa: E731
-    tables = pd.read_html(io.StringIO(HTTP.get(url, timeout=60).text))
+    tables = None
+    for attempt, u in enumerate([url, url + ("&" if "?" in url else "?") + "action=render"]):
+        try:
+            tables = pd.read_html(io.StringIO(HTTP.get(u, timeout=60).text))
+            break
+        except ValueError:  # Wikipedia liefert bei Last gelegentlich eine Seite ohne Tabellen
+            if attempt == 0:
+                time.sleep(6)
+    if tables is None:
+        raise ValueError("No tables found")
     for t in tables:
         if isinstance(t.columns, pd.MultiIndex):
             t.columns = [" ".join(str(x) for x in c if "Unnamed" not in str(x)) for c in t.columns]
@@ -1136,11 +1145,21 @@ def em_korea_taiwan(min_weight=0.02) -> list[dict]:
         elif isin.startswith("TW000") and len(isin) == 12 and isin[5:9].isdigit():
             sym = isin[5:9] + (".TWO" if ("GRETAI" in ex or "TAIPEI EXCHANGE" in ex or "TPEX" in ex) else ".TW")
             c = "Taiwan"
+        elif isin.startswith("BR") and len(isin) == 12 and isin[2:6].isalpha():
+            # B3-Kürzel aus der ISIN: BRPETRACNPR6 → PETR4 (ON=3, PN=4, PNA=5, PNB=6, Units=11)
+            cls_ = {"ACNOR": "3", "ACNPR": "4", "ACNPA": "5", "ACNPB": "6", "CDAM1": "11", "UNT00": "11"}.get(isin[6:11])
+            if not cls_ and isin[6:10] == "CDAM":
+                cls_ = "11"
+            if not cls_:
+                continue
+            sym = isin[2:6] + cls_ + ".SA"
+            c = "Brazil"
         else:
             continue
-        out.append({"s": sym, "n": r["name"].title(), "sec": None, "c": c, "src": ["MSCI EM (Korea/Taiwan)"]})
+        out.append({"s": sym, "n": r["name"].title(), "sec": None, "c": c,
+                    "src": ["MSCI EM (Brasilien)" if c == "Brazil" else "MSCI EM (Korea/Taiwan)"]})
     # Börsenplatz prüfen: Taipei Exchange (.TWO) bzw. KOSDAQ (.KQ) sind in der Positionsliste nicht immer erkennbar
-    alt = {".TW": ".TWO", ".TWO": ".TW", ".KS": ".KQ", ".KQ": ".KS"}
+    alt = {".TW": ".TWO", ".TWO": ".TW", ".KS": ".KQ", ".KQ": ".KS", ".SA": ".SA"}
     have = history_block([r["s"] for r in out], period="5d", interval="1d")
     miss = [r for r in out if have.get(r["s"]) is None or not len(have[r["s"]])]
     if miss:
@@ -1151,7 +1170,7 @@ def em_korea_taiwan(min_weight=0.02) -> list[dict]:
             r["s"] = n if (have2.get(n) is not None and len(have2[n])) else None
     dropped = sum(1 for r in out if not r["s"])
     out = [r for r in out if r["s"]]
-    log(f"  MSCI EM (Korea/Taiwan): {len(out)} Titel ({len(miss)} Börsenplatz geprüft, {dropped} ohne Kurse verworfen)")
+    log(f"  MSCI EM (Korea/Taiwan/Brasilien): {len(out)} Titel, davon Brasilien {sum(1 for r in out if r['c'] == 'Brazil')} ({len(miss)} Börsenplatz geprüft, {dropped} ohne Kurse verworfen)")
     return out
 
 
@@ -1485,7 +1504,7 @@ def main():
         todo = [s for s in known if s not in fund] + sorted([s for s in known if s in fund],
                                                            key=lambda s: fund[s].get("upd") or "")
         log(f"Detailseiten: bis zu {batch} von {len(todo)} offenen Titeln (Zeitbudget {budget:.0f} Min.)")
-        done = fails = 0
+        done = fails = na = npt = 0
         for s in todo[:batch]:
             if elapsed_min() > budget:
                 log("Zeitbudget erreicht – Rest folgt in der nächsten Nacht")
@@ -1495,6 +1514,8 @@ def main():
                 save(TICK / f"{file_safe(s)}.json", d, quiet=True)
                 fund[s] = p
                 done += 1
+                na += bool(d.get("actions"))
+                npt += any(a.get("pt") for a in d.get("actions") or [])
                 fails = 0
             except Exception as e:  # noqa: BLE001
                 fails += 1
@@ -1507,6 +1528,7 @@ def main():
                 save(DATA / "fundamentals.json", fund, quiet=True)
             time.sleep(0.4)
         log(f"Detailseiten erstellt: {done}")
+        log(f"  Analystenmeinungen: {na} Titel mit Einzelmeldungen, davon {npt} mit Kurszielen")
 
     # --- Indizes, Märkte, Watchlist
     log("Kurse Indizes/Märkte/Watchlist …")

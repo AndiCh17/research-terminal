@@ -101,12 +101,6 @@
         "url": "https://en.wikipedia.org/wiki/NIFTY_50",
         "suffix": ".NS",
         "country": "India"
-      },
-      {
-        "name": "Ibovespa",
-        "url": "https://en.wikipedia.org/wiki/List_of_companies_listed_on_Ibovespa",
-        "suffix": ".SA",
-        "country": "Brazil"
       }
     ],
     "extra": [
