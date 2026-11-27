@@ -164,7 +164,10 @@
      "min_mcap": 3000000000.0,
      "max_w": 4
     },
-    "quelle": "Factsheet iShares (Top 10) + Index-Näherung für den Rest"
+    "quelle": "Factsheet iShares (Top 10) + Index-Näherung für den Rest",
+    "bericht": {
+     "fonds": "ISHARES STOXX GLOBAL SELECT DIVIDEND 100 UCITS ETF (DE)"
+    }
    }
   },
   {
@@ -399,7 +402,10 @@
     "subset": {
      "sector": "Gesundheit"
     },
-    "quelle": "STOXX-Europe-600-Positionsliste (Xtrackers), gefiltert auf Gesundheit und neu gewichtet"
+    "quelle": "STOXX-Europe-600-Positionsliste (Xtrackers), gefiltert auf Gesundheit und neu gewichtet",
+    "bericht": {
+     "fonds": "ISHARES STOXX EUROPE 600 HEALTH CARE UCITS ETF (DE)"
+    }
    }
   },
   {
@@ -417,7 +423,10 @@
     "subset": {
      "industry_re": "^Banks"
     },
-    "quelle": "STOXX-Europe-600-Positionsliste (Xtrackers), gefiltert auf Banken und neu gewichtet"
+    "quelle": "STOXX-Europe-600-Positionsliste (Xtrackers), gefiltert auf Banken und neu gewichtet",
+    "bericht": {
+     "fonds": "ISHARES STOXX EUROPE 600 BANKS UCITS ETF (DE)"
+    }
    }
   },
   {
@@ -493,7 +502,10 @@
      "top": 50,
      "weight": "mcap"
     },
-    "quelle": "Factsheet iShares (Top 10) + Index-Näherung für den Rest"
+    "quelle": "Factsheet iShares (Top 10) + Index-Näherung für den Rest",
+    "bericht": {
+     "slug": "ishares-dow-jones-global-titans-50-ucits-etf-de"
+    }
    }
   },
   {

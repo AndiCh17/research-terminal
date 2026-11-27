@@ -1399,10 +1399,11 @@ def build_holdings(uni_rows: list[dict], fund: dict):
     save(DATA / "fund_symbols.json", _SYMC, quiet=True)
     extra: set[str] = set(_EXTRA)
     safe(lambda: add_report_holdings(cfg, keys, first, by_sym, tops, meta, isin_map, extra, uni_rows, fund), None, "Fondsberichte/Factsheets")
+    safe(lambda: add_ish_reports(cfg, keys, first, by_sym, tops, meta, isin_map, extra), None, "iShares-Berichte")
     xrows = safe(lambda: extra_rows(extra, {r["s"] for r in uni_rows}), [], "Zusatztitel") or []
     log(f"  ISIN-Zuordnung Aktien: {len(isin_map)}")
     save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta, "isin": isin_map,
-                                  "extra": xrows, "v": 3, "berichte": sum(1 for k in meta if k.startswith("F:"))})
+                                  "extra": xrows, "v": 4, "berichte": sum(1 for k in meta if k.startswith("F:"))})
 
 
 # ----------------------------------------------------------------- Fondsberichte & Factsheets (echte Bestände)
@@ -1797,6 +1798,130 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
                      "anleihen": rnd(art["anleihe"], 1), "fonds": rnd(max(art["fonds"], 0), 1), "tranchen": r.get("tranchen") or []}
         nf += 1
     log(f"  Fondsbestände aus Berichten: {nf} Fonds")
+
+
+# ----------------------------------------------------------------- iShares (DE): Halbjahres-/Jahresberichte
+ISH_BASE = "https://www.ishares.com/gls-download/literature/"
+_ISH_POS = re.compile(r"^(?P<pre>.*?)\s*(?P<isin>[A-Z]{2}[A-Z0-9]{9}[0-9])\s+(?:STK|Units|ANT|Shares)\s+[\d\.,\s\-]+?\s(?P<cur>[A-Z]{3})\s+"
+                      r"[\d\.,]+\s+[\d\.,]+\s+(?P<pct>-?\d{1,3}[\.,]\d{2})\s*$")
+_ISH_CUT = re.compile(r"\s(Registered|Reg\.|Namens-|Inhaber-|Aandelen|Actions|Act\.|Bearer|Shares|Navne|Nam\.-|Inh\.|Vorzugs|Rg\.|Shs|Ordinary|Class|Cl\.|Acções|Azioni|Aktier|Akt\.|Bonus|Port\.|Nom\.|Acciones|Accions|Bons|Andeler|Unit|Partizipationsscheine|Genussscheine|Namn-Aktier|Acç\.)(?=[\s,]|$).*$")
+
+
+def ish_candidates(src: dict) -> list[str]:
+    out = []
+    for y in (NOW.year, NOW.year - 1):
+        if src.get("slug"):
+            sl = src["slug"]
+            out += [f"{ISH_BASE}interim-report/{sl}-en-interim-report-{y}.pdf", f"{ISH_BASE}annual-report/{sl}-jahresbericht-{y}.pdf",
+                    f"{ISH_BASE}annual-report/{sl}-pc-annual-report-{y}.pdf"]
+        else:
+            out += [f"{ISH_BASE}interim-report/ishares-invag-de-en-interim-report-{y}.pdf",
+                    f"{ISH_BASE}annual-report/ishares-invag-de-en-annual-report-{y}.pdf"]
+    return out
+
+
+_ISH_DOC: dict[str, list[str]] = {}
+
+
+def ish_pages(url: str) -> list[str]:
+    if url not in _ISH_DOC:
+        import pypdf
+        r = pypdf.PdfReader(io.BytesIO(HTTP.get(url, timeout=180).content))
+        _ISH_DOC[url] = [(p.extract_text() or "") for p in r.pages]
+    return _ISH_DOC[url]
+
+
+def parse_ish_report(pages: list[str], fonds: str | None) -> dict:
+    start_re = re.compile(r"(Statement of Net Assets as at (\d\d)/(\d\d)/(\d{4})|Vermögensaufstellung zum (\d\d)\.(\d\d)\.(\d{4}))")
+    starts = [i for i, t in enumerate(pages) if start_re.search(t)]
+    sel = []
+    for k, i in enumerate(starts):
+        head = pages[i][:400].upper()
+        if fonds and fonds.upper() not in head.replace("\n", " "):
+            continue
+        end = starts[k + 1] if k + 1 < len(starts) else len(pages)
+        sel = pages[i:end]
+        break
+    if not sel:
+        return {}
+    m = start_re.search(sel[0])
+    stichtag = f"{m.group(2)}.{m.group(3)}.{m.group(4)}" if m.group(2) else f"{m.group(5)}.{m.group(6)}.{m.group(7)}"
+    items, buf = [], []
+    for ln in "\n".join(sel).splitlines():
+        ln = ln.strip()
+        mm = _ISH_POS.match(ln)
+        if mm and isin_ok(mm["isin"]):
+            name = " ".join(buf + [mm["pre"]]).strip()
+            name = _ISH_CUT.sub("", name).strip(" ,") or name
+            items.append({"isin": mm["isin"], "name": name, "tick": "", "code": "", "cur": mm["cur"],
+                          "w": float(mm["pct"].replace(".", "").replace(",", ".")) if "," in mm["pct"] else float(mm["pct"]), "grp": "Aktien"})
+            buf = []
+        elif re.match(r"^(Aktien|Shares|Wertpapiervermögen|Securities|Börsengehandelte Wertpapiere|Exchange-traded securities|Summe|Total)\s*[\d\.,\s]*$", ln) or re.match(r"^(Gattungsbezeichnung|Designation)", ln) or re.search(r"\d[\d,\.]{5,}\s+-?\d{1,3}[\.,]\d{2}$", ln):
+            buf = []
+        elif len(ln) < 80 and not re.match(r"^\d", ln):
+            buf = (buf + [ln])[-2:]
+    return {"stichtag": stichtag, "items": items}
+
+
+def ish_report(src: dict, cache: dict) -> dict | None:
+    key = src.get("slug") or ("invag:" + src.get("fonds", ""))
+    old = cache.get(key) or {}
+    if old.get("checked") and (NOW - datetime.fromisoformat(old["checked"])).days < 6 and old.get("items"):
+        return old
+    best = old if old.get("items") else None
+    for url in ish_candidates(src):
+        try:
+            if HTTP.head(url, timeout=20, allow_redirects=False).status_code != 200:
+                continue
+            if best and best.get("url") == url:
+                continue
+            rep = parse_ish_report(ish_pages(url), src.get("fonds"))
+        except Exception as ex:
+            log(f"  iShares-Bericht {url.rsplit('/', 1)[-1]}: {ex}")
+            continue
+        if not rep.get("items") or sum(i["w"] for i in rep["items"]) < 50:
+            continue
+        d = lambda s: datetime.strptime(s, "%d.%m.%Y")  # noqa: E731
+        if not best or d(rep["stichtag"]) > d(best["stichtag"]):
+            best = {**rep, "url": url, "typ": "Halbjahresbericht" if "interim" in url else "Jahresbericht"}
+    if best:
+        best["checked"] = NOW.isoformat()
+        cache[key] = best
+    return best
+
+
+def add_ish_reports(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: dict, meta: dict, isin_map: dict, extra: set):
+    cache = load(DATA / "ish_reports.json") or {}
+    for e in cfg.get("etfs", []):
+        src = (e.get("holdings") or {}).get("bericht")
+        if not src:
+            continue
+        rep = safe(lambda: ish_report(src, cache), None, f"iShares-Bericht {e.get('ticker')}")
+        if not rep:
+            continue
+        symmap = resolve_positions(rep["items"], keys, first, isin_map)
+        agg, names = {}, {}
+        for it in rep["items"]:
+            s_ = symmap.get(it["isin"])
+            if s_:
+                agg[s_] = agg.get(s_, 0) + it["w"]
+                isin_map.setdefault(it["isin"], s_)
+                extra.add(s_)
+        # bisherige Näherung für diesen ETF ersetzen
+        for s_ in list(by_sym):
+            by_sym[s_] = [x for x in by_sym[s_] if x[0] != e["isin"]]
+            if not by_sym[s_]:
+                del by_sym[s_]
+        for s_, w in agg.items():
+            by_sym.setdefault(s_, []).append([e["isin"], rnd(w, 3)])
+        top = sorted(rep["items"], key=lambda x: -x["w"])[:10]
+        tops[e["isin"]] = [[nice_name(t["name"]), rnd(t["w"], 2)] for t in top]
+        wall = sum(i["w"] for i in rep["items"])
+        meta[e["isin"]] = {"art": "bericht", "quelle": f"{rep['typ']} iShares", "stichtag": rep["stichtag"], "url": rep["url"],
+                           "n": len(rep["items"]), "hit": len(agg), "wsum": rnd(sum(agg.values()), 1), "wall": rnd(wall, 1),
+                           "aktien": rnd(wall, 1), "anleihen": 0}
+        log(f"  iShares-Bericht {e.get('ticker')}: {len(rep['items'])} Positionen per {rep['stichtag']} ({wall:.1f} %), {len(agg)} zugeordnet")
+    save(DATA / "ish_reports.json", cache, quiet=True)
 
 
 # ----------------------------------------------------------------- Langfrist-Historie (Beratung)
@@ -2206,7 +2331,7 @@ def main():
         safe(build_long_history, None, "Langfrist-Historie")
     _h = load(DATA / "holdings.json") or {}
     _need = {e["isin"] for e in json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8")).get("etfs", []) if e.get("holdings")}
-    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 3 or not _need <= set(_h.get("meta", {})):
+    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 4 or not _need <= set(_h.get("meta", {})):
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
 
     # --- News + Stimmung
