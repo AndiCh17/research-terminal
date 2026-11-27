@@ -288,6 +288,11 @@
     "^NDX": "Nasdaq 100 (USD)",
     "^N225": "Nikkei 225 (JPY)",
     "^FTSE": "FTSE 100 (GBP)",
-    "GC=F": "Gold (USD)"
+    "GOLD": {
+      "name": "Gold (USD)",
+      "csv": "https://raw.githubusercontent.com/datasets/gold-prices/main/data/monthly.csv",
+      "from": "1970-01",
+      "extend": "GC=F"
+    }
   }
 }

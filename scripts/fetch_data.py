@@ -1206,10 +1206,12 @@ def build_holdings(uni_rows: list[dict], fund: dict):
 def build_long_history():
     idx = CFG.get("long_indices", {})
     # Eintrag: "SYMBOL": "Name"  oder  "SCHLÜSSEL": {"name": …, "try": [Kandidaten]} – genommen wird die längste Reihe
-    cand = {k: (v.get("try") if isinstance(v, dict) else [k]) for k, v in idx.items()}
+    cand = {k: (v.get("try") if isinstance(v, dict) else [k]) for k, v in idx.items() if not (isinstance(v, dict) and v.get("csv"))}
     data = history_block([s for c in cand.values() for s in c], period="max", interval="1mo", chunk=20)
     out = {}
     for key, v in idx.items():
+        if key not in cand:
+            continue
         name = v["name"] if isinstance(v, dict) else v
         best = max((data.get(s) for s in cand[key] if data.get(s) is not None), key=len, default=None)
         if best is None or len(best) < 24:
@@ -1218,6 +1220,22 @@ def build_long_history():
         src = next(s for s in cand[key] if data.get(s) is best)
         log(f"  Langfrist: {name} aus {src} ab {best.index[0].date()}")
         out[key] = {"name": name, "src": src, "m": series_pairs(best, 2)}
+    # Reihen aus einer CSV-Datei (z. B. Gold seit 1970), am aktuellen Rand mit Yahoo-Monatsschlüssen verlängert
+    for key, v in idx.items():
+        if not (isinstance(v, dict) and v.get("csv")):
+            continue
+        try:
+            df = pd.read_csv(io.StringIO(HTTP.get(v["csv"], timeout=60).text))
+            ser = pd.Series(df.iloc[:, 1].astype(float).values, index=pd.to_datetime(df.iloc[:, 0].astype(str) + "-01"))
+            ser = ser[ser.index >= pd.Timestamp(v.get("from", "1970-01") + "-01")]
+            ext = history_block([v["extend"]], period="max", interval="1mo").get(v["extend"]) if v.get("extend") else None
+            if ext is not None and len(ext):
+                ext.index = pd.to_datetime(ext.index).tz_localize(None).to_period("M").to_timestamp()
+                ser = pd.concat([ser, ext[ext.index > ser.index[-1]]])
+            out[key] = {"name": v["name"], "src": "csv", "m": series_pairs(ser, 2)}
+            log(f"  Langfrist: {v['name']} aus CSV ab {ser.index[0].date()} bis {ser.index[-1].date()}")
+        except Exception as ex:
+            log(f"WARNUNG Langfrist {v['name']}: {ex}")
     save(DATA / "long.json", {"updated": NOW.isoformat(), "series": out})
     log(f"Langfrist-Historie: {len(out)} Reihen")
 

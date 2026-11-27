@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Research Terminal</title>
+<link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="manifest" href="assets/manifest.webmanifest">
+<meta name="theme-color" content="#0b0d10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Terminal">
 <style>
 @font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-latin-wght-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-latin-ext-wght-normal.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
@@ -29,7 +37,9 @@ button{font:inherit;cursor:pointer}
 /* --- Kopfzeile --- */
 header{position:sticky;top:0;z-index:20;background:rgba(11,13,16,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
 .top{display:flex;align-items:center;gap:10px;padding:6px 10px}
-.logo{background:var(--amber);color:#000;font:800 13px var(--mono);padding:3px 8px;letter-spacing:.5px;border-radius:4px}
+.logo{display:flex;align-items:center;gap:8px;text-decoration:none!important;color:var(--txt)}
+.logo img{display:block;border-radius:7px}
+.logo span{font-size:10.5px;line-height:1.15;font-weight:650;letter-spacing:.6px;text-transform:uppercase;color:var(--dim)}
 .cmd{flex:1;display:flex;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);position:relative}
 .cmd:focus-within{border-color:var(--amber)}
 .cmd span{color:var(--amber);padding:0 8px;font-weight:700}
@@ -125,6 +135,32 @@ tr.click:hover td{background:var(--hl)}
 .help td{text-align:left;white-space:normal}
 @media(max-width:600px){.clock{display:none}.dhead .s,.dhead .p{font-size:19px}}
 .help td:first-child{color:var(--amber);width:170px}
+/* --- Handy & kleine Bildschirme --- */
+@media (max-width:760px){
+  html,body{font-size:13px}
+  .top{gap:8px;padding:6px 8px}
+  .logo span,.clock,.ticker-tape{display:none}
+  .logo img{width:30px;height:30px}
+  .cmd input{font-size:16px;padding:7px 4px}      /* 16px verhindert das Zoomen auf iOS */
+  .cmd input::placeholder{font-size:13px}
+  .go{padding:7px 10px}
+  #logout{padding:5px 7px}
+  .fkeys{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 8px 7px;gap:5px}
+  .fkeys::-webkit-scrollbar{display:none}
+  .fkeys button{flex:0 0 auto;padding:5px 11px;font-size:12.5px}
+  .fkeys button b{display:none}
+  main{padding:8px}
+  .grid{gap:8px}
+  .pb{padding:8px 9px}
+  .ph{flex-wrap:wrap;padding:8px 10px}
+  .ph > div,.ph > small{max-width:100%}
+  td,th{padding:5px 6px}
+  .tiles{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+  .tile .v{font-size:18px}
+  .fbar label{flex:1 1 140px}
+  .dhead{padding:8px 10px}
+  .dhead .s,.dhead .p{font-size:19px}
+}
 footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px solid var(--line2)}
 /* Passwort-Sperre */
 #gate{position:fixed;inset:0;z-index:100;background:var(--bg);display:none;align-items:center;justify-content:center;padding:20px}
@@ -160,7 +196,7 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
 <body>
 <header>
   <div class="top">
-    <div class="logo">RT</div>
+    <a class="logo" href="#HOME" title="Übersicht"><img src="assets/icon.svg" alt="" width="28" height="28"><span>Research<br>Terminal</span></a>
     <form class="cmd" id="cmdForm" autocomplete="off">
       <span>&gt;</span>
       <input id="cmd" placeholder="Befehl oder Ticker … z. B. AAPL, VOE.VI DES, ECO, TOP, HELP" spellcheck="false">
@@ -190,7 +226,7 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
   <div class="ticker-tape"><div id="tape"></div></div>
 </header>
 <div id="gate"><form id="gateForm" autocomplete="on">
-  <h1>RT · RESEARCH TERMINAL</h1><p>Geschützter Bereich. Bitte Passwort eingeben.</p>
+  <img src="assets/icon.svg" alt="" width="44" height="44" style="display:block;margin-bottom:12px;border-radius:10px"><h1>RESEARCH TERMINAL</h1><p>Geschützter Bereich. Bitte Passwort eingeben.</p>
   <input type="text" name="username" value="terminal" autocomplete="username" hidden>
   <input type="password" id="pw" autocomplete="current-password" placeholder="Passwort" required>
   <label><input type="checkbox" id="remember"> Auf diesem Gerät angemeldet bleiben</label>
@@ -203,6 +239,7 @@ Kurse verzögert, keine Anlageberatung. Für Kundenunterlagen offizielle Bankque
 
 <script>
 "use strict";
+try{ if (matchMedia("(max-width:760px)").matches) document.getElementById("cmd").placeholder = "Ticker oder Befehl …"; }catch(e){}
 /* ============================================================ Daten */
 const D = {market:null, macro:null, news:null, meta:null, universe:null, history:null, calendar:null, marktupdate:null, bonds:null, etfs:null, holdings:null, long:null, tick:{}};
 let DEMO = false;
@@ -1235,6 +1272,7 @@ function berZinsAfter(el){
 
 /* ---- Langfrist-Chart ---- */
 let lgSym="^SP500TR", lgRange="Max", lgLog=true;
+function lgCut(){ if(lgRange==="ab 1980") return new Date("1979-12-31"); const y={"Max":999,"30 J.":30,"20 J.":20,"10 J.":10}[lgRange]||999; const c=new Date(); c.setFullYear(c.getFullYear()-y); return c; }
 function drawdowns(pts){
   const eps=[]; let peak=pts[0], cur=null;
   for(const p of pts){
@@ -1250,7 +1288,7 @@ function drawdowns(pts){
 function berLang(){
   const L=D.long&&D.long.series; if(!L) return panel("Langfrist-Chart", noData("Langfrist-Daten"));
   const s=L[lgSym]||Object.values(L)[0]; if(!s) return panel("Langfrist-Chart", noData("Langfrist-Daten"));
-  const yrs={"Max":999,"30 J.":30,"20 J.":20,"10 J.":10}[lgRange]; const cut=new Date(); cut.setFullYear(cut.getFullYear()-yrs);
+  const cut=lgCut();
   const pts=s.m.filter(d=>new Date(d[0])>=cut);
   const n=(new Date(pts[pts.length-1][0])-new Date(pts[0][0]))/(365.25*864e5);
   const cagr=Math.pow(pts[pts.length-1][1]/pts[0][1],1/n)-1, tot=pts[pts.length-1][1]/pts[0][1]-1;
@@ -1261,7 +1299,7 @@ function berLang(){
   return `<div class="fbar"><div class="btns" id="lgS">${Object.entries(L).map(([k,v])=>`<button data-s="${esc(k)}" class="${k===lgSym?"on":""}">${esc(v.name)}</button>`).join("")}</div></div>
     <div class="grid g32">
       ${panel(esc(s.name)+` <span class="dim">· seit ${ds(pts[0][0])}</span>`, `<div id="lgChart"></div><div class="ph" style="margin:8px -9px 6px;border-top:1px solid var(--line)"><h2>Rücksetzer vom jeweiligen Höchststand</h2></div><div id="ddChart"></div>`,
-        `<div style="display:flex;gap:8px;align-items:center"><div class="btns" id="lgR">${["Max","30 J.","20 J.","10 J."].map(r=>`<button data-r="${r}" class="${r===lgRange?"on":""}">${r}</button>`).join("")}</div><label class="dim" style="font-size:11px"><input type="checkbox" id="lgLog"${lgLog?" checked":""}> log.</label></div>`)}
+        `<div style="display:flex;gap:8px;align-items:center"><div class="btns" id="lgR">${["Max","ab 1980","30 J.","20 J.","10 J."].map(r=>`<button data-r="${r}" class="${r===lgRange?"on":""}">${r}</button>`).join("")}</div><label class="dim" style="font-size:11px"><input type="checkbox" id="lgLog"${lgLog?" checked":""}> log.</label></div>`)}
       <div class="grid">
         ${panel("Kennzahlen", `<div class="tiles" style="grid-template-columns:1fr 1fr">
           <div class="tile" style="cursor:default"><div class="t"><span>Rendite p.a.</span></div><div class="v ${cls(cagr)}">${pct(cagr*100,1)}</div><div class="s">über ${fmt(n,0)} Jahre</div></div>
@@ -1274,11 +1312,11 @@ function berLang(){
       </div></div>
     <div style="margin-top:10px">${panel("Die größten Rücksetzer", `<div class="scroll"><table><thead><tr><th class="l">Höchststand</th><th class="l">Tiefpunkt</th><th>Verlust</th><th>Dauer bis Tief</th><th class="l">Wieder auf Höchststand</th><th>Dauer der Erholung</th></tr></thead><tbody>
       ${eps.slice(0,12).map(e=>`<tr><td class="l">${ds(e.peak)}</td><td class="l">${ds(e.trough)}</td><td class="dn">${pct(e.dd*100,1)}</td><td>${e.toTrough} Mon.</td><td class="l">${e.rec?ds(e.rec):'<span class="amb">noch nicht</span>'}</td><td>${e.toRec!=null?(e.toRec>=24?fmt(e.toRec/12,1)+" J.":e.toRec+" Mon."):"–"}</td></tr>`).join("")}
-      </tbody></table></div><p class="dim" style="font-size:11px;margin-top:8px">Monatsschlusskurse laut Yahoo Finance, in Indexwährung, ohne Kosten und Steuern. ${lgSym==="^GSPC"||lgSym==="^STOXX50E"||lgSym==="^ATX"||lgSym==="^NDX"||lgSym==="^N225"||lgSym==="^FTSE"?"Kursindex – ohne Dividenden, die Gesamtrendite lag höher.":lgSym==="GC=F"?"Gold-Terminkontrakt.":lgSym==="MSCIWORLD"?({"^990100-USD-STRD":"MSCI World Kursindex in USD – ohne Dividenden.","URTH":"Ersatzweise iShares MSCI World ETF (URTH, USD, ausschüttend) – Kursverlauf ohne Ausschüttungen, Daten erst ab 2012.","IWDA.AS":"Ersatzweise iShares Core MSCI World ETF (IWDA, EUR, thesaurierend) – inkl. Dividenden, Daten erst ab 2009."}[s.src]||"MSCI World."):"Inklusive wiederangelegter Dividenden."} Vergangene Entwicklungen sind kein verlässlicher Indikator für künftige Ergebnisse.</p>`)}</div>`;
+      </tbody></table></div><p class="dim" style="font-size:11px;margin-top:8px">Monatsschlusskurse laut Yahoo Finance, in Indexwährung, ohne Kosten und Steuern. ${lgSym==="^GSPC"||lgSym==="^STOXX50E"||lgSym==="^ATX"||lgSym==="^NDX"||lgSym==="^N225"||lgSym==="^FTSE"?"Kursindex – ohne Dividenden, die Gesamtrendite lag höher.":lgSym==="GOLD"?"Gold in USD je Feinunze: Monatsdurchschnitte laut Weltbank/World Gold Council (Datensatz „gold-prices“, frei nutzbar), am aktuellen Rand Monatsschlusskurse des Gold-Terminkontrakts. Gold wirft keine laufenden Erträge ab.":lgSym==="MSCIWORLD"?({"^990100-USD-STRD":"MSCI World Kursindex in USD – ohne Dividenden.","URTH":"Ersatzweise iShares MSCI World ETF (URTH, USD, ausschüttend) – Kursverlauf ohne Ausschüttungen, Daten erst ab 2012.","IWDA.AS":"Ersatzweise iShares Core MSCI World ETF (IWDA, EUR, thesaurierend) – inkl. Dividenden, Daten erst ab 2009."}[s.src]||"MSCI World."):"Inklusive wiederangelegter Dividenden."} Vergangene Entwicklungen sind kein verlässlicher Indikator für künftige Ergebnisse.</p>`)}</div>`;
 }
 function berLangAfter(el){
   const L=D.long&&D.long.series; if(!L) return; const s=L[lgSym]||Object.values(L)[0];
-  const yrs={"Max":999,"30 J.":30,"20 J.":20,"10 J.":10}[lgRange]; const cut=new Date(); cut.setFullYear(cut.getFullYear()-yrs);
+  const cut=lgCut();
   const pts=s.m.filter(d=>new Date(d[0])>=cut);
   const c=el.querySelector("#lgChart");
   if(lgLog) lineChart(c, pts.map(d=>[d[0],Math.log10(d[1])]), {h:300, color:"var(--up)", yfmt:v=>fmt(Math.pow(10,v), Math.pow(10,v)<100?1:0)});
