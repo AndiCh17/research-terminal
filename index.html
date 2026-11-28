@@ -1228,15 +1228,17 @@ function fondsInsight(f, rep){
   const rest=Math.max(0,100-(rep.aktien||0)-(rep.anleihen||0)-(rep.fonds||0));
   const split=[["Aktien",rep.aktien||0],["Anleihen",rep.anleihen||0],["Fonds (ohne Durchblick)",rep.fonds||0],["Liquidität/Sonstiges",rest]].filter(([,v])=>v>0.05);
   const F=(D.fonds&&D.fonds.fonds)||[];
-  const posRows=(rep.pos||[]).map(([n,k,w,sub],i)=>{ const kk=KIND[k]||[k,"var(--dim)"]; const inCat=sub&&F.some(x=>x.name===sub);
-    return `<tr><td class="l" style="white-space:normal">${i+1}. ${esc(n)}${sub?` <span class="dim" style="font-size:11px">→ ${inCat?`<a href="#" data-fsub="${esc(sub)}">${esc(sub)}</a>`:esc(sub)}</span>`:""}</td><td class="l"><span class="chip" style="color:${kk[1]}">${kk[0]}</span></td><td>${fmt(w,2)} %</td></tr>`; }).join("");
+  const posRows=(rep.pos||[]).map(([n,k,w,sub,lab],i)=>{ const kk=KIND[k]||[k,"var(--dim)"]; const inCat=sub&&F.some(x=>x.name===sub);
+    const dl=k==="fonds"&&!sub?` <span style="font-size:11px" class="${lab?(lab.startsWith("≈")?"":"up"):"dim"}" title="${lab?(lab.startsWith("≈")?"Zerlegt über ein ETF mit gleichem Index (Näherung)":"Zerlegt mit dem Bestand dieses ETFs"):"Nicht zerlegt – keine passenden Bestandsdaten"}">${lab?"→ "+esc(lab):"· nicht zerlegt"}</span>`:"";
+    return `<tr><td class="l" style="white-space:normal">${i+1}. ${esc(n)}${sub?` <span class="dim" style="font-size:11px">→ ${inCat?`<a href="#" data-fsub="${esc(sub)}">${esc(sub)}</a>`:esc(sub)}</span>`:""}${dl}</td><td class="l"><span class="chip" style="color:${kk[1]}">${kk[0]}</span></td><td>${fmt(w,2)} %</td></tr>`; }).join("");
   const np=rep.npos||{};
   return tiles+chart+`<div class="grid g3" style="margin-bottom:10px">
       <div><div class="dim" style="font-size:11px;margin-bottom:6px">AUFTEILUNG</div>${bars(split,5)}<div class="dim" style="font-size:11px;margin-top:6px">${fmt(np.aktie||0,0)} Aktien · ${fmt(np.anleihe||0,0)} Anleihen · ${fmt(np.fonds||0,0)} Fonds</div></div>
       <div><div class="dim" style="font-size:11px;margin-bottom:6px">WÄHRUNGEN</div>${rep.cur?bars(rep.cur,6):"–"}</div>
       <div><div class="dim" style="font-size:11px;margin-bottom:6px">BERICHT</div><div style="font-size:12.5px;line-height:1.7">${esc(rep.quelle)} per <b>${esc(rep.stichtag||"")}</b><br><a href="${esc(rep.url)}" target="_blank" rel="noopener">Bericht öffnen ↗</a><br>
         ${f.hist1y?`<a href="#" data-cmp="F:${esc(f.name)}">⊕ Vergleich (Chart)</a><br>`:""}<a href="#" data-kzv="F:${esc(f.name)}">⊕ Kennzahlenvergleich</a></div></div></div>
-    ${posRows?`<div class="dim" style="font-size:11px;margin-bottom:6px">GRÖSSTE POSITIONEN – ALLE ANLAGEKLASSEN</div><table style="margin-bottom:12px"><tbody>${posRows}</tbody></table>`:""}
+    ${rep.durch&&(rep.durch.exakt+rep.durch.naeherung+rep.durch.offen)>1?`<div style="margin-bottom:10px"><div class="dim" style="font-size:11px;margin-bottom:6px">DURCHBLICK DER ETF-/FONDSPOSITIONEN</div>${bars([["mit Bestand des ETFs zerlegt",rep.durch.exakt],["über ETF mit gleichem Index zerlegt (Näherung)",rep.durch.naeherung],["nicht zerlegt (Themen-/Spezial-ETFs)",rep.durch.offen]].filter(([,v])=>v>0.05),3)}</div>`:""}
+    ${posRows?`<div class="dim" style="font-size:11px;margin-bottom:6px">${(np.fonds||0)>10?"ALLE POSITIONEN":"GRÖSSTE POSITIONEN – ALLE ANLAGEKLASSEN"}</div><table style="margin-bottom:12px"><tbody>${posRows}</tbody></table>`:""}
     ${rep.n?`<div class="dim" style="font-size:11px;margin:4px 0 6px">AKTIEN-DURCHBLICK${rep.fonds||(np.fonds||0)?" (inkl. durchleuchteter Subfonds/ETFs)":""}</div>${etfInsight({isin:"F:"+f.name})}`:`<div class="dim" style="font-size:12px">Keine Aktienpositionen im Bestand.</div>`}`;
 }
 /* Durchblick: Kennzahlen eines ETFs aus seinen (dem Universum zugeordneten) Positionen */

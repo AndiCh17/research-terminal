@@ -1753,7 +1753,7 @@ def build_holdings(uni_rows: list[dict], fund: dict):
     xrows = safe(lambda: extra_rows(extra, {r["s"] for r in uni_rows}), [], "Zusatztitel") or []
     log(f"  ISIN-Zuordnung Aktien: {len(isin_map)}")
     save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta, "isin": isin_map,
-                                  "extra": xrows, "v": 6, "berichte": sum(1 for k in meta if k.startswith("F:"))})
+                                  "extra": xrows, "v": 7, "berichte": sum(1 for k in meta if k.startswith("F:"))})
 
 
 # ----------------------------------------------------------------- Fondsberichte & Factsheets (echte Bestände)
@@ -1791,46 +1791,64 @@ def month_ends(n: int) -> list[str]:
     return out
 
 
+_POS_EN = re.compile(r"^(?P<grp>.*?)\s*(?P<isin>[A-Z]{2}[A-Z0-9]{9}[0-9])\s+(?P<rest>.+?)\s+(?P<cur>[A-Z]{3})\s+"
+                     r"(?P<nums>[\d\.,\s\-]+?)\s+(?P<pct>-?\d{1,3}\.\d{2,3})\s*%\s*$")
+_MON_EN = {m: i + 1 for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"])}
+
+
 def parse_fund_report(pdf: bytes) -> dict:
-    """Vermögensaufstellung eines Raiffeisen-KAG-Berichts: alle Wertpapiere mit Anteil am Fondsvermögen."""
+    """Vermögensaufstellung eines Raiffeisen-KAG-Berichts (deutsche oder englische Fassung): alle Wertpapiere mit Anteil am Fondsvermögen."""
     import pypdf
     r = pypdf.PdfReader(io.BytesIO(pdf))
     txt = "\n".join((p.extract_text() or "") for p in r.pages)
     m = re.search(r"Vermögensaufstellung in \w+ per (\d\d\.\d\d\.\d{4})", txt)
+    en = None
+    if not m:
+        me = re.search(r"Portfolio of investments in \w+ as of ([A-Z][a-z]{2})[a-z]* (\d{1,2}), (\d{4})", txt)
+        if me and me.group(1).lower() in _MON_EN:
+            en = f"{int(me.group(2)):02d}.{_MON_EN[me.group(1).lower()]:02d}.{me.group(3)}"
+    rx = _POS_EN if en else _POS_RE
     items, grp, tranchen = [], "", []
     for ln in txt.splitlines():
         ln = ln.strip()
         mt = re.match(r"^([A-Z]{2}[A-Z0-9]{9}[0-9])\s+.+\((?:I|R|RZ|RD|S|SZ)\)\s", ln)
         if mt and isin_ok(mt.group(1)) and mt.group(1) not in tranchen:
             tranchen.append(mt.group(1))
-        mm = _POS_RE.match(ln)
+        mm = rx.match(ln)
         if not mm or not isin_ok(mm["isin"]):
             continue
         g = mm["grp"].strip() or grp
         grp = g
         rest = mm["rest"].split()
         tick, code = "", ""
-        if len(rest) > 1 and re.fullmatch(r"\d{3,6}", rest[-1]):
+        if en:
+            pass  # englische Fassung: keine Ticker-/Kennnummer-Spalte
+        elif len(rest) > 1 and re.fullmatch(r"\d{3,6}", rest[-1]):
             code, rest = rest[-1], rest[:-1]
         elif len(rest) > 1 and re.fullmatch(r"[A-Z0-9][A-Z0-9\./\-]{0,7}", rest[-1]):
             tick, rest = rest[-1], rest[:-1]
         items.append({"isin": mm["isin"], "name": " ".join(rest), "tick": tick, "code": code, "cur": mm["cur"],
-                      "w": float(mm["pct"].replace(",", ".")), "grp": g})
-    return {"stichtag": m.group(1) if m else None, "items": items, "tranchen": tranchen, "gebuehr": parse_fees(txt)}
+                      "w": float(mm["pct"] if en else mm["pct"].replace(",", ".")), "grp": g})
+    return {"stichtag": m.group(1) if m else en, "items": items, "tranchen": tranchen, "gebuehr": parse_fees(txt)}
 
 
 def parse_fees(txt: str) -> dict:
     """„effektive Verwaltungsgebühr des Fonds  I-Tranche (EUR): 1,000 % R-Tranche (EUR): 2,000 % …" -> {"I": 1.0, "R": 2.0}"""
     i = txt.find("effektive Verwaltungsgebühr")
+    en = i < 0
+    if en:
+        i = txt.find("Effective management fee")
     if i < 0:
         return {}
     seg = txt[i:i + 600]
-    seg = seg[:seg.find("Depotbank")] if "Depotbank" in seg else seg
+    for stop in ("Depotbank", "Custodian bank", "Max. management fee"):
+        seg = seg[:seg.find(stop)] if stop in seg else seg
+    dec = r"\d{1,2}\.\d{1,3}" if en else r"\d{1,2},\d{1,3}"
     out = {}
-    for t, v in re.findall(r"\b([A-Z]{1,3})-Tranche \(\w{3}\):\s*(\d{1,2},\d{1,3})\s*%", seg):
+    for t, v in re.findall(r"\b([A-Z]{1,3})-Tranche \(\w{3}\):\s*(" + dec + r")\s*%", seg):
         out.setdefault(t, float(v.replace(",", ".")))
     if not out:
-        mm = re.search(r"effektive Verwaltungsgebühr[^\d]{0,40}(\d{1,2},\d{1,3})\s*%", seg)
+        mm = re.search(r"(?:effektive Verwaltungsgebühr|Effective management fee)[^\d]{0,40}(" + dec + r")\s*%", seg)
         if mm:
             out["alle"] = float(mm.group(1).replace(",", "."))
     return out
@@ -1838,9 +1856,9 @@ def parse_fees(txt: str) -> dict:
 
 def pos_kind(it: dict) -> str:
     g = it.get("grp") or ""
-    if re.search(r"zertifikat|fonds|ETF|Investmentanteil", g, re.I):
+    if re.search(r"zertifikat|fonds|ETF|Investmentanteil|fund|investment certificate", g, re.I):
         return "fonds"
-    if re.search(r"Aktie|ADR|GDR|REIT|Partizipation|Genuss", g, re.I):
+    if re.search(r"Aktie|ADR|GDR|REIT|Partizipation|Genuss|Equit|Share", g, re.I):
         return "aktie"
     return "anleihe"
 
@@ -1948,8 +1966,46 @@ def parse_any_report(pdf: bytes) -> dict:
             rep["typ"] = "Halbjahresbericht" if "Halbjahresbericht" in txt[:3000] else "Rechenschaftsbericht"
             return rep
     rep = parse_fund_report(pdf)
-    rep["typ"] = "Halbjahresbericht" if "Halbjahresbericht" in txt[:3000] else "Rechenschaftsbericht"
+    rep["typ"] = "Halbjahresbericht" if re.search(r"Halbjahresbericht|semi-annual", txt[:3000], re.I) else "Rechenschaftsbericht"
     return rep
+
+
+TT_FUND = "https://gewinn2.ttweb.net/funds/fundDetails.asp?WPKNR={isin}"
+TT_DOC = "https://markets.easybank.at/markets/dokumente/{doc}"
+
+
+def tt_report_links(fonds: list[dict]) -> dict[str, list[str]]:
+    """Aktuelle Halbjahres-/Rechenschaftsberichte je Fonds über die öffentliche Fonds-Detailseite (Gewinn/TeleTrader).
+    Die Dokumentnamen (HB-/RS-<uuid>.pdf) sind dieselben wie im öffentlichen Dokumentenbereich von easybank markets.
+    Wöchentlich je Fonds geprüft; nur die Links werden gemerkt, gelesen wird über den PDF-Cache."""
+    cache = load(DATA / "report_tt.json") or {}
+    left = 160 if MODE == "nightly" or not cache else 15
+    for f in sorted(fonds, key=lambda f_: (cache.get(f_["name"]) or {}).get("checked", "")):
+        isins = f.get("isins") or []
+        if not isins:
+            continue
+        c = cache.get(f["name"]) or {}
+        if c.get("checked") and (NOW - datetime.fromisoformat(c["checked"])).days < 7:
+            continue
+        if left <= 0:
+            break
+        docs: list[str] = []
+        for isin in isins[:2]:
+            left -= 1
+            try:
+                html = HTTP.get(TT_FUND.format(isin=isin), timeout=30).text
+            except Exception as ex:
+                log(f"  Berichtslinks {f['name']}: {ex}")
+                continue
+            docs = sorted(set(re.findall(r"funddocuments/((?:HB|RS)-[0-9a-f\-]{36}\.pdf)", html)))
+            if docs:
+                break
+            time.sleep(0.5)
+        cache[f["name"]] = {"checked": NOW.isoformat(), "docs": docs or c.get("docs") or []}
+    save(DATA / "report_tt.json", cache, quiet=True)
+    out = {n: [TT_DOC.format(doc=d) for d in v.get("docs") or []] for n, v in cache.items()}
+    log(f"  Berichtslinks (Fonds-Detailseiten): {sum(1 for v in out.values() if v)} Fonds")
+    return out
 
 
 def load_fund_reports() -> dict:
@@ -1991,16 +2047,26 @@ def load_fund_reports() -> dict:
     pcache = load(DATA / "report_pdfs.json") or {}
     cand: dict[str, list[dict]] = {}
     srcs = [(f["name"], u) for f in fonds for u in (f.get("berichte") or [])]
+    srcs += [(n, u) for n, us in tt_report_links(fonds).items() for u in us]
     for p_ in sorted((ROOT / "manual" / "berichte").glob("*.pdf")) if (ROOT / "manual" / "berichte").exists() else []:
         srcs.append((None, "file:" + p_.name))
     for fname, u in srcs:
         if u not in pcache:
             try:
-                raw = (ROOT / "manual" / "berichte" / u[5:]).read_bytes() if u.startswith("file:") else HTTP.get(u, timeout=90).content
+                if u.startswith("file:"):
+                    raw = (ROOT / "manual" / "berichte" / u[5:]).read_bytes()
+                else:
+                    resp = HTTP.get(u, timeout=90)
+                    if resp.status_code != 200 or not resp.content.startswith(b"%PDF"):
+                        log(f"  Bericht {u.rsplit('/', 1)[-1]}: nicht abrufbar (HTTP {resp.status_code})")
+                        continue  # später erneut versuchen
+                    raw = resp.content
                 rp = parse_any_report(raw)
                 pcache[u] = {k: rp.get(k) for k in ("stichtag", "items", "tranchen", "typ", "gebuehr")}
             except Exception as ex:
                 log(f"  Bericht {u.rsplit('/', 1)[-1]}: nicht lesbar ({ex})")
+                if "Timeout" in type(ex).__name__ or "Connection" in type(ex).__name__:
+                    continue  # Netzwerkfehler: im nächsten Lauf erneut versuchen
                 pcache[u] = {"items": []}
         rp = pcache[u]
         if not rp.get("items"):
@@ -2200,6 +2266,73 @@ def search_symbol(name: str, cache: dict) -> str | None:
     return sym
 
 
+# Index-Gleichheit: (Muster im ETF-Namen, ETF mit bekanntem Bestand, Ausschnitt, Beschriftung) – erste passende Regel gilt
+_W = "IE00B4L5Y983"  # iShares Core MSCI World
+ETF_PROXY = [
+    (r"MSCI WORLD.*QUALITY", "IE00BP3QZ601", None, ""), (r"MSCI WORLD.*VALUE", "IE00BP3QZB59", None, ""),
+    (r"MSCI WORLD.*MOMENTUM", "IE00BP3QZ825", None, ""), (r"MSCI WORLD.*MIN.*VOL", "IE00B8FHGS14", None, ""),
+    (r"MSCI WORLD.*(INFORMATION TECH|IT\b)", _W, {"sec": "Technologie"}, "Sektor Technologie"),
+    (r"MSCI WORLD.*FINANCIAL", _W, {"sec": "Finanzen"}, "Sektor Finanzen"),
+    (r"MSCI WORLD.*HEALTH", _W, {"sec": "Gesundheit"}, "Sektor Gesundheit"),
+    (r"MSCI WORLD.*CONSUMER DISCR", _W, {"sec": "Zyklischer Konsum"}, "Sektor zyklischer Konsum"),
+    (r"MSCI WORLD.*CONSUMER STAP", _W, {"sec": "Basiskonsum"}, "Sektor Basiskonsum"),
+    (r"MSCI WORLD.*UTILIT", _W, {"sec": "Versorger"}, "Sektor Versorger"),
+    (r"MSCI WORLD.*ENERGY", _W, {"sec": "Energie"}, "Sektor Energie"),
+    (r"MSCI WORLD.*INDUSTRIAL", _W, {"sec": "Industrie"}, "Sektor Industrie"),
+    (r"MSCI WORLD.*MATERIAL", _W, {"sec": "Rohstoffe"}, "Sektor Rohstoffe"),
+    (r"MSCI WORLD.*COMMUNICATION", _W, {"sec": "Kommunikation"}, "Sektor Kommunikation"),
+    (r"MSCI WORLD.*REAL ESTATE", _W, {"sec": "Immobilien"}, "Sektor Immobilien"),
+    (r"MSCI ACWI|MSCI ALL COUNTRY|MSCI AC WORLD", "IE00B6R52259", None, ""),
+    (r"MSCI WORLD", _W, None, ""),
+    (r"MSCI USA|MSCI US\b|MSCI NORTH AMERICA", _W, {"c": {"United States"}}, "USA-Anteil"),
+    (r"S&P 500", "IE00B5BMR087", None, ""),
+    (r"MSCI EUROPE|MSCI EUR\b", "IE00B1YZSC51", None, ""),
+    (r"STOXX EUROPE 600", "DE0002635307", None, ""), (r"EURO STOXX 50", "IE00B53L3W79", None, ""),
+    (r"MSCI EM\b|MSCI EMERGING|EMERGING MARKETS", "IE00BTJRMP35", None, ""),
+    (r"MSCI JAPAN", _W, {"c": {"Japan"}}, "Japan-Anteil"),
+    (r"MSCI CANADA", _W, {"c": {"Canada"}}, "Kanada-Anteil"),
+    (r"PACIFIC EX.?JAPAN", _W, {"c": {"Australia", "Hong Kong", "Singapore", "New Zealand"}}, "Pazifik ohne Japan"),
+]
+_SUF_C = {".TO": "Canada", ".T": "Japan", ".AX": "Australia", ".HK": "Hong Kong", ".SI": "Singapore", ".NZ": "New Zealand",
+          ".L": "United Kingdom", ".SW": "Switzerland", ".DE": "Germany", ".PA": "France", ".AS": "Netherlands"}
+_C_ALIAS = {"USA": "United States", "US": "United States", "Vereinigte Staaten": "United States", "Japan": "Japan",
+            "Kanada": "Canada", "Australien": "Australia", "Singapur": "Singapore", "Neuseeland": "New Zealand", "Hongkong": "Hong Kong"}
+
+
+def sym_match(sym: str, d: dict, flt: dict) -> bool:
+    if flt.get("sec"):
+        return d.get("sec") == flt["sec"]
+    if flt.get("c"):
+        c = _C_ALIAS.get(d.get("c") or "", d.get("c"))
+        if not c:
+            suf = "." + sym.rsplit(".", 1)[1] if "." in sym else ""
+            c = _SUF_C.get(suf) or ("United States" if not suf else None)
+        return c in flt["c"]
+    return True
+
+
+def etf_name(n: str) -> str:
+    """Lesbarer ETF-Name ohne Umbrella-Präfix, z. B. „ISHARES III PLC - ISHARES CORE MSCI WORLD …" -> „iShares Core MSCI World …"."""
+    n = re.sub(r"^.*?\b(?:PLC|ICAV|SICAV|FUND|SOLUTIONS|EASY|ETFS EUROPE I PLC)\s+-\s+", "", n or "", flags=re.I)
+    n = re.sub(r"^XTRACKERS\s+-\s+", "", n, flags=re.I)
+    n = re.sub(r"^SHARES\b", "ISHARES", n)
+    n = re.sub(r"\(AC?$", "(Acc)", n.strip())
+    out = []
+    for w in n.split():
+        up = w.upper()
+        if up in ("MSCI", "ETF", "UCITS", "USD", "EUR", "ACWI", "EM", "USA", "UK", "SPDR", "S&P", "ESG", "SRI", "IMI", "ECPI", "BNP", "UBS", "IE", "DIST", "ACC", "II", "III", "IV", "V", "VI", "VII", "1C"):
+            out.append({"DIST": "Dist", "ACC": "Acc"}.get(up, up))
+        elif up.startswith("ISHARES"):
+            out.append("iShares" + w[7:].lower())
+        else:
+            out.append(w[:1].upper() + w[1:].lower())
+    return " ".join(out).replace("(dist)", "(Dist)").replace("(acc)", "(Acc)").replace("Wisdomtree", "WisdomTree")
+
+
+def npos_f(its: list[dict]) -> int:
+    return sum(1 for it in its if pos_kind(it) == "fonds")
+
+
 def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: dict, meta: dict, isin_map: dict, extra: set,
                         uni_rows: list | None = None, fund: dict | None = None):
     """Echte Bestände: Factsheet-Top-10 (iShares) und Vermögensaufstellungen der Halbjahres-/Rechenschaftsberichte."""
@@ -2253,6 +2386,34 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
         for i, w in lst:
             if w is not None:
                 etf_w.setdefault(i, {})[sym] = w
+    # ETFs in Dachfonds, die nicht selbst im Universum sind: über ein ETF mit gleichem Index (ggf. Länder-/Sektor-Ausschnitt) zerlegen
+    info = {r["s"]: {**r, **(fund.get(r["s"]) or {})} for r in (uni_rows or [])}
+    etf_names = {e["isin"]: e.get("name") or e.get("ticker") or e["isin"] for e in cfg.get("etfs", [])}
+    proxy_cache: dict[str, tuple] = {}
+
+    def proxy(it: dict):
+        """(Gewichte {Symbol: % des ETF}, Beschreibung) oder None"""
+        if it["isin"] in proxy_cache:
+            return proxy_cache[it["isin"]]
+        nm = (it.get("name") or "").upper()
+        res = None
+        if re.search(r"BOND|GOVT|GOVERNMENT|TREASUR|CORP|AGGREGATE|ANLEIHE|RENTEN|HIGH YIELD|MONEY|GELDMARKT|INFLATION|\bEUR HEDG.*\bBD\b", nm):
+            proxy_cache[it["isin"]] = None
+            return None
+        for rx, base, flt, lab in ETF_PROXY:
+            if not re.search(rx, nm):
+                continue
+            bw = etf_w.get(base)  # erste passende Regel entscheidet – kein Rückfall auf eine allgemeinere
+            if bw and flt:
+                sel = {s_: w for s_, w in bw.items() if sym_match(s_, info.get(s_) or {}, flt)}
+                tot = sum(sel.values())
+                bw = {s_: w / tot * 100 for s_, w in sel.items()} if tot > 0 else None
+            if bw:
+                res = (bw, f"≈ {etf_names.get(base, base)}" + (f" · {lab}" if lab else ""))
+            break
+        proxy_cache[it["isin"]] = res
+        return res
+    durch: dict[str, dict[str, float]] = {}
 
     def equity(name, depth=0):
         """(Aktienpositionen als {Schlüssel: [Name, Gewicht %, Symbol]}, Anteile je Art)"""
@@ -2274,12 +2435,22 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
                         p[1] += w * it["w"] / tot
                     art["aktie"] += sa["aktie"] * it["w"] / tot
                     art["fonds"] -= it["w"] * (sa["aktie"] / tot)
-                elif it["isin"] in etf_w:
-                    for s, w in etf_w[it["isin"]].items():
-                        p = pos.setdefault(s, [s, 0.0, s])
-                        p[1] += w * it["w"] / 100
-                    art["aktie"] += it["w"]
-                    art["fonds"] -= it["w"]
+                else:
+                    ew = etf_w.get(it["isin"])
+                    px = None if ew else proxy(it)
+                    if px:
+                        ew = px[0]
+                    if depth == 0:
+                        d_ = durch.setdefault(name, {"exakt": 0.0, "naeherung": 0.0, "offen": 0.0})
+                        d_["exakt" if it["isin"] in etf_w else "naeherung" if px else "offen"] += it["w"]
+                    if ew:
+                        tot = sum(ew.values()) or 100
+                        sc = 100 / tot if tot > 100.5 else 1  # Summe > 100 % (Rundung) auf 100 normieren
+                        for s, w in ew.items():
+                            p = pos.setdefault(s, [(info.get(s) or {}).get("n") or s, 0.0, s])
+                            p[1] += w * sc * it["w"] / 100
+                        art["aktie"] += it["w"]
+                        art["fonds"] -= it["w"]
         return pos, art
 
     nf = 0
@@ -2299,8 +2470,15 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
             by_sym.setdefault(s, []).append([key, rnd(w, 3)])
         tops[key] = [[n, rnd(w, 2)] for n, w, _ in sorted(pos.values(), key=lambda x: -x[1])[:10]]
         its = r.get("items") or []
-        allpos = [[nice_name(it["name"]), pos_kind(it), rnd(it["w"], 2), by_isin.get(it["isin"]) if pos_kind(it) == "fonds" else None]
-                  for it in sorted(its, key=lambda x: -x["w"])[:15]]
+        def plab(it):
+            if pos_kind(it) != "fonds" or by_isin.get(it["isin"]):
+                return None
+            if it["isin"] in etf_w:
+                return "Bestand des ETF"
+            px = proxy(it)
+            return px[1] if px else None
+        allpos = [[etf_name(it["name"]) if pos_kind(it) == "fonds" else nice_name(it["name"]), pos_kind(it), rnd(it["w"], 2), by_isin.get(it["isin"]) if pos_kind(it) == "fonds" else None, plab(it)]
+                  for it in sorted(its, key=lambda x: -x["w"])[:40 if npos_f(its) > 10 else 15]]
         curs: dict[str, float] = {}
         for it in its:
             curs[it.get("cur") or "?"] = curs.get(it.get("cur") or "?", 0) + it["w"]
@@ -2308,7 +2486,8 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
         meta[key] = {"art": "bericht", "quelle": r["typ"], "stichtag": r["stichtag"], "url": r["url"], "n": len(pos), "hit": hit,
                      "pos": allpos, "cur": [[c, rnd(w, 1)] for c, w in sorted(curs.items(), key=lambda x: -x[1])[:6]], "npos": npos,
                      "wsum": rnd(sum(agg.values()), 1), "wall": rnd(art["aktie"], 1), "aktien": rnd(art["aktie"], 1),
-                     "anleihen": rnd(art["anleihe"], 1), "fonds": rnd(max(art["fonds"], 0), 1), "tranchen": r.get("tranchen") or []}
+                     "anleihen": rnd(art["anleihe"], 1), "fonds": rnd(max(art["fonds"], 0), 1), "tranchen": r.get("tranchen") or [],
+                     "durch": {k_: rnd(v_, 1) for k_, v_ in durch.get(name, {}).items()} or None}
         nf += 1
     log(f"  Fondsbestände aus Berichten: {nf} Fonds")
 
@@ -3031,7 +3210,7 @@ def main():
         safe(build_long_history, None, "Langfrist-Historie")
     _h = load(DATA / "holdings.json") or {}
     _need = {e["isin"] for e in json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8")).get("etfs", []) if e.get("holdings")}
-    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 6 or not _need <= set(_h.get("meta", {})):
+    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 7 or not _need <= set(_h.get("meta", {})):
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
         safe(build_funds, None, "Fonds (Gebühren aus neuen Berichten)")
 

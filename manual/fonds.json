@@ -283,8 +283,16 @@
    "kag": "Raiffeisen KAG",
    "kat": "Aktien",
    "aktien": 100,
-   "isins": [],
-   "region": null,
+   "isins": [
+    "AT0000A381B4",
+    "AT0000A381C2",
+    "AT0000A3B1H3",
+    "AT0000A381G3",
+    "AT0000A381F5",
+    "AT0000A381E8",
+    "AT0000A381D0"
+   ],
+   "region": "Global (ETF-Dachfonds)",
    "match": "Index-Selection-Equity"
   },
   {
@@ -1464,7 +1472,9 @@
    "kag": "KEPLER-FONDS KAG",
    "kat": "Misch",
    "aktien": null,
-   "isins": [],
+   "isins": [
+    "AT0000722673"
+   ],
    "region": null,
    "match": "Portefeuille I - Sicherheit Plus"
   },
