@@ -1040,8 +1040,8 @@ def wb_prices() -> dict[str, dict]:
     if url.startswith("/"):
         url = "https://www.wienerborse.at" + url
     prices = {}
-    for pg in range(1, 4):
-        html = HTTP.get(url + (f"&c7928-page={pg}" if pg > 1 else "") + "&per-page=50", timeout=40).text
+    for pg in range(1, 2):  # nur die erste Seite: robots.txt der Wiener Börse sperrt "-page="-Parameter (alle ~35 Bundesanleihen passen darauf)
+        html = HTTP.get(url, timeout=40).text
         found = 0
         for t in pd.read_html(io.StringIO(html)):
             cols = [str(c) for c in t.columns]
@@ -1065,6 +1065,193 @@ def wb_prices() -> dict[str, dict]:
     if not prices:
         raise ValueError("keine Kurse in der Liste")
     return prices
+
+
+# ----------------------------------------------------------------- Raiffeisen Zertifikate (Anlageprodukte)
+RZ_BASE = "https://www.raiffeisenzertifikate.at"
+RZ_LABELS = ["Basiswert", "Kapitalschutzbetrag", "Partizipationsfaktor", "Cap", "Fixer Zinssatz jährlich", "Zinssatz Gesamtlaufzeit",
+             "Startwert", "Basispreis", "Barriere", "Abstand zur Barriere", "Barriere verletzt", "Beobachtung Barriere", "Bonuslevel",
+             "Bonusbetrag", "Erster Bewertungstag", "Emissionstag", "Letzter Bewertungstag", "Rückzahlungstermin", "Produkt-Klassifikation",
+             "Wertpapier-Typ (Eusipa-Nr.)", "Land / Region Basiswert", "Geeignete Markterwartung", "Währung Produkt", "Rückzahlungsart",
+             "Max. Rendite p.a.", "Max. Rendite p.a. bis zum nächsten Bewertungstag", "Emissionspreis"]
+
+
+def _html_lines(page: str) -> list[str]:
+    import html as _h
+    t = re.sub(r"<script.*?</script>|<style.*?</style>", "", page, flags=re.S)
+    return [x.strip() for x in _h.unescape(re.sub(r"<[^>]+>", "\n", t)).split("\n") if x.strip()]
+
+
+def rz_detail(isin: str) -> dict:
+    """Eckdaten einer Produktseite (/zertifikat/{ISIN} leitet auf die Detailseite weiter)."""
+    L = _html_lines(HTTP.get(f"{RZ_BASE}/zertifikat/{isin}", timeout=60).text)
+    i = L.index("Eckdaten") if "Eckdaten" in L else 0
+    L = L[i:i + 600]
+    out = {}
+    for k, ln in enumerate(L):
+        if ln in RZ_LABELS and ln not in out:
+            for v in L[k + 1:k + 6]:
+                if v == ln or v == "Schliessen" or (len(v) > 45 and v.endswith(".")):
+                    continue
+                out[ln] = v
+                break
+    return out
+
+
+def build_certificates():
+    """Alle Anlageprodukte von Raiffeisen Zertifikate (EUR): Liste nachts vollständig, Eckdaten je ISIN rotierend (Cache 30 Tage)."""
+    import html as _h
+    old = load(DATA / "zertifikate.json") or {}
+    det = load(DATA / "rz_details.json") or {}
+    rows: dict[str, dict] = {}
+    if MODE == "nightly" or not old.get("rows"):
+        start = HTTP.get(f"{RZ_BASE}/unsere-zertifikate/anlageprodukte", timeout=60).text
+        links: dict[int, str] = {}
+        harvest = lambda pg: [links.setdefault(int(n), _h.unescape(u)) for u, n in re.findall(r'href="([^"]*c5081-page=(\d+)[^"]*)"', pg)]  # noqa: E731
+        harvest(start)
+        seen: set[int] = set()
+        while len(seen) < 120:
+            todo = [n for n in sorted(links) if n not in seen]
+            if not todo:
+                break
+            n = todo[0]
+            seen.add(n)
+            try:
+                pg = HTTP.get(RZ_BASE + links[n], timeout=60).text
+            except Exception as ex:
+                log(f"  Zertifikate Seite {n}: {ex}")
+                continue
+            harvest(pg)
+            for tr in pg.split('<tr data-key')[1:]:
+                mi = re.search(r'class="sxp-no-ajax anchor isin-link" href="([^"]+)">([A-Z0-9]{12})<', tr)
+                if not mi:
+                    continue
+                tds = [re.sub(r"\s+", " ", _h.unescape(re.sub(r"<[^>]+>", " ", x))).strip() for x in re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)]
+                pct = re.findall(r"(\d[\d\.]*,\d+)\s*%", tds[4] if len(tds) > 4 else "")
+                rows[mi.group(2)] = {"isin": mi.group(2), "url": RZ_BASE + mi.group(1), "n": tds[1] if len(tds) > 1 else "",
+                                     "typ": tds[2] if len(tds) > 2 else "", "faellig": tds[3] if len(tds) > 3 else "",
+                                     "geld": float(pct[0].replace(".", "").replace(",", ".")) if pct else None,
+                                     "brief": float(pct[1].replace(".", "").replace(",", ".")) if len(pct) > 1 else None,
+                                     "cur": tds[5] if len(tds) > 5 else ""}
+            time.sleep(0.4)
+        log(f"  Zertifikate: {len(rows)} Anlageprodukte aus {len(seen)} Listenseiten")
+    if not rows:
+        rows = {r["isin"]: r for r in old.get("rows", [])}
+    left = 300 if MODE == "nightly" else 25
+    for isin in sorted(rows, key=lambda x: det.get(x, {}).get("_d", "")):
+        d = det.get(isin) or {}
+        if d.get("_d") and (NOW - datetime.fromisoformat(d["_d"])).days < 30:
+            continue
+        if left <= 0:
+            break
+        left -= 1
+        try:
+            det[isin] = {**rz_detail(isin), "_d": NOW.isoformat()}
+        except Exception as ex:
+            log(f"  Zertifikat {isin}: {ex}")
+        time.sleep(0.6)
+    num = lambda v: float(re.sub(r"[^\d,\-]", "", v).replace(",", ".")) if v and re.search(r"\d", v) else None  # noqa: E731
+    out = []
+    for isin, r in rows.items():
+        d = det.get(isin) or {}
+        kl = d.get("Produkt-Klassifikation", "")
+        out.append({**r, "basis": d.get("Basiswert"), "land": d.get("Land / Region Basiswert"), "klasse": kl,
+                    "schutz": num(d.get("Kapitalschutzbetrag")), "kupon": num(d.get("Fixer Zinssatz jährlich")),
+                    "barriere": d.get("Barriere"), "abst": num(d.get("Abstand zur Barriere")), "verletzt": d.get("Barriere verletzt"),
+                    "cap": d.get("Cap"), "beob": d.get("Beobachtung Barriere"), "rueck": d.get("Rückzahlungsart"),
+                    "eusipa": d.get("Wertpapier-Typ (Eusipa-Nr.)"), "markt": d.get("Geeignete Markterwartung"),
+                    "maxp": num(d.get("Max. Rendite p.a.") or d.get("Max. Rendite p.a. bis zum nächsten Bewertungstag")),
+                    "emission": d.get("Emissionstag"), "detail": bool(d)})
+    save(DATA / "rz_details.json", det, quiet=True)
+    save(DATA / "zertifikate.json", {"updated": NOW.isoformat(), "quelle": "raiffeisenzertifikate.at", "rows": out})
+    log(f"Zertifikate: {len(out)}, mit Eckdaten {sum(1 for r in out if r['detail'])}")
+
+
+# ----------------------------------------------------------------- Bank- & Wohnbauanleihen (Stammdaten über OpenFIGI)
+def openfigi(isins: list[str], cache: dict) -> dict:
+    """Stammdaten je ISIN über die öffentliche OpenFIGI-API (Emittent, Kupon, Fälligkeit); Cache 60 Tage."""
+    todo = [i for i in isins if not (cache.get(i) and (NOW - datetime.fromisoformat(cache[i]["_d"])).days < 60)]
+    for k in range(0, len(todo), 10):
+        chunk = todo[k:k + 10]
+        try:
+            r = HTTP.post("https://api.openfigi.com/v3/mapping", json=[{"idType": "ID_ISIN", "idValue": i} for i in chunk], timeout=40)
+            if r.status_code == 429:
+                time.sleep(30)
+                r = HTTP.post("https://api.openfigi.com/v3/mapping", json=[{"idType": "ID_ISIN", "idValue": i} for i in chunk], timeout=40)
+            res = r.json()
+        except Exception as ex:
+            log(f"  OpenFIGI: {ex}")
+            break
+        for i, x in zip(chunk, res):
+            d = (x.get("data") or [{}])[0] if isinstance(x, dict) else {}
+            cache[i] = {"name": d.get("name"), "ticker": d.get("ticker"), "sektor": d.get("marketSector"), "typ": d.get("securityType2"),
+                        "boerse": d.get("exchCode"), "_d": NOW.isoformat()}
+        time.sleep(2.6)  # ohne API-Schlüssel max. 25 Anfragen pro Minute
+    return cache
+
+
+def parse_bond_ticker(t: str | None) -> tuple[float | None, str | None]:
+    """'RFLBTI 2.9 09/07/32' -> (2.9, '2032-09-07')"""
+    if not t:
+        return None, None
+    m = re.search(r"\s(\d+(?:\.\d+)?|\d+ \d/\d+|0)\s+(\d\d)/(\d\d)/(\d\d)\b", t)
+    if not m:
+        return None, None
+    c = m.group(1)
+    if " " in c:
+        w, fr = c.split(" ")
+        a, b = fr.split("/")
+        c = float(w) + float(a) / float(b)
+    yy = int(m.group(4))
+    return float(c), f"{2000 + yy if yy < 70 else 1900 + yy}-{m.group(2)}-{m.group(3)}"
+
+
+def build_bank_bonds():
+    """Raiffeisen-, Bank- und Wohnbauanleihen: ISINs von den öffentlichen Emissionsseiten der Emittenten, Stammdaten über OpenFIGI."""
+    srcs = CFG.get("anleihen_quellen", [])
+    man = ROOT / "manual" / "anleihen.json"
+    extra = json.loads(man.read_text(encoding="utf-8")).get("anleihen", []) if man.exists() else []
+    old = {r["isin"]: r for r in (load(DATA / "anleihen.json") or {}).get("rows", [])}
+    found: dict[str, dict] = {}
+    for src in srcs:
+        try:
+            page = HTTP.get(src["url"], timeout=60).text
+        except Exception as ex:
+            log(f"  Anleihen-Quelle {src.get('emittent')}: {ex}")
+            for i, r in old.items():
+                if r.get("quelle") == src["url"]:
+                    found.setdefault(i, r)
+            continue
+        lines = _html_lines(page)
+        for k, ln in enumerate(lines):
+            for isin in re.findall(r"\b([A-Z]{2}[A-Z0-9]{9}[0-9])\b", ln):
+                if isin_ok(isin) and isin not in found:
+                    txt = " ".join(lines[k:k + 2]) if len(ln) < 20 else ln
+                    found[isin] = {"isin": isin, "emittent": src.get("emittent"), "art": src.get("art", "Bankanleihe"),
+                                   "bez": re.sub(r"\s+", " ", txt)[:160], "quelle": src["url"]}
+    for e in extra:
+        found.setdefault(e["isin"], {"isin": e["isin"], "emittent": e.get("emittent"), "art": e.get("art", "Anleihe"),
+                                     "bez": e.get("bez", ""), "quelle": "manual/anleihen.json"})
+    cache = openfigi(sorted(found), load(DATA / "openfigi.json") or {})
+    save(DATA / "openfigi.json", cache, quiet=True)
+    rows = []
+    for isin, r in found.items():
+        f = cache.get(isin) or {}
+        if f.get("sektor") and f["sektor"] not in ("Corp", "Govt", "Muni", "Mtge"):
+            continue  # z. B. Fonds oder Aktien auf derselben Seite
+        kup, fae = parse_bond_ticker(f.get("ticker"))
+        if kup is None:
+            m = re.search(r"(\d{1,2}(?:,\d{1,3})?)\s?%", r.get("bez", ""))
+            kup = float(m.group(1).replace(",", ".")) if m else None
+        stufen = bool(re.search(r"Stufenzins|\d\s?%\s?-\s?\d", r.get("bez", "")))
+        var = bool(re.search(r"[Vv]ario|[Vv]ariabel", r.get("bez", "")))
+        if fae and fae < NOW.strftime("%Y-%m-%d"):
+            continue  # bereits getilgt
+        rows.append({**r, "name": f.get("name") or r.get("emittent"), "ticker": f.get("ticker"), "kupon": kup, "faellig": fae,
+                     "stufen": stufen, "variabel": var, "boerse": f.get("boerse"),
+                     "wohnbau": "Wohnbau" in (r.get("art") or "") or "WOHNBAU" in (f.get("name") or "").upper()})
+    save(DATA / "anleihen.json", {"updated": NOW.isoformat(), "rows": sorted(rows, key=lambda x: (x.get("emittent") or "", x.get("faellig") or ""))})
+    log(f"Anleihen (Bank/Wohnbau): {len(rows)} aus {len(srcs)} Quellen, {sum(1 for r in rows if r['faellig'])} mit Fälligkeit")
 
 
 def bond_yield(price: float, coupon: float, maturity: datetime, today: datetime):
@@ -2726,6 +2913,10 @@ def main():
     safe(lambda: merge_manual_macro(editions), None, "PMI-Zusammenführung")
 
     safe(build_bonds, None, "Bundesanleihen")
+    if MODE == "nightly" or not (DATA / "zertifikate.json").exists():
+        safe(build_certificates, None, "Zertifikate")
+    if MODE == "nightly" or not (DATA / "anleihen.json").exists():
+        safe(build_bank_bonds, None, "Bank-/Wohnbauanleihen")
     safe(build_etfs, None, "ETFs")
     if MODE == "nightly" or not set(CFG.get("long_indices", {})) <= set((load(DATA / "long.json") or {}).get("series", {})):
         safe(build_long_history, None, "Langfrist-Historie")
@@ -2762,7 +2953,8 @@ def main():
 def build_status(uni_n: int, details_n: int):
     """Datenstatus für die Ansicht STATUS: Stand je Datei, Abdeckung der Positionen, Fonds-Kurse/-Kosten, Warnungen dieses Laufs."""
     files = {}
-    for k in ("market", "universe", "news", "calendar", "macro", "bonds", "etfs", "fonds", "holdings", "history", "long", "marktupdate"):
+    for k in ("market", "universe", "news", "calendar", "macro", "bonds", "etfs", "fonds", "holdings", "history", "long", "marktupdate",
+              "zertifikate", "anleihen"):
         d = load(DATA / f"{k}.json")
         if isinstance(d, dict):
             files[k] = d.get("updated") or d.get("stand")

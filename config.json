@@ -301,5 +301,52 @@
       "from": "1970-01",
       "extend": "GC=F"
     }
-  }
+  },
+  "anleihen_quellen": [
+    {
+      "emittent": "Raiffeisen Wohnbaubank",
+      "art": "Wohnbauanleihe",
+      "url": "https://www.raiffeisen.at/wohnbaubank/de/wohnbauanleihen/sekundaermarkt.html"
+    },
+    {
+      "emittent": "Raiffeisen Wohnbaubank",
+      "art": "Wohnbauanleihe",
+      "url": "https://www.raiffeisen.at/wohnbaubank/de/wohnbauanleihen/primaermarkt.html"
+    },
+    {
+      "emittent": "Hypo-Wohnbaubank",
+      "art": "Wohnbauanleihe",
+      "url": "https://www.hypo-wohnbaubank.at/Basisprospekt/j/2026"
+    },
+    {
+      "emittent": "Hypo-Wohnbaubank",
+      "art": "Wohnbauanleihe",
+      "url": "https://www.hypo-wohnbaubank.at/Basisprospekt/j/2025"
+    },
+    {
+      "emittent": "RLB Tirol",
+      "art": "Bankanleihe",
+      "url": "https://www.raiffeisen.at/boerse-on/de/anlegen---vorsorgen/anlegen-in-anleihen/raiffeisen-tirol-anleihen.html"
+    },
+    {
+      "emittent": "RLB Tirol",
+      "art": "Bankanleihe",
+      "url": "https://www.raiffeisen.at/tirol/rlb/de/meine-bank/investor-relations/eigene-emissionen-der-rlb-tirol-ag/basisprospekte.html"
+    },
+    {
+      "emittent": "RLB Oberösterreich",
+      "art": "Bankanleihe",
+      "url": "https://www.raiffeisen.at/ooe/rlb/de/meine-bank/investor-relations/eigene-emissionen/prospekte-und-bedingungen.html"
+    },
+    {
+      "emittent": "RLB Steiermark",
+      "art": "Bankanleihe",
+      "url": "https://www.raiffeisen.at/stmk/aichfeld/de/privatkunden/anlegen/aktien-anleihen/prospekte.html"
+    },
+    {
+      "emittent": "RLB NÖ-Wien",
+      "art": "Bankanleihe",
+      "url": "https://www.raiffeisen.at/noew/im-thayatal/de/privatkunden/anlegen/aktuelle-anleihen-der-rlb.html"
+    }
+  ]
 }

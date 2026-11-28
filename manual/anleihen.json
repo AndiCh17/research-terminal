@@ -1,0 +1,4 @@
+{
+  "_hinweis": "Zusätzliche Anleihen für die Depotanalyse (z. B. RBI-Emissionen oder Anleihen anderer Banken). Je Eintrag nur die ISIN, optional Emittent und Art (Bankanleihe, Wohnbauanleihe, Unternehmensanleihe, Staatsanleihe). Kupon und Fälligkeit holt der Workflow über OpenFIGI.",
+  "anleihen": []
+}
