@@ -2560,7 +2560,7 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
                 return "Bestand: " + (q_ or "Anbieter") + (f" per {st}" if st else "")
             px = proxy(it)
             return px[1] if px else None
-        allpos = [[etf_name(it["name"]) if pos_kind(it) == "fonds" else nice_name(it["name"]), pos_kind(it), rnd(it["w"], 2), by_isin.get(it["isin"]) if pos_kind(it) == "fonds" else None, plab(it)]
+        allpos = [[etf_name(it["name"]) if pos_kind(it) == "fonds" else nice_name(it["name"]), pos_kind(it), rnd(it["w"], 2), by_isin.get(it["isin"]) if pos_kind(it) == "fonds" else None, plab(it), it["isin"]]
                   for it in sorted(its, key=lambda x: -x["w"])[:40 if npos_f(its) > 10 else 15]]
         curs: dict[str, float] = {}
         for it in its:
