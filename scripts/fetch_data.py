@@ -2897,14 +2897,14 @@ def add_ish_reports(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: dict
         if keep:
             meta[e["isin"]] = {**fsm, "art": "factsheet+bericht", "rest": len(agg) - len(keep), "rest_stichtag": rep["stichtag"],
                                "rest_url": rep["url"], "wall": rnd(sum(agg.values()), 1), "hit": len(agg)}
-            log(f"  iShares-Bericht {e.get('ticker')}: Top 10 laut Factsheet, Rest {len(agg) - len(keep)} Titel laut Bericht per {rep['stichtag']}")
+            log(f"  iShares-Bericht {e.get('ticker') or e.get('name') or e['isin']}: Top 10 laut Factsheet, Rest {len(agg) - len(keep)} Titel laut Bericht per {rep['stichtag']}")
             continue
         top = sorted(rep["items"], key=lambda x: -x["w"])[:10]
         tops[e["isin"]] = [[nice_name(t["name"]), rnd(t["w"], 2)] for t in top]
         meta[e["isin"]] = {"art": "bericht", "quelle": f"{rep['typ']} iShares", "stichtag": rep["stichtag"], "url": rep["url"],
                            "n": len(rep["items"]), "hit": len(agg), "wsum": rnd(sum(agg.values()), 1), "wall": rnd(wall, 1),
                            "aktien": rnd(wall, 1), "anleihen": 0}
-        log(f"  iShares-Bericht {e.get('ticker')}: {len(rep['items'])} Positionen per {rep['stichtag']} ({wall:.1f} %), {len(agg)} zugeordnet")
+        log(f"  iShares-Bericht {e.get('ticker') or e.get('name') or e['isin']}: {len(rep['items'])} Positionen per {rep['stichtag']} ({wall:.1f} %), {len(agg)} zugeordnet")
     save(DATA / "ish_reports.json", cache, quiet=True)
 
 
