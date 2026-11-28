@@ -1990,12 +1990,12 @@ def tt_report_links(fonds: list[dict]) -> dict[str, list[str]]:
         if not isins:
             continue
         c = cache.get(f["name"]) or {}
-        if c.get("checked") and (NOW - datetime.fromisoformat(c["checked"])).days < 7:
+        if c.get("checked") and (NOW - datetime.fromisoformat(c["checked"])).days < 7 and (c.get("docs") or c.get("v") == 2):
             continue
         if left <= 0:
             break
         docs: list[str] = []
-        for isin in isins[:2]:
+        for isin in isins[:8]:  # nicht jede Tranche hat Dokumente hinterlegt -> bis zum ersten Treffer alle prüfen
             left -= 1
             try:
                 html = HTTP.get(TT_FUND.format(isin=isin), timeout=30).text
@@ -2006,7 +2006,7 @@ def tt_report_links(fonds: list[dict]) -> dict[str, list[str]]:
             if docs:
                 break
             time.sleep(0.5)
-        cache[f["name"]] = {"checked": NOW.isoformat(), "docs": docs or c.get("docs") or []}
+        cache[f["name"]] = {"checked": NOW.isoformat(), "docs": docs or c.get("docs") or [], "v": 2}
     save(DATA / "report_tt.json", cache, quiet=True)
     out = {n: [TT_DOC.format(doc=d) for d in v.get("docs") or []] for n, v in cache.items()}
     log(f"  Berichtslinks (Fonds-Detailseiten): {sum(1 for v in out.values() if v)} Fonds")
@@ -2061,9 +2061,18 @@ def load_fund_reports() -> dict:
                 if u.startswith("file:"):
                     raw = (ROOT / "manual" / "berichte" / u[5:]).read_bytes()
                 else:
-                    resp = HTTP.get(u, timeout=90)
-                    if resp.status_code != 200 or not resp.content.startswith(b"%PDF"):
-                        log(f"  Bericht {u.rsplit('/', 1)[-1]}: nicht abrufbar (HTTP {resp.status_code})")
+                    resp = None
+                    alts = [u] + ([u.replace("https://markets.easybank.at/", h) for h in ("https://www.easybank.at/", "https://easybank.at/")]
+                                  if u.startswith("https://markets.easybank.at/") else [])
+                    for au in alts:  # derselbe Dokumentenbereich ist unter mehreren Adressen erreichbar
+                        try:
+                            resp = HTTP.get(au, timeout=90)
+                        except Exception:
+                            continue
+                        if resp.status_code == 200 and resp.content.startswith(b"%PDF"):
+                            break
+                    if resp is None or resp.status_code != 200 or not resp.content.startswith(b"%PDF"):
+                        log(f"  Bericht {u.rsplit('/', 1)[-1]}: nicht abrufbar (HTTP {resp.status_code if resp is not None else '-'})")
                         continue  # später erneut versuchen
                     raw = resp.content
                 rp = parse_any_report(raw)
