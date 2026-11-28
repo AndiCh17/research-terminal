@@ -1441,7 +1441,10 @@
     "AT0000A32YX0"
    ],
    "region": "Global",
-   "match": "KEPLER Trend Select Aktienfonds"
+   "match": "KEPLER Trend Select Aktienfonds",
+   "berichte": [
+    "https://services.kepler.at/public/services/download/accountabilityReports/AT0000A32YW2/30042026"
+   ]
   },
   {
    "name": "KEPLER X-250 Welt Aktien",
