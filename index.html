@@ -193,9 +193,14 @@ tr.click:hover td{background:var(--hl)}
   #printBox *{max-width:100%;box-sizing:border-box}
   #printBox .ins-wrap{position:static!important;width:auto!important}
   #printBox table{width:100%!important;min-width:0!important;table-layout:auto}
-  #printBox th,#printBox td{white-space:normal!important;word-break:break-word;overflow-wrap:anywhere;min-width:0!important;max-width:none!important}
+  #printBox th,#printBox td{white-space:normal!important;word-break:normal;overflow-wrap:break-word;min-width:0!important;max-width:none!important}
+  #printBox td.nw,#printBox th.nw,#printBox td:not(.l):not(.nm){white-space:nowrap!important}
+  #printBox .tile,#printBox .tiles,#printBox .kv>div,#printBox .bar,#printBox tr,#printBox .ph{break-inside:avoid!important;page-break-inside:avoid!important}
+  #printBox .ph{break-after:avoid!important;page-break-after:avoid!important}
   #printBox .nm{max-width:none!important}
-  #printBox .tiles{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important}
+  /* Kacheln als inline-block: werden (auch in Safari/iOS) nie über einen Seitenumbruch geteilt */
+  #printBox .tiles{display:block!important}
+  #printBox .tiles>.tile{display:inline-block!important;width:calc(25% - 6px)!important;margin:0 6px 6px 0!important;vertical-align:top}
   #printBox .kv{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}
   #printBox .g2,#printBox .g3,#printBox .g32{display:block!important}
   #printBox .chart,#printBox svg{max-width:100%!important;height:auto}
@@ -1245,8 +1250,8 @@ function printFundSheet(id){
     <div><span>Aktienquote</span>${rep?fmt(rep.aktien,0)+" %":"–"}</div><div><span>Bericht</span>${rep?esc(rep.quelle)+" per "+esc(rep.stichtag||""):"–"}</div></div>`);
   const nodes=[info];
   if(rep&&rep.pos&&rep.pos.length){
-    const rows=rep.pos.slice(0,25).map(([n,k,w,sub,lab],i)=>`<tr><td class="l">${i+1}. ${esc(n)}${sub?` <span class="dim">→ ${esc(sub)}</span>`:""}${lab?` <span class="dim">(${esc(lab)})</span>`:""}</td><td class="l">${esc((KIND[k]||[k])[0])}</td><td>${fmt(w,2)} %</td></tr>`).join("");
-    nodes.push(panelOf("Größte Positionen laut Bericht",`<table><thead><tr><th class="l">Position</th><th class="l">Art</th><th>Anteil</th></tr></thead><tbody>${rows}</tbody></table>`));
+    const rows=rep.pos.slice(0,25).map(([n,k,w,sub,lab],i)=>`<tr><td class="l">${i+1}. ${esc(n)}${sub?` <span class="dim">→ ${esc(sub)}</span>`:""}${lab?` <span class="dim">(${esc(lab)})</span>`:""}</td><td class="l nw">${esc((KIND[k]||[k])[0])}</td><td class="nw">${fmt(w,2)} %</td></tr>`).join("");
+    nodes.push(panelOf("Größte Positionen laut Bericht",`<table><thead><tr><th class="l">Position</th><th class="l nw">Art</th><th class="nw">Anteil</th></tr></thead><tbody>${rows}</tbody></table>`));
   }
   if(rep&&rep.n) nodes.push(panelOf("Aktien-Durchblick", etfInsight({isin:id})));
   printSheet(f.name, nodes, {sub: rep?`${rep.quelle} per ${rep.stichtag||""}`:""});
