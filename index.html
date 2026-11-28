@@ -176,6 +176,15 @@ tr.click:hover td{background:var(--hl)}
   #printBox .dhead{border:0;padding:0 0 6px}
   #printBox .grid{display:block}
   #printBox table{font-size:10px}
+  /* lange Tabellen dürfen umbrechen, nichts abschneiden */
+  #printBox .panel{break-inside:auto!important;overflow:visible!important;border:0;background:none}
+  #printBox .scroll,#printBox .pb{overflow:visible!important;padding-left:0;padding-right:0}
+  #printBox .ph{padding:4px 0;border-bottom:1px solid #d5d9df}
+  #printBox table.fit{table-layout:fixed;width:100%}
+  #printBox table.fit th,#printBox table.fit td{white-space:normal!important;min-width:0!important;max-width:none!important;word-break:break-word;padding:3px 5px;vertical-align:top}
+  #printBox table.fit th:first-child,#printBox table.fit td:first-child{width:24%}
+  #printBox tr{break-inside:avoid}
+  #printBox thead{display:table-header-group}
 }
 /* --- Handy & kleine Bildschirme --- */
 @media (max-width:760px){
@@ -661,7 +670,8 @@ function printSheet(title, nodes, opt={}){
   let box=document.getElementById("printBox"); if(box) box.remove();
   box=document.createElement("div"); box.id="printBox";
   const stand=new Date().toLocaleDateString("de-AT");
-  box.innerHTML=`<div class="pb-head"><div><b>${esc(title)}</b><br><span>${opt.kunde?`${esc(opt.sub||"Depotauswertung")} · Stand ${stand}`:`Steckbrief · Research Terminal · Stand ${stand}`}</span></div><img src="assets/icon.svg" width="34" height="34" alt=""></div>`;
+  box.innerHTML=`<div class="pb-head"><div><b>${esc(title)}</b><br><span>${opt.kunde?`${esc(opt.sub||"Depotauswertung")} · Stand ${stand}`:`${esc(opt.sub||"Steckbrief")} · Research Terminal · Stand ${stand}`}</span></div><img src="assets/icon.svg" width="34" height="34" alt=""></div>`;
+  if(opt.landscape) box.insertAdjacentHTML("beforeend",`<style>@page{size:A4 landscape;margin:10mm}</style>`);
   nodes.filter(Boolean).forEach(n=>{ const c=n.cloneNode(true);
     c.querySelectorAll("input:not([type=checkbox]),select").forEach(x=>{ const sp=document.createElement("span"); sp.textContent = x.tagName==="SELECT" ? (x.value||"") : (x.type==="number"&&x.value!==""? fmt(+x.value,2) : x.value); x.replaceWith(sp); });
     c.querySelectorAll("button,.btns,input[type=checkbox],.noprint,[data-del],[data-sdel]").forEach(x=>x.remove()); box.appendChild(c); });
@@ -1982,7 +1992,9 @@ V.KZV = async () => {
 V.KZV.after = el => {
   el.querySelectorAll("[data-krm]").forEach(a=>a.onclick=e=>{ e.preventDefault(); kzvSel=kzvSel.filter(k=>k!==a.dataset.krm); kzvSave(); render(); });
   const clr=el.querySelector("#kzvClr"); if(clr) clr.onclick=()=>{ kzvSel=[]; kzvSave(); render(); };
-  const pdf=el.querySelector("#kzvPdf"); if(pdf) pdf.onclick=()=>{ const ps=[...el.querySelectorAll(".panel")].map(p=>{ const c=p.cloneNode(true); c.querySelectorAll(".fbar,[data-krm]").forEach(x=>x.remove()); return c; }); printSheet("Kennzahlenvergleich", ps); };
+  const pdf=el.querySelector("#kzvPdf"); if(pdf) pdf.onclick=()=>{ const ps=[...el.querySelectorAll(".panel")].map((p,i)=>{ const c=p.cloneNode(true); c.querySelectorAll(".fbar,[data-krm],.sugg").forEach(x=>x.remove()); if(i===0) c.querySelector(".ph")?.remove(); c.querySelectorAll("table").forEach(t=>t.classList.add("fit")); c.querySelectorAll("th,td").forEach(x=>x.style.minWidth=""); return c; });
+    const names=kzvSel.map(kzvItem).map(x=>x.typ==="Fonds"?x.name:(x.sub||x.name)).filter(Boolean);
+    printSheet(`Kennzahlenvergleich: ${names.slice(0,4).join(" · ")}${names.length>4?" …":""}`, ps, {sub:"Kennzahlenvergleich", landscape:kzvSel.length>3}); };
   const inp=el.querySelector("#kzvAdd"), sg=el.querySelector("#kzvSug");
   inp.oninput=()=>{
     const q=inp.value.trim().toUpperCase(); if(!q){ sg.style.display="none"; return; }
