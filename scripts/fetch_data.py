@@ -1709,7 +1709,8 @@ def build_holdings(uni_rows: list[dict], fund: dict):
         hit = 0
         for (n, w), fr in zip(rows, full):
             k = name_key(n)
-            sym = keys.get(k)
+            fis = (fr.get("isin") or "").strip().upper()
+            sym = isin_map.get(fis) or keys.get(k)  # gleiche ISIN -> immer dasselbe Symbol (keine Doppelzählung über mehrere ETFs)
             if not sym and k:
                 cand = first.get(k.split()[0], [])
                 sym = cand[0] if len(cand) == 1 else None
@@ -1757,7 +1758,7 @@ def build_holdings(uni_rows: list[dict], fund: dict):
     xrows = safe(lambda: extra_rows(extra, {r["s"] for r in uni_rows}), [], "Zusatztitel") or []
     log(f"  ISIN-Zuordnung Aktien: {len(isin_map)}")
     save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta, "isin": isin_map,
-                                  "extra": xrows, "v": 7, "berichte": sum(1 for k in meta if k.startswith("F:"))})
+                                  "extra": xrows, "v": 8, "berichte": sum(1 for k in meta if k.startswith("F:"))})
 
 
 # ----------------------------------------------------------------- Fondsberichte & Factsheets (echte Bestände)
@@ -2502,7 +2503,8 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
             kd = pos_kind(it)
             art[kd] += it["w"]
             if kd == "aktie":
-                p = pos.setdefault(it["isin"], [nice_name(it["name"]), 0.0, symmap.get(it["isin"])])
+                sm = symmap.get(it["isin"])
+                p = pos.setdefault(sm or it["isin"], [nice_name(it["name"]), 0.0, sm])  # gleicher Schlüssel wie Titel aus ETFs
                 p[1] += it["w"]
             elif kd == "fonds" and depth < 2:
                 sub = by_isin.get(it["isin"])
@@ -2547,6 +2549,15 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
                 extra.add(s)
         for s, w in agg.items():
             by_sym.setdefault(s, []).append([key, rnd(w, 3)])
+        grp: dict[str, list] = {}
+        for k_, (n, w, s) in pos.items():
+            nk = " ".join((name_key(n) or "").split()[:2])
+            if nk:
+                grp.setdefault(nk, []).append((s or k_, w))
+        dups = {k_: v for k_, v in grp.items() if len(v) > 1}
+        if dups:
+            log(f"  {name}: {len(pos)} Titel, {len(dups)} Namensgruppen mit mehreren Symbolen, z. B. "
+                + "; ".join(f"{k_}: " + ", ".join(f"{s_} {w_:.2f}" for s_, w_ in v[:3]) for k_, v in list(sorted(dups.items(), key=lambda x: -sum(w for _, w in x[1])))[:6]))
         tops[key] = [[n, rnd(w, 2)] for n, w, _ in sorted(pos.values(), key=lambda x: -x[1])[:10]]
         its = r.get("items") or []
         def plab(it):
@@ -2566,7 +2577,9 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
         for it in its:
             curs[it.get("cur") or "?"] = curs.get(it.get("cur") or "?", 0) + it["w"]
         npos = {k_: sum(1 for it in its if pos_kind(it) == k_) for k_ in ("aktie", "anleihe", "fonds")}
+        n_direct = sum(1 for it in its if pos_kind(it) == "aktie")
         meta[key] = {"art": "bericht", "quelle": r["typ"], "stichtag": r["stichtag"], "url": r["url"], "n": len(pos), "hit": hit,
+                     "ndirekt": n_direct,
                      "pos": allpos, "cur": [[c, rnd(w, 1)] for c, w in sorted(curs.items(), key=lambda x: -x[1])[:6]], "npos": npos,
                      "wsum": rnd(sum(agg.values()), 1), "wall": rnd(art["aktie"], 1), "aktien": rnd(art["aktie"], 1),
                      "anleihen": rnd(art["anleihe"], 1), "fonds": rnd(max(art["fonds"], 0), 1), "tranchen": r.get("tranchen") or [],
@@ -3323,7 +3336,7 @@ def main():
         safe(build_long_history, None, "Langfrist-Historie")
     _h = load(DATA / "holdings.json") or {}
     _need = {e["isin"] for e in json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8")).get("etfs", []) if e.get("holdings")}
-    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 7 or not _need <= set(_h.get("meta", {})):
+    if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 8 or not _need <= set(_h.get("meta", {})):
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
         safe(build_funds, None, "Fonds (Gebühren aus neuen Berichten)")
 
