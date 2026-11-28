@@ -19,81 +19,97 @@
 @font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:100 800;font-display:swap;src:url(fonts/jetbrains-mono-latin-wght-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:"JetBrains Mono";font-style:normal;font-weight:100 800;font-display:swap;src:url(fonts/jetbrains-mono-latin-ext-wght-normal.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 :root{
-  --bg:#0b0d10;--panel:#11141a;--panel2:#161a21;--line:#252b34;--line2:#1b2028;
-  --amber:#ffa630;--amber2:#ffc069;--txt:#e7e9ee;--dim:#9aa2ae;--dim2:#646d79;
-  --up:#34d399;--dn:#f87171;--blue:#60a5fa;--hl:#1d1a12;
+  --bg:#0d1117;--panel:#141922;--panel2:#1a202a;--line:#272e3a;--line2:#1e242e;
+  --amber:#e0b25a;--amber2:#f0cd8a;--txt:#e7eaf0;--dim:#9aa3b2;--dim2:#6c7686;
+  --up:#3fcf8e;--dn:#f07a7d;--blue:#7cb0ff;--hl:rgba(224,178,90,.08);--acc:#7cb0ff;--accbg:rgba(124,176,255,.12);
+  --violet:#b39dff;--cyan:#5fd4c8;
   --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   --mono:"JetBrains Mono","SF Mono","Cascadia Mono",Consolas,monospace;
-  --r:6px;
+  --r:10px;
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--txt);font:13.5px/1.5 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;font-feature-settings:"cv11","ss01"}
-input,select,textarea{font:inherit;background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:4px;padding:4px 7px}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.55 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;font-feature-settings:"cv11","ss01"}
+input,select,textarea{font:inherit;background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:5px 9px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--acc)}
 select{padding:3px 6px}
 a{color:var(--blue);text-decoration:none}
 a:hover{text-decoration:underline}
 button{font:inherit;cursor:pointer}
 
-/* --- Kopfzeile --- */
-header{position:sticky;top:0;z-index:20;background:rgba(11,13,16,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
-.top{display:flex;align-items:center;gap:10px;padding:6px 10px}
-.logo{display:flex;align-items:center;gap:8px;text-decoration:none!important;color:var(--txt)}
-.logo img{display:block;border-radius:7px}
-.logo span{font-size:10.5px;line-height:1.15;font-weight:650;letter-spacing:.6px;text-transform:uppercase;color:var(--dim)}
-.cmd{flex:1;display:flex;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);position:relative}
-.cmd:focus-within{border-color:var(--amber)}
-.cmd span{color:var(--amber);padding:0 8px;font-weight:700}
-.cmd input{flex:1;background:transparent;border:0;color:var(--amber2);font:500 13px var(--mono);padding:8px 4px;outline:none;text-transform:uppercase}
-.cmd span{font-family:var(--mono)}
-.cmd input::placeholder{color:var(--dim2);text-transform:none}
-.go{background:var(--amber);color:#000;border:0;padding:8px 14px;font-weight:700;border-radius:0 var(--r) var(--r) 0}
-.sugg{position:absolute;top:calc(100% + 4px);left:0;right:0;border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.5);background:var(--panel2);border:1px solid var(--line);display:none;max-height:300px;overflow:auto}
-.sugg div{padding:5px 10px;cursor:pointer;display:flex;gap:12px}
-.sugg div:hover,.sugg div.on{background:var(--hl)}
-.sugg b{color:var(--amber);min-width:90px}
-.clock{color:var(--dim);white-space:nowrap;font-size:12px;text-align:right}
-.clock b{color:var(--amber)}
-.fkeys{display:flex;flex-wrap:wrap;gap:4px;padding:0 10px 8px}
-.fkeys button{background:transparent;border:1px solid var(--line);color:var(--txt);padding:4px 11px;white-space:nowrap;border-radius:999px;font-size:12.5px;font-weight:500}
-.fkeys button:hover{border-color:var(--dim2);background:var(--panel2)}
-.fkeys button b{color:var(--amber);margin-right:6px;font:600 11px var(--mono)}
-.fkeys button.on{background:var(--amber);color:#000}
-.fkeys button.on b{color:#000}
+/* --- Kopfzeile: Logo · Menügruppen · Befehlszeile · Uhr --- */
+header{position:sticky;top:0;z-index:30;background:rgba(13,17,23,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:14px;padding:8px 16px}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none!important;color:var(--txt);flex:0 0 auto}
+.logo img{display:block;border-radius:8px}
+.logo span{font-size:11px;line-height:1.15;font-weight:600;letter-spacing:.4px;color:var(--dim)}
+.cmd{flex:1;max-width:520px;margin-left:auto;display:flex;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:9px;position:relative}
+.cmd:focus-within{border-color:var(--acc)}
+.cmd span{color:var(--dim2);padding:0 4px 0 11px;font:600 13px var(--mono)}
+.cmd input{flex:1;background:transparent;border:0;color:var(--txt);font:500 13px var(--mono);padding:8px 4px;outline:none;text-transform:uppercase}
+.cmd input::placeholder{color:var(--dim2);text-transform:none;font-family:var(--sans)}
+.go{background:transparent;color:var(--acc);border:0;border-left:1px solid var(--line);padding:8px 14px;font-weight:650;border-radius:0 9px 9px 0}
+.go:hover{background:var(--accbg)}
+.sugg{position:absolute;top:calc(100% + 6px);left:0;right:0;border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.55);background:var(--panel2);border:1px solid var(--line);display:none;max-height:320px;overflow:auto;z-index:5}
+.sugg div{padding:7px 12px;cursor:pointer;display:flex;gap:12px}
+.sugg div:hover,.sugg div.on{background:var(--accbg)}
+.sugg b{color:var(--acc);min-width:90px;font-family:var(--mono);font-weight:600}
+.clock{color:var(--dim);white-space:nowrap;font-size:11.5px;text-align:right;flex:0 0 auto}
+.clock b{color:var(--txt);font-weight:600}
+/* Menügruppen */
+.nav{display:flex;gap:2px;flex:0 0 auto}
+.ng{position:relative}
+.ngb{background:transparent;border:0;color:var(--dim);padding:7px 12px;border-radius:8px;font-size:13.5px;font-weight:550;display:flex;align-items:center;gap:7px}
+.ngb svg{width:16px;height:16px;opacity:.85}
+.ngb:hover,.ng.open .ngb{color:var(--txt);background:var(--panel2)}
+.ngb.on{color:var(--txt)}
+.ngb.on::after{content:"";position:absolute;left:12px;right:12px;bottom:-9px;height:2px;border-radius:2px;background:var(--amber)}
+.ddm{position:absolute;top:calc(100% + 8px);left:0;min-width:230px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 44px rgba(0,0,0,.55);padding:6px;display:none;z-index:40}
+.ng.open .ddm{display:block}
+@media (hover:hover) and (min-width:761px){.ng:hover .ddm{display:block}.ng:hover .ngb{color:var(--txt);background:var(--panel2)}.ddm::before{content:"";position:absolute;left:0;right:0;top:-10px;height:10px}}
+.ddm button{display:flex;align-items:center;justify-content:space-between;width:100%;background:transparent;border:0;color:var(--txt);padding:8px 10px;border-radius:8px;font-size:13.5px;text-align:left}
+.ddm button:hover{background:var(--accbg)}
+.ddm button.on{background:var(--hl);color:var(--amber2)}
+.ddm kbd{font:500 10.5px var(--mono);color:var(--dim2);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.ddm .gh{font-size:10.5px;color:var(--dim2);text-transform:uppercase;letter-spacing:.6px;padding:6px 10px 4px}
 .ticker-tape{border-top:1px solid var(--line2);white-space:nowrap;overflow:hidden;font-size:12px;color:var(--dim)}
 .ticker-tape div{display:inline-block;padding:4px 0;animation:tape 90s linear infinite}
 .ticker-tape span{margin-right:28px}
 @keyframes tape{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (max-width:1180px) and (min-width:761px){.ngb span{display:none}.ngb{padding:8px 10px}.logo span{display:none}}
 
 /* --- Layout --- */
-main{padding:10px}
-.grid{display:grid;gap:10px}
+main{padding:16px;max-width:1720px;margin:0 auto}
+.grid{display:grid;gap:12px}
 .g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g32{grid-template-columns:2fr 1fr}
 @media(max-width:1000px){.g2,.g3,.g32{grid-template-columns:1fr}}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);min-width:0;overflow:hidden}
-.ph{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line2);background:var(--panel)}
-.ph h2{margin:0;font-size:11.5px;font-weight:650;color:var(--amber);letter-spacing:.7px;text-transform:uppercase}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 16px;border-bottom:1px solid var(--line2)}
+.ph h2{margin:0;font-size:13.5px;font-weight:620;color:var(--txt);letter-spacing:.1px;display:flex;align-items:center;gap:8px}
+.ph h2::before{content:"";width:3px;height:14px;border-radius:2px;background:var(--amber);flex:0 0 auto}
+.ph h2 .dim{font-weight:450;font-size:12.5px}
 .ph small{color:var(--dim2)}
-.pb{padding:10px 12px}
+.pb{padding:12px 16px}
 .scroll{overflow:auto}
 
 table{width:100%;border-collapse:collapse}
-th{color:var(--dim2);font-weight:600;text-align:right;padding:5px 7px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase}
+th{color:var(--dim2);font-weight:550;text-align:right;padding:7px 9px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none;font-size:11.5px;letter-spacing:.2px}
 th:first-child,td:first-child,th.l,td.l{text-align:left}
-td{padding:5px 7px;text-align:right;border-bottom:1px solid var(--line2);white-space:nowrap}
-tbody tr:hover td{background:rgba(255,255,255,.02)}
+td{padding:7px 9px;text-align:right;border-bottom:1px solid var(--line2);white-space:nowrap}
+tbody tr:hover td{background:rgba(255,255,255,.025)}
+tbody tr:last-child td{border-bottom:0}
 tr.click{cursor:pointer}
 tr.click:hover td{background:var(--hl)}
-.sym{color:var(--amber);font:600 12.5px var(--mono)}
+.sym{color:var(--amber2);font:600 12.5px var(--mono)}
 .nm{color:var(--txt);max-width:230px;overflow:hidden;text-overflow:ellipsis}
 .up{color:var(--up)}.dn{color:var(--dn)}.dim{color:var(--dim)}.amb{color:var(--amber)}
-.chip{display:inline-block;padding:1px 8px;border:1px solid var(--line);border-radius:999px;font-size:11px;color:var(--dim)}
-.sent{display:inline-block;min-width:44px;text-align:center;font-size:11px;padding:0 4px}
-.sent.positive{background:#0e2e18;color:var(--up)}.sent.negative{background:#3a1010;color:var(--dn)}.sent.neutral{background:#1c1c1c;color:var(--dim)}
+.chip{display:inline-block;padding:1px 9px;border:1px solid var(--line);border-radius:999px;font-size:11.5px;color:var(--dim)}
+.sent{display:inline-block;min-width:44px;text-align:center;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px}
+.sent.positive{background:rgba(63,207,142,.13);color:var(--up)}.sent.negative{background:rgba(240,122,125,.14);color:var(--dn)}.sent.neutral{background:rgba(255,255,255,.06);color:var(--dim)}
 
 /* Kacheln */
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
-.tile{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;cursor:pointer;transition:border-color .15s}
-.tile:hover{border-color:var(--amber)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.tile{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color .15s,background .15s}
+.tile:hover{border-color:var(--line)}
 .tile.on{border-color:var(--amber);background:var(--hl)}
 .tile .t{color:var(--dim);font-size:11px;display:flex;justify-content:space-between;gap:6px}
 .tile .v{font-size:21px;font-weight:600;letter-spacing:-.3px;color:var(--txt);margin:3px 0}
@@ -109,20 +125,20 @@ tr.click:hover td{background:var(--hl)}
 .news a:hover{color:var(--amber2)}
 
 /* Detailansicht */
-.dhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;padding:10px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);margin-bottom:10px}
-.dhead .s{font:700 22px var(--mono);color:var(--amber)}
+.dhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;padding:14px 18px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);margin-bottom:12px}
+.dhead .s{font:700 22px var(--mono);color:var(--amber2)}
 .dhead .n{font-size:15px}
 .dhead .p{font-size:22px;font-weight:600}
 .kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:0 14px}
 .kv div{display:flex;justify-content:space-between;border-bottom:1px solid var(--line2);padding:3px 0;gap:8px}
 .kv span{color:var(--dim)}
 .kv span.up{color:var(--up)}.kv span.dn{color:var(--dn)}.kv span.amb{color:var(--amber)}
-.btns{display:flex;flex-wrap:wrap;gap:3px}
-.btns button{background:var(--panel2);border:1px solid var(--line);color:var(--dim);padding:2px 9px;font-size:11.5px;border-radius:4px}
-.btns button:hover{color:var(--txt)}
-.btns button.on{color:#000;background:var(--amber);border-color:var(--amber)}
+.btns{display:flex;flex-wrap:wrap;gap:4px}
+.btns button{background:transparent;border:1px solid var(--line);color:var(--dim);padding:4px 11px;font-size:12.5px;border-radius:999px}
+.btns button:hover{color:var(--txt);border-color:var(--dim2)}
+.btns button.on{color:var(--amber2);background:var(--hl);border-color:rgba(224,178,90,.55)}
 .desc{color:#c3c8d0;line-height:1.6;font-size:12px;max-height:180px;overflow:auto}
-.bar{height:8px;border-radius:4px;overflow:hidden;background:#1f252e;position:relative}
+.bar{height:8px;border-radius:4px;overflow:hidden;background:#222935;position:relative}
 .bar i{position:absolute;top:0;bottom:0}
 
 /* Charts */
@@ -139,7 +155,7 @@ tr.click:hover td{background:var(--hl)}
 @media print{
   :root{--bg:#fff;--panel:#fff;--panel2:#f6f7f9;--line:#d5d9df;--line2:#e7eaee;--txt:#1d232b;--dim:#5b6470;--dim2:#7b8490;--amber:#b5650d;--up:#1f7a4f;--dn:#b03a3a;--blue:#1f5fb0}
   html,body{background:#fff!important;color:#1d232b;font-size:11px}
-  header,footer,.ticker-tape,.fkeys,#gate,.noprint,.btns,button,label.info,#depPaste{display:none!important}
+  header,footer,.ticker-tape,.nav,#gate,.noprint,.btns,button,label.info,#depPaste{display:none!important}
   main{padding:0}
   .panel{break-inside:avoid;border-color:#d5d9df}
   input,select{border:0!important;background:transparent!important;color:#1d232b!important;padding:0!important}
@@ -171,11 +187,27 @@ tr.click:hover td{background:var(--hl)}
   .cmd input::placeholder{font-size:13px}
   .go{padding:7px 10px}
   #logout{padding:5px 7px}
-  .fkeys{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 8px 7px;gap:5px}
-  .fkeys::-webkit-scrollbar{display:none}
-  .fkeys button{flex:0 0 auto;padding:5px 11px;font-size:12.5px}
-  .fkeys button b{display:none}
-  main{padding:8px}
+  header{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--bg)}  /* sonst wären fixierte Leisten an die Kopfzeile gebunden */
+  .scroll td:first-child,.scroll th:first-child{position:sticky;left:0;z-index:1;background:var(--panel);box-shadow:1px 0 0 var(--line2)}
+  .scroll td.nm:first-child{max-width:160px!important;white-space:normal}
+  .top{gap:8px}
+  .cmd{min-width:0}
+  .cmd input{min-width:0;width:100%}
+  /* Menügruppen als Leiste am unteren Rand, Untermenü als Blatt darüber */
+  .nav{position:fixed;left:0;right:0;bottom:0;z-index:50;display:grid;grid-template-columns:repeat(5,1fr);gap:0;background:rgba(17,21,28,.97);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:4px 4px calc(4px + env(safe-area-inset-bottom))}
+  .ng{position:static}
+  .ngb{flex-direction:column;gap:2px;width:100%;padding:6px 2px;font-size:10.5px;font-weight:550;border-radius:10px}
+  .ngb svg{width:21px;height:21px}
+  .ngb span{display:block!important}
+  .ngb.on{color:var(--amber2)}
+  .ngb.on::after{display:none}
+  .ddm{position:fixed;left:8px;right:8px;top:auto;bottom:calc(66px + env(safe-area-inset-bottom));min-width:0;border-radius:16px;padding:8px;max-height:65vh;overflow:auto}
+  .ddm button{padding:12px;font-size:15px}
+  .ddm kbd{display:none}
+  body.menu-open::after{content:"";position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:45}
+  body.menu-open header{z-index:60}
+  main{padding:10px 8px calc(84px + env(safe-area-inset-bottom))}
+  footer{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
   .grid{gap:8px}
   .pb{padding:8px 9px}
   .ph{flex-wrap:wrap;padding:8px 10px}
@@ -209,33 +241,40 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
 #gate input[type=password]{width:100%;background:var(--panel2);border-radius:6px;border:1px solid var(--line);color:var(--amber2);font:16px var(--mono);padding:10px;outline:none}
 #gate input[type=password]:focus{border-color:var(--amber)}
 #gate label{display:flex;gap:8px;align-items:center;color:var(--dim);font-size:12px;margin:12px 0}
-#gate button{width:100%;background:var(--amber);color:#000;border:0;padding:10px;font-weight:700;border-radius:6px}
+#gate button{width:100%;background:var(--amber);color:#14110a;border:0;padding:11px;font-weight:700;border-radius:9px}
 #gate .err{color:var(--dn);font-size:12px;min-height:18px;margin-top:8px}
-#logout{background:none;border:1px solid var(--line);color:var(--dim);padding:6px 8px;display:none}
-.info{background:none;border:1px solid var(--line);border-radius:4px;color:var(--blue);font-size:11.5px;padding:2px 8px}
+#logout{background:none;border:1px solid var(--line);color:var(--dim);padding:6px 9px;border-radius:8px;display:none}
+.info{background:none;border:1px solid var(--line);border-radius:8px;color:var(--blue);font-size:12.5px;padding:4px 10px}
 .info:hover{border-color:var(--blue)}
 #modal{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.75);display:none;align-items:flex-start;justify-content:center;padding:40px 14px;overflow:auto}
-#modal .box{max-width:720px;width:100%;background:var(--panel);border:1px solid var(--amber);padding:16px 18px;color:#cfcfcf;font-size:12.5px}
+#modal .box{max-width:720px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;color:#d3d7de;font-size:13px}
 #modal h3{color:var(--amber);margin:0 0 10px;font-size:13px;letter-spacing:.5px}
 #modal h4{color:var(--txt);margin:14px 0 4px;font-size:12px}
 #modal p,#modal li{margin:4px 0;line-height:1.55}
 #modal button.x{float:right;background:none;border:1px solid var(--line);color:var(--dim);padding:2px 9px}
 .fbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
-.fbar input,.fbar select{background:var(--panel2);border:1px solid var(--line);border-radius:4px;color:var(--txt);font:12.5px var(--sans);padding:5px 7px;min-width:0}
+.fbar input,.fbar select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--txt);font:13px var(--sans);padding:6px 10px;min-width:0}
 .fbar input[type=number]{width:78px}
 .fbar label{color:var(--dim);font-size:11px;display:flex;gap:4px;align-items:center}
 .cal-day{color:var(--amber);border-bottom:1px solid var(--line);padding:10px 0 4px;font-size:12px;letter-spacing:.4px}
 .cal-ev{display:grid;grid-template-columns:90px 1fr auto;gap:8px;padding:4px 0;border-bottom:1px solid var(--line2);align-items:center}
 .cal-ev .t{font-size:10px;text-align:center;padding:1px 4px}
 .t-cb{background:#1b2a44;color:#8fc1ff}.t-earn{background:#2a2108;color:var(--amber2)}.t-exdiv{background:#0e2e18;color:var(--up)}.t-div{background:#1c1c1c;color:var(--dim)}
-.more{display:block;margin:10px auto 0;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--amber);padding:6px 14px}
-.banner{background:#2a1d05;color:var(--amber2);border:1px solid #5a3d08;padding:6px 10px;margin-bottom:10px;font-size:12px}
+.more{display:block;margin:10px auto 0;border-radius:8px;background:var(--panel2);border:1px solid var(--line);color:var(--amber);padding:6px 14px}
+.banner{background:rgba(224,178,90,.08);color:var(--amber2);border:1px solid rgba(224,178,90,.3);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12.5px}
 </style>
 </head>
 <body>
 <header>
   <div class="top">
     <a class="logo" href="#HOME" title="Übersicht"><img src="assets/icon.svg" alt="" width="28" height="28"><span>Research<br>Terminal</span></a>
+    <nav class="nav" id="fkeys">
+      <div class="ng" data-g="mkt"><button class="ngb" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 3 6-8"/><path d="M3 21h18"/></svg><span>Märkte</span></button><div class="ddm"><div class="gh">Märkte</div><button data-v="HOME">Übersicht<kbd>F1</kbd></button><button data-v="WEI">Märkte<kbd>F4</kbd></button><button data-v="MKT">Marktupdate<kbd>F2</kbd></button><button data-v="ECO">Makro<kbd>F3</kbd></button><button data-v="TOP">News</button><button data-v="CAL">Kalender</button></div></div>
+      <div class="ng" data-g="ana"><button class="ngb" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>Analyse</span></button><div class="ddm"><div class="gh">Analyse</div><button data-v="DES">Aktie (Detail)</button><button data-v="SCR">Screener<kbd>F6</kbd></button><button data-v="BRA">Branchen & Regionen<kbd>F5</kbd></button><button data-v="CMP">Vergleich (Chart)<kbd>F10</kbd></button><button data-v="KZV">Kennzahlenvergleich</button></div></div>
+      <div class="ng" data-g="prod"><button class="ngb" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 10h18M9 10v10"/></svg><span>Produkte</span></button><div class="ddm"><div class="gh">Produkte</div><button data-v="ETF">ETFs & Fonds<kbd>F7</kbd></button><button data-v="ZERT">Zertifikate</button><button data-v="BANK">Bank- & Wohnbauanleihen</button><button data-v="GOVT">Bundesanleihen AT<kbd>F8</kbd></button></div></div>
+      <div class="ng" data-g="ber"><button class="ngb" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8h14M5 8l-2 6h6zM19 8l-2 6h6z"/></svg><span>Beratung</span></button><div class="ddm"><div class="gh">Beratung</div><button data-v="DEP">Depotanalyse</button><button data-v="BER">Zinsen & Duration<kbd>F9</kbd></button><button data-v="NET">Renditevergleich</button></div></div>
+      <div class="ng" data-g="sys"><button class="ngb" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>System</span></button><div class="ddm"><div class="gh">System</div><button data-v="STATUS">Datenstatus</button><button data-v="HELP">Hilfe & Befehle</button></div></div>
+    </nav>
     <form class="cmd" id="cmdForm" autocomplete="off">
       <span>&gt;</span>
       <input id="cmd" placeholder="Befehl, Ticker oder ISIN … z. B. AAPL, AT0000937503, ECO, HELP" spellcheck="false">
@@ -245,26 +284,6 @@ footer{color:var(--dim2);font-size:11px;padding:8px 10px 20px;border-top:1px sol
     <button id="logout" title="Abmelden">⏻</button>
     <div class="clock"><b id="clk">--:--:--</b><br><span id="stamp">Daten: –</span></div>
   </div>
-  <nav class="fkeys" id="fkeys">
-    <button data-v="HOME"><b>F1</b>Übersicht</button>
-    <button data-v="MKT"><b>F2</b>Marktupdate</button>
-    <button data-v="ECO"><b>F3</b>Makro</button>
-    <button data-v="WEI"><b>F4</b>Märkte</button>
-    <button data-v="BRA"><b>F5</b>Branchen/Regionen</button>
-    <button data-v="SCR"><b>F6</b>Screener</button>
-    <button data-v="ETF"><b>F7</b>ETFs & Fonds</button>
-    <button data-v="GOVT"><b>F8</b>Anleihen AT</button>
-    <button data-v="BER"><b>F9</b>Beratung</button>
-    <button data-v="CMP"><b>F10</b>Vergleich</button>
-    <button data-v="KZV"><b>·</b>Kennzahlenvergleich</button>
-    <button data-v="DEP"><b>·</b>Depotanalyse</button>
-    <button data-v="NET"><b>·</b>Renditevergleich</button>
-    <button data-v="TOP"><b>·</b>News</button>
-    <button data-v="CAL"><b>·</b>Kalender</button>
-    <button data-v="DES"><b>›</b>Aktie</button>
-    <button data-v="STATUS"><b>·</b>Datenstatus</button>
-    <button data-v="HELP"><b>?</b>Hilfe</button>
-  </nav>
   <div class="ticker-tape"><div id="tape"></div></div>
 </header>
 <div id="gate"><form id="gateForm" autocomplete="on">
@@ -1565,6 +1584,11 @@ function depResolve(r){
   if(f && fr) return {typ:"Fonds", label:f.name, aktien:fr.aktien, proxy:fr.n?"F:"+f.name:null, cls:fr.anleihen>5?"Anleihen":"Geldmarkt/Liquidität", kag:f.kag, bericht:fr.stichtag};
   if(f) return f.kat==="Misch" ? {typ:"Fonds", label:f.name, aktien:null, misch:true, kag:f.kag}
     : {typ:"Fonds", label:f.name, aktien:f.kat==="Aktien"?100:0, proxy:null, cls:f.kat==="Anleihen"?"Anleihen":f.kat==="Geldmarkt"?"Geldmarkt/Liquidität":f.kat==="Rohstoffe"?"Rohstoffe/Gold":"Sonstiges", kag:f.kag, ohne:true};
+  const z = isin && zertBy(isin);
+  if(z){ const ks = z.schutz!=null && z.schutz>=90 || /mit Kapitalschutz/.test(z.klasse||"") || /Kapitalschutz/.test(z.typ||"");
+    return {typ:"Zertifikat", label:`${z.n} · ${z.typ}`, aktien:0, cls: ks?"Zertifikate mit Kapitalschutz":"Zertifikate ohne Kapitalschutz", zert:z}; }
+  const bd = (isin && bondBy(isin)) || (!etf && bondFromName(r.name));
+  if(bd) return {typ:"Anleihe", label:`${bd.name||bd.emittent||""}${bd.kupon!=null?" · "+fmt(bd.kupon,2)+" %":""}${bd.faellig?" · bis "+bd.faellig.slice(0,4):""}`, aktien:0, cls:bd.wohnbau?"Anleihen (Wohnbau)":"Anleihen", bond:bd};
   const sym = isin && D.holdings && D.holdings.isin && D.holdings.isin[isin];
   const row = sym && D.universe && D.universe.rows.find(x=>x.s===sym);
   if(row) return {typ:"Aktie", label:row.n, aktien:100, sym, row};
@@ -1606,7 +1630,15 @@ function depAnalyse(rows=depRows){
   if(ov.length) hints.push(`Mehrfach gehalten (in 3+ Positionen): ${ov.map(e=>esc(e.r.n)).join(", ")}.`);
   if(cls["nicht zugeordnet"]) hints.push(`${fmt(cls["nicht zugeordnet"],0)} € sind noch keiner Kategorie zugeordnet.`);
   let cW=0, cV=0; pos.forEach(p=>{ const c=depCost(p.res); if(c!=null){ cW+=p.amt; cV+=p.amt*c; } });
+  const bonds=pos.filter(p=>p.res.bond).map(p=>({...p.res.bond, amt:p.amt, y:yrsTo(p.res.bond.faellig)}));
+  const bTot=bonds.reduce((a,b)=>a+b.amt,0), bw=(f)=>{ let w=0,v=0; bonds.forEach(b=>{ const x=f(b); if(x!=null&&isFinite(x)){ w+=b.amt; v+=b.amt*x; } }); return w?v/w:null; };
+  const ladder=[["< 1 J.",0,1],["1–3 J.",1,3],["3–5 J.",3,5],["5–10 J.",5,10],["> 10 J.",10,999]].map(([l,a,b])=>[l, bonds.filter(x=>x.y!=null&&x.y>=a&&x.y<b).reduce((s,x)=>s+x.amt,0)/(bTot||1)*100]);
+  const emit={}; bonds.forEach(b=>{ const k=b.emittent||b.name||"unbekannt"; emit[k]=(emit[k]||0)+b.amt; });
+  const zerts=pos.filter(p=>p.res.zert).map(p=>({...p.res.zert, amt:p.amt}));
+  if(bTot && Object.values(emit).some(v=>v/tot>0.2)) hints.push(`Ein Emittent stellt über 20 % des Depots (${esc(Object.entries(emit).sort((a,b)=>b[1]-a[1])[0][0])}).`);
+  zerts.filter(z=>z.abst!=null&&z.abst<15).forEach(z=>hints.push(`Zertifikat <b>${esc(z.n)}</b>: nur ${fmt(z.abst,1)} % Abstand zur Barriere.`));
   return {pos,tot,cls:Object.entries(cls).sort((a,b)=>b[1]-a[1]),eqTot,eqLook,sek,land,top,hints,pe:harm("pe"),fpe:harm("fpe"),dy,feg:wavg("feg",-50,100),up:wavg("up",-80,150),
+    bonds, bTot, ladder, emit:Object.entries(emit).sort((a,b)=>b[1]-a[1]), kupon:bw(b=>b.kupon), rlz:bw(b=>b.y), zerts,
     cost:cW?cV/cW:null, costCover:cW/tot*100, costEur:cW?cV/100*(tot/cW):null, multi:items.filter(e=>e.src.size>=2).length, top1:top[0]||null};
 }
 async function depOcr(files, msg){
@@ -1649,6 +1681,7 @@ function depCompare(A,B){
     ${sec("Aktienteil nach Sektoren")}${sek.map(k=>row(esc(k),g(A,"sek",k),g(B,"sek",k),P1,false)).join("")}
     ${sec("Aktienteil nach Ländern")}${land.map(k=>row(esc(k),g(A,"land",k),g(B,"land",k),P1,false)).join("")}
     ${sec("Kennzahlen Aktienteil")}${row("KGV",A.pe,B.pe,N,false)}${row("KGV erwartet",A.fpe,B.fpe,N,false)}${row("Dividendenrendite",A.dy,B.dy,P2)}${row("erw. EPS-Wachstum",A.feg,B.feg,P1)}
+    ${(A.bonds.length||B.bonds.length)?sec("Anleihen")+row("Anleihen gesamt",A.bTot,B.bTot,E,false)+row("Ø Kupon",A.kupon,B.kupon,P2,false)+row("Ø Restlaufzeit (Jahre)",A.rlz,B.rlz,N,false):""}
     ${sec("Kosten & Konzentration")}${row("laufende Kosten p.a. (gewichtet)",A.cost,B.cost,P2,false)}${row("≈ Kosten p.a. in €",A.costEur,B.costEur,E,false)}
     ${row("Kostenangabe vorhanden für",A.costCover,B.costCover,P1,false)}
     <tr><td class="l">Größter Einzeltitel</td><td>${A.top1?`${esc(A.top1.r.n)} ${fmt(A.top1.pctDepot,1)} %`:"–"}</td><td>${B.top1?`${esc(B.top1.r.n)} ${fmt(B.top1.pctDepot,1)} %`:"–"}</td><td></td></tr>
@@ -1656,14 +1689,14 @@ function depCompare(A,B){
   </tbody></table>`;
 }
 V.DEP = async () => {
-  await lazy("etfs"); await lazy("holdings"); await lazy("universe"); await lazy("fonds");
+  await Promise.all(["etfs","holdings","universe","fonds","zertifikate","anleihen","bonds"].map(k=>lazy(k)));
   const A=depAnalyse();
   const katOpts=r=>`<select data-kat="${r._i}" style="max-width:170px"><option value="">Kategorie …</option>${Object.keys(DEP_KAT).map(k=>`<option${r.kat===k?" selected":""}>${k}</option>`).join("")}</select>`;
   const posTbl = depRows.length ? `<div class="scroll"><table><thead><tr><th class="l">ISIN</th><th class="l">Bezeichnung</th><th>${depScen?"Vorher €":"Betrag €"}</th>${depScen?'<th>Nachher €</th>':""}<th class="l">Erkannt als</th><th class="l">Aktienanteil</th><th class="l">Kosten p.a.</th><th></th></tr></thead><tbody>
     ${depRows.map((r,i)=>{ r._i=i; const R=depResolve(r); return `<tr><td class="l"><input data-f="isin" data-i="${i}" value="${esc(r.isin)}" style="width:130px;font-family:var(--mono)"></td>
       <td class="l"><input data-f="name" data-i="${i}" value="${esc(r.name)}" style="width:220px"></td>
       <td><input data-f="amt" data-i="${i}" type="number" step="0.01" value="${r.amt||""}" style="width:110px;text-align:right"></td>${depScen?`<td><input data-sa="${i}" type="number" step="0.01" value="${depScen.amt[i]!=null?depScen.amt[i]:(r.amt||"")}" style="width:110px;text-align:right;border-color:var(--amber)"></td>`:""}
-      <td class="l">${R.typ==="unbekannt"?katOpts(r):`<span class="chip" style="color:${R.typ==="Aktie"?"var(--blue)":R.typ==="ETF"?"var(--amber)":"var(--up)"}">${R.typ}</span> <span class="dim" style="font-size:11.5px">${esc(R.label)}</span>${R.typ==="Zuordnung"?" "+katOpts(r):""}`}</td>
+      <td class="l">${R.typ==="unbekannt"?katOpts(r):`<span class="chip" style="color:${R.typ==="Aktie"?"var(--blue)":R.typ==="ETF"?"var(--amber)":R.typ==="Zertifikat"?"var(--violet,#b48cff)":R.typ==="Anleihe"?"var(--cyan,#4fd1c5)":"var(--up)"}">${R.typ}</span> <span class="dim" style="font-size:11.5px">${esc(R.label)}</span>${R.typ==="Zuordnung"?" "+katOpts(r):""}`}</td>
       <td class="l dim">${R.aktien!=null?fmt(R.aktien,0)+" %":"–"}${R.bericht?` <span title="laut Fondsbericht per ${esc(R.bericht)}">· Bestand ${esc(R.bericht)}</span>`:R.misch?' <span class="dim" title="Kein Bericht – Aufteilung Aktien/Anleihen unbekannt">· kein Bestand</span>':R.ohne?' <span class="dim" title="Kein Bericht – Einzeltitel unbekannt">· ohne Durchblick</span>':""}</td><td class="dim">${(c=>c==null?"–":fmt(c,2)+" %")(depCost(R))}</td><td><a href="#" data-del="${i}" style="color:var(--dn)">✕</a></td></tr>`; }).join("")}
     ${depScen?depScen.add.map((r,j)=>{ const R=depResolve(r); return `<tr style="background:rgba(255,159,26,.06)"><td class="l"><input data-sf="isin" data-j="${j}" value="${esc(r.isin)}" placeholder="ISIN" style="width:130px;font-family:var(--mono)"></td>
       <td class="l"><input data-sf="name" data-j="${j}" value="${esc(r.name)}" placeholder="neue Position" style="width:220px"></td><td class="dim">–</td>
@@ -1687,6 +1720,12 @@ V.DEP = async () => {
           <div class="tile" style="cursor:default"><div class="t"><span>erw. EPS-Wachstum</span></div><div class="v ${cls(A.feg)}">${pct(A.feg,1)}</div></div></div>`)}
         ${panel("Auffälligkeiten", A.hints.length?`<ul style="margin:0;padding-left:18px;line-height:1.7">${A.hints.map(h=>`<li>${h}</li>`).join("")}</ul>`:`<div class="dim">Keine auffälligen Klumpen.</div>`)}
       </div></div>
+    ${A.bonds.length?`<div class="grid g3" style="margin-top:10px">
+      ${panel("Anleihen – Laufzeitenprofil", bars(A.ladder.filter(([,v])=>v>0),6)+`<div class="dim" style="font-size:11px;margin-top:8px">${fmt(A.bTot,0)} € in ${A.bonds.length} Anleihen · Ø Kupon ${A.kupon!=null?fmt(A.kupon,2)+" %":"–"} · Ø Restlaufzeit ${A.rlz!=null?fmt(A.rlz,1)+" J.":"–"}</div>`)}
+      ${panel("Anleihen nach Emittent", bars(A.emit.map(([k,v])=>[k,v/A.bTot*100]),8))}
+      ${panel("Anleihen im Depot", `<table><thead><tr><th class="l">Anleihe</th><th>Kupon</th><th>fällig</th><th>€</th></tr></thead><tbody>${A.bonds.sort((a,b)=>(a.faellig||"").localeCompare(b.faellig||"")).map(b=>`<tr><td class="l nm" style="max-width:200px">${esc(b.name||b.emittent||b.isin)}${b.geschaetzt?' <span class="dim" title="'+esc(b.quelle)+'">*</span>':""}</td><td>${b.kupon!=null?fmt(b.kupon,2)+" %":"–"}</td><td>${b.faellig?(b.geschaetzt?b.faellig.slice(0,4):new Date(b.faellig).toLocaleDateString("de-AT")):"–"}</td><td>${fmt(b.amt,0)}</td></tr>`).join("")}</tbody></table>`)}
+    </div>`:""}
+    ${A.zerts.length?`<div style="margin-top:10px">${panel("Zertifikate im Depot", `<div class="scroll"><table><thead><tr><th class="l">Zertifikat</th><th class="l">Typ</th><th class="l">Basiswert</th><th>fällig</th><th>Kap.-Schutz</th><th>Abst. Barriere</th><th>Kupon</th><th>€</th></tr></thead><tbody>${A.zerts.map(z=>`<tr><td class="l nm">${esc(z.n)}<br><span class="dim" style="font-size:11px">${esc(z.isin)}</span></td><td class="l dim">${esc(z.typ)}</td><td class="l dim" style="white-space:normal">${esc(z.basis||"–")}</td><td>${esc(z.faellig||"–")}</td><td>${z.schutz!=null?fmt(z.schutz,0)+" %":"–"}</td><td class="${z.abst!=null&&z.abst<15?"dn":""}">${z.abst!=null?fmt(z.abst,1)+" %":"–"}</td><td>${z.kupon!=null?fmt(z.kupon,2)+" %":"–"}</td><td>${fmt(z.amt,0)}</td></tr>`).join("")}</tbody></table></div><p class="dim" style="font-size:11px;margin-top:6px">Zertifikate werden nicht in den Aktien-Durchblick eingerechnet; das Risiko hängt vom Basiswert und der Barriere ab. Eckdaten laut raiffeisenzertifikate.at.</p>`)}</div>`:""}
     <p class="dim" style="font-size:11px;margin-top:8px">${B?"Die Bereiche unter dem Vergleich zeigen das Depot <b>vorher</b>. ":""}Durchblick: ETFs über Positionslisten bzw. Berichte der Anbieter, Fonds ausschließlich über die Vermögensaufstellung des letzten Halbjahres-/Rechenschaftsberichts (Stichtag je Fonds); Fonds ohne veröffentlichten Bestand werden nicht durchleuchtet. Kosten: TER bzw. effektive Verwaltungsgebühr laut Fondsbericht. Kennzahlen laut Yahoo Finance. Keine Anlageempfehlung.</p>` : "";
   return panel("Depotanalyse", `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
       <span class="chip" style="color:var(--amber);border-color:var(--amber);padding:5px 12px;font-size:12.5px">📋 Screenshot kopieren und hier <b>Strg+V</b> drücken</span>
@@ -1727,6 +1766,62 @@ V.DEP.after = el => {
   el.querySelectorAll("input[data-f]").forEach(inp=>inp.onchange=()=>{ const r=depRows[+inp.dataset.i]; const f=inp.dataset.f; r[f]= f==="amt" ? (+inp.value||0) : f==="isin" ? inp.value.trim().toUpperCase() : inp.value; render(); });
   el.querySelectorAll("select[data-kat]").forEach(s=>s.onchange=()=>{ depRows[+s.dataset.kat].kat=s.value; render(); });
 };
+/* --- Zertifikate (Raiffeisen Zertifikate, Anlageprodukte) und Bank-/Wohnbauanleihen --- */
+const dmyD = x => { const m=/^(\d\d)\.(\d\d)\.(\d{4})$/.exec(x||""); return m ? new Date(+m[3], +m[2]-1, +m[1]) : (x&&/^\d{4}-\d\d-\d\d/.test(x)?new Date(x):null); };
+const yrsTo = x => { const d=dmyD(x); return d ? (d-Date.now())/(365.25*864e5) : null; };
+function zertBy(isin){ return ((D.zertifikate&&D.zertifikate.rows)||[]).find(z=>z.isin===isin); }
+function bondBy(isin){
+  const a=((D.anleihen&&D.anleihen.rows)||[]).find(b=>b.isin===isin);
+  if(a) return {isin, name:a.name, emittent:a.emittent, art:a.art, kupon:a.kupon, faellig:a.faellig, stufen:a.stufen, variabel:a.variabel, wohnbau:a.wohnbau, quelle:"Emittent/OpenFIGI"};
+  const g=((D.bonds&&D.bonds.rows)||[]).find(b=>b.isin===isin);
+  if(g) return {isin, name:g.name, emittent:"Republik Österreich", art:"Staatsanleihe", kupon:g.kupon, faellig:g.faellig||(g.bis?g.bis+"-12-31":null), kurs:g.kurs, rendite:g.rendite, duration:g.duration, quelle:"OeKB/Wiener Börse"};
+  return null;
+}
+function bondFromName(name){ // „3,00 % RLB Tirol Anleihe 2026-2032" → Kupon und Laufzeit aus der Bezeichnung
+  const n=String(name||""); if(!/anl|obl|bond|schuldv|wohnbau|pfandbr|notes?\b|%/i.test(n)) return null;
+  const k=/(\d{1,2}(?:[,.]\d{1,3})?)\s?%/.exec(n), y=/(20\d\d|\b\d\d)\s?[-–\/]\s?(20\d\d|\d\d)\b/.exec(n);
+  if(!k||!y) return null; const e=+y[2]<100?2000+ +y[2]:+y[2];
+  return {name:n, kupon:parseFloat(k[1].replace(",",".")), faellig:`${e}-12-31`, art:/wohnbau/i.test(n)?"Wohnbauanleihe":"Anleihe", wohnbau:/wohnbau/i.test(n), geschaetzt:true, quelle:"aus der Bezeichnung (Fälligkeit nur Jahr)"};
+}
+let zertTyp="", zertQ="", zertSort={k:"faellig",d:1};
+V.ZERT = async () => {
+  const z = await lazy("zertifikate"); if(!z||!z.rows) return panel("Zertifikate", noData("Zertifikatsdaten (erscheinen nach dem nächsten Lauf)"));
+  const typs=[...new Set(z.rows.map(r=>r.typ))].sort(), q=zertQ.trim().toUpperCase();
+  const rows=z.rows.filter(r=>(!zertTyp||r.typ===zertTyp)&&(!q||r.isin.includes(q)||(r.n||"").toUpperCase().includes(q)||(r.basis||"").toUpperCase().includes(q)))
+    .sort((a,b)=>{ const k=zertSort.k; let x=a[k], y=b[k]; if(k==="faellig"){ x=dmyD(x); y=dmyD(y); } if(x==null) return 1; if(y==null) return -1; return (typeof x==="string"?x.localeCompare(y):x-y)*zertSort.d; });
+  const h=(k,l,c="")=>`<th class="${c}" data-zk="${k}" style="cursor:pointer">${l}${zertSort.k===k?(zertSort.d>0?" ▲":" ▼"):""}</th>`;
+  return panel(`Zertifikate <span class="dim">· Raiffeisen Zertifikate · ${z.rows.length} Anlageprodukte</span>`, `<div class="fbar"><input id="zq" value="${esc(zertQ)}" placeholder="ISIN, Name oder Basiswert" style="min-width:220px">
+    <div class="btns" id="zt"><button data-t="" class="${zertTyp?"":"on"}">Alle</button>${typs.map(t=>`<button data-t="${esc(t)}" class="${t===zertTyp?"on":""}">${esc(t.replace("-Zertifikat",""))}</button>`).join("")}</div></div>
+    <div class="scroll"><table><thead><tr>${h("n","Produkt","l")}${h("typ","Typ","l")}${h("basis","Basiswert","l")}${h("faellig","fällig")}${h("geld","Geld")}${h("kupon","Kupon p.a.")}${h("schutz","Kap.-Schutz")}${h("abst","Abst. Barriere")}${h("maxp","max. Rend. p.a.")}<th></th></tr></thead><tbody>
+    ${rows.slice(0,400).map(r=>`<tr><td class="l nm" style="max-width:300px">${esc(r.n)}<br><span class="dim" style="font-size:11px">${esc(r.isin)}</span></td><td class="l dim">${esc(r.typ)}</td><td class="l dim" style="max-width:220px;white-space:normal">${esc(r.basis||"–")}</td>
+      <td>${esc(r.faellig||"–")}</td><td>${r.geld!=null?fmt(r.geld,2)+" %":"–"}</td><td>${r.kupon!=null?fmt(r.kupon,2)+" %":"–"}</td><td>${r.schutz!=null?fmt(r.schutz,0)+" %":"–"}</td>
+      <td class="${r.abst!=null?(r.abst<10?"dn":r.abst<20?"":"up"):""}">${r.abst!=null?fmt(r.abst,1)+" %":"–"}${r.verletzt==="ja"?' <span class="dn">verletzt</span>':""}</td><td>${r.maxp!=null?fmt(r.maxp,1)+" %":"–"}</td>
+      <td><a href="${esc(r.url)}" target="_blank" rel="noopener">Details ↗</a></td></tr>`).join("")}</tbody></table></div>
+    <p class="dim" style="font-size:11px;margin-top:8px">${rows.length>400?`${rows.length} Treffer, die ersten 400 angezeigt – bitte filtern. `:""}Quelle: raiffeisenzertifikate.at (Produktliste täglich nachts, Eckdaten je Produkt alle 30 Tage). Geldkurse indikativ, Stand des Abrufs. Barriereabstand zum Zeitpunkt des Abrufs. Maßgeblich sind die Endgültigen Bedingungen und das Basisinformationsblatt. Keine Anlageempfehlung.</p>`);
+};
+V.ZERT.after = el => {
+  el.querySelectorAll("#zt button").forEach(b=>b.onclick=()=>{ zertTyp=b.dataset.t; render(); });
+  el.querySelectorAll("[data-zk]").forEach(t=>t.onclick=()=>{ const k=t.dataset.zk; zertSort = zertSort.k===k?{k,d:-zertSort.d}:{k,d:1}; render(); });
+  const q=el.querySelector("#zq"); q.onchange=()=>{ zertQ=q.value; render(); };
+};
+let bankEm="", bankQ="";
+V.BANK = async () => {
+  const a = await lazy("anleihen"); if(!a||!a.rows) return panel("Bank- & Wohnbauanleihen", noData("Anleihedaten (erscheinen nach dem nächsten Lauf)"));
+  const ems=[...new Set(a.rows.map(r=>r.emittent))], q=bankQ.trim().toUpperCase();
+  const rows=a.rows.filter(r=>(!bankEm||r.emittent===bankEm)&&(!q||r.isin.includes(q)||(r.name||"").toUpperCase().includes(q)||(r.bez||"").toUpperCase().includes(q)))
+    .sort((x,y)=>(x.faellig||"9999").localeCompare(y.faellig||"9999"));
+  return panel(`Bank- &amp; Wohnbauanleihen <span class="dim">· ${a.rows.length} Anleihen</span>`, `<div class="fbar"><input id="bq" value="${esc(bankQ)}" placeholder="ISIN oder Name" style="min-width:200px">
+    <div class="btns" id="be"><button data-e="" class="${bankEm?"":"on"}">Alle Emittenten</button>${ems.map(e=>`<button data-e="${esc(e)}" class="${e===bankEm?"on":""}">${esc(e)}</button>`).join("")}</div></div>
+    <div class="scroll"><table><thead><tr><th class="l">Anleihe</th><th class="l">Emittent</th><th class="l">Art</th><th>Kupon</th><th>fällig</th><th>Restlaufzeit</th><th class="l">Hinweis</th></tr></thead><tbody>
+    ${rows.map(r=>{ const y=yrsTo(r.faellig); return `<tr><td class="l nm" style="max-width:320px">${esc(r.ticker||r.name)}<br><span class="dim" style="font-size:11px">${esc(r.isin)}</span></td><td class="l dim">${esc(r.name||r.emittent)}</td><td class="l dim">${esc(r.art)}</td>
+      <td>${r.kupon!=null?fmt(r.kupon,3)+" %":"–"}</td><td>${r.faellig?new Date(r.faellig).toLocaleDateString("de-AT"):"–"}</td><td>${y!=null?fmt(y,1)+" J.":"–"}</td>
+      <td class="l dim">${[r.stufen?"Stufenzins":"", r.variabel?"variabel":"", r.wohnbau?"Wohnbau (KESt-Begünstigung prüfen)":""].filter(Boolean).join(" · ")}</td></tr>`; }).join("")}</tbody></table></div>
+    <p class="dim" style="font-size:11px;margin-top:8px">ISINs von den öffentlichen Emissionsseiten der Emittenten (Raiffeisen Wohnbaubank, Hypo-Wohnbaubank, RLB Tirol, RLB OÖ, RLB Steiermark, RLB NÖ-Wien), Kupon und Fälligkeit über OpenFIGI. Bei Stufenzins- und variablen Anleihen ist der Kupon der aktuell bzw. zuerst gültige Wert. Meist keine Börsenkurse verfügbar. Weitere Anleihen: manual/anleihen.json. Keine Anlageempfehlung.</p>`);
+};
+V.BANK.after = el => {
+  el.querySelectorAll("#be button").forEach(b=>b.onclick=()=>{ bankEm=b.dataset.e; render(); });
+  const q=el.querySelector("#bq"); q.onchange=()=>{ bankQ=q.value; render(); };
+};
 /* --- Datenstatus: Stand je Datenquelle, Positions-Stichtage, Fonds-Kurse/-Kosten, Warnungen --- */
 let statTab = "quellen";
 V.STATUS = async () => {
@@ -1738,8 +1833,8 @@ V.STATUS = async () => {
   const mon = x => { const d=dmy(x); return d ? (now-d.getTime())/(30.44*864e5) : null; };
   const amp = (v, warn, bad) => v==null ? "neutral" : v>bad ? "negative" : v>warn ? "neutral" : "positive";
   const tag = (txt, a) => `<span class="sent ${a}">${txt}</span>`;
-  const FN = {market:"Märkte & Watchlist",universe:"Aktienuniversum",news:"News & Stimmung",calendar:"Kalender",macro:"Makrodaten",bonds:"Bundesanleihen",etfs:"ETFs (Kurse, TER)",fonds:"Fonds (NAV, Gebühren)",holdings:"Positionen ETFs/Fonds",history:"Kursverläufe",long:"Langfrist-Historie",marktupdate:"Marktupdate"};
-  const LIM = {market:[1.5,26],news:[1.5,26],universe:[26,60],etfs:[1.5,26],fonds:[1.5,26],history:[26,60],holdings:[26,60],calendar:[26,60],macro:[26,72],bonds:[26,72],long:[200,400],marktupdate:[200,400]};
+  const FN = {market:"Märkte & Watchlist",universe:"Aktienuniversum",news:"News & Stimmung",calendar:"Kalender",macro:"Makrodaten",bonds:"Bundesanleihen",etfs:"ETFs (Kurse, TER)",fonds:"Fonds (NAV, Gebühren)",holdings:"Positionen ETFs/Fonds",history:"Kursverläufe",long:"Langfrist-Historie",marktupdate:"Marktupdate",zertifikate:"Zertifikate",anleihen:"Bank-/Wohnbauanleihen"};
+  const LIM = {market:[1.5,26],news:[1.5,26],universe:[26,60],etfs:[1.5,26],fonds:[1.5,26],history:[26,60],holdings:[26,60],calendar:[26,60],macro:[26,72],bonds:[26,72],long:[200,400],marktupdate:[200,400],zertifikate:[26,60],anleihen:[26,60]};
   const tabs = `<div class="btns" id="stT" style="margin-bottom:8px">${[["quellen","Quellen & Läufe"],["etf","ETF-Positionen"],["fonds","Fonds"]].map(([k,l])=>`<button data-t="${k}" class="${k===statTab?"on":""}" style="padding:4px 12px;font-size:12px">${l}</button>`).join("")}</div>`;
   const head = `<div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:10px">
     <div class="tile" style="cursor:default"><div class="t"><span>Letzter Lauf</span></div><div class="v" style="font-size:16px">${ageTxt(ageH(st.updated))}</div><div class="dim" style="font-size:11px">${st.mode==="nightly"?"Nachtlauf":"Schnelllauf"} · ${fmt(st.min,1)} Min.</div></div>
@@ -1795,7 +1890,8 @@ V.HELP = () => panel("Befehle", `<table class="help"><tbody><tr><td><b>ISIN</b><
 
 /* ============================================================ Router */
 async function render(){
-  document.querySelectorAll("#fkeys button").forEach(b=>b.classList.toggle("on", b.dataset.v===state.view));
+  document.querySelectorAll("#fkeys [data-v]").forEach(b=>b.classList.toggle("on", b.dataset.v===state.view));
+  document.querySelectorAll("#fkeys .ng").forEach(g=>{ g.querySelector(".ngb").classList.toggle("on", !!g.querySelector(`[data-v="${state.view}"]`)); g.classList.remove("open"); }); document.body.classList.remove("menu-open");
   const el=document.getElementById("view"), fn=V[state.view]||V.HOME;
   const html = await fn();
   el.innerHTML = (DEMO?`<div class="banner">Vorschau mit Beispieldaten – echte Kurse erscheinen, sobald der GitHub-Workflow gelaufen ist.</div>`:"") + html;
@@ -1905,7 +2001,7 @@ document.addEventListener("click", ev => { const c=ev.target.closest&&ev.target.
 document.addEventListener("click", ev => { const a=ev.target.closest&&ev.target.closest("[data-kzv]"); if(!a) return; ev.preventDefault(); kzvAdd(a.dataset.kzv); go("KZV"); });
 
 /* ============================================================ Befehlszeile */
-const ALIAS={HOME:"HOME",WEI:"WEI",W:"HOME",WL:"HOME",MOV:"HOME",MOVER:"HOME",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",CMP:"CMP",COMP:"CMP",BRA:"BRA",BRANCHEN:"BRA",IND:"BRA",ETF:"ETF",ETFS:"ETF",KZV:"KZV",KENNZAHLEN:"KZV",KENNZAHLENVERGLEICH:"KZV",FONDS:"ETF",FUND:"ETF",VERGLEICH:"CMP",GOVT:"GOVT",BOND:"GOVT",DEP:"DEP",DEPOT:"DEP",BER:"BER",BERATUNG:"BER",ZINS:"BER",DURATION:"BER",NET:"NET",NETTO:"NET",RENDITE:"NET",FESTGELD:"NET",ANLEIHEN:"GOVT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP",STATUS:"STATUS",STAT:"STATUS",DATEN:"STATUS",DATENSTATUS:"STATUS"};
+const ALIAS={HOME:"HOME",WEI:"WEI",W:"HOME",WL:"HOME",MOV:"HOME",MOVER:"HOME",SCR:"SCR",SCREENER:"SCR",EQS:"SCR",ECO:"ECO",MACRO:"ECO",TOP:"TOP",N:"TOP",NEWS:"TOP",CAL:"CAL",KAL:"CAL",MKT:"MKT",MU:"MKT",CMP:"CMP",COMP:"CMP",BRA:"BRA",BRANCHEN:"BRA",IND:"BRA",ETF:"ETF",ETFS:"ETF",KZV:"KZV",KENNZAHLEN:"KZV",KENNZAHLENVERGLEICH:"KZV",FONDS:"ETF",FUND:"ETF",VERGLEICH:"CMP",GOVT:"GOVT",BOND:"GOVT",DEP:"DEP",DEPOT:"DEP",BER:"BER",BERATUNG:"BER",ZINS:"BER",DURATION:"BER",NET:"NET",NETTO:"NET",RENDITE:"NET",FESTGELD:"NET",ANLEIHEN:"GOVT",MARKTUPDATE:"MKT",EVTS:"CAL",DES:"DES",GP:"GP",HELP:"HELP",HILFE:"HELP",ZERT:"ZERT",ZERTIFIKATE:"ZERT",BANK:"BANK",WOHNBAU:"BANK",BANKANLEIHEN:"BANK",STATUS:"STATUS",STAT:"STATUS",DATEN:"STATUS",DATENSTATUS:"STATUS"};
 const ISIN_RE=/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
 function isinOf(sym){ const r=((D.universe&&D.universe.rows)||[]).find(x=>x.s===sym); if(r&&r.i) return r.i; const m=(D.holdings&&D.holdings.isin)||{}; for(const k in m){ if(m[k]===sym && !k.startsWith("N:")) return k; } return null; }
 let isinMiss=null;
@@ -1919,6 +2015,9 @@ async function isinGo(isin){
   const r=((D.universe&&D.universe.rows)||[]).find(x=>x.i===isin);
   const sym=(r&&r.s)||((D.holdings&&D.holdings.isin)||{})[isin];
   if(sym) return go("DES", sym);
+  await Promise.all(["zertifikate","anleihen"].map(k=>lazy(k)));
+  if(zertBy(isin)){ zertQ=isin; zertTyp=""; return go("ZERT"); }
+  if(((D.anleihen&&D.anleihen.rows)||[]).some(b=>b.isin===isin)){ bankQ=isin; bankEm=""; return go("BANK"); }
   isinMiss=isin; go("ISN");
 }
 V.ISN = () => panel("ISIN-Suche", `<div class="empty">Die ISIN <b>${esc(isinMiss||"")}</b> ist im Terminal (noch) nicht hinterlegt.<br><br>Gesucht wird in allen ETFs, den Raiffeisen- und KEPLER-Fonds (inkl. aller Tranchen aus den Berichten) und rund ${fmt(((D.universe&&D.universe.rows)||[]).length,0)} Aktien.<br>Aktien aus MSCI World und MSCI EM werden laufend ergänzt; ein fehlender Fonds lässt sich in manual/fonds.json nachtragen.<br><br>${isinOk(isinMiss||"")?"":'<span class="dn">Achtung: Die Prüfziffer dieser ISIN stimmt nicht – bitte Tippfehler prüfen.</span>'}</div>`);
@@ -1967,7 +2066,11 @@ inp.addEventListener("keydown",e=>{
   if(e.key==="Enter"&&sIdx>=0){ e.preventDefault(); const v=it[sIdx].dataset.v; inp.value=""; sg.style.display="none"; runCmd(v); }
 });
 document.getElementById("cmdForm").onsubmit=e=>{e.preventDefault(); const v=inp.value; inp.value=""; sg.style.display="none"; inp.blur(); runCmd(v);};
-document.querySelectorAll("#fkeys button").forEach(b=>b.onclick=()=>go(b.dataset.v));
+document.querySelectorAll("#fkeys [data-v]").forEach(b=>b.onclick=()=>{ document.querySelectorAll("#fkeys .ng").forEach(g=>g.classList.remove("open")); document.body.classList.remove("menu-open"); go(b.dataset.v); });
+document.querySelectorAll("#fkeys .ngb").forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); const g=b.parentNode, was=g.classList.contains("open");
+  document.querySelectorAll("#fkeys .ng").forEach(x=>x.classList.remove("open")); if(!was) g.classList.add("open"); document.body.classList.toggle("menu-open", !was && matchMedia("(max-width:760px)").matches); });
+document.addEventListener("click", ev => { if(!ev.target.closest("#fkeys")){ document.querySelectorAll("#fkeys .ng.open").forEach(x=>x.classList.remove("open")); document.body.classList.remove("menu-open"); } });
+document.addEventListener("keydown", ev => { if(ev.key==="Escape"){ document.querySelectorAll("#fkeys .ng.open").forEach(x=>x.classList.remove("open")); document.body.classList.remove("menu-open"); } });
 document.addEventListener("keydown",e=>{
   const m=e.key.match(/^F([1-9]|10)$/); if(m){ e.preventDefault(); go(["HOME","MKT","ECO","WEI","BRA","SCR","ETF","GOVT","BER","CMP"][+m[1]-1]); return; }
   if((e.key==="/"&&document.activeElement!==inp)||(e.key.toLowerCase()==="k"&&(e.ctrlKey||e.metaKey))){ e.preventDefault(); inp.focus(); }
