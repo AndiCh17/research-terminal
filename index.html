@@ -148,6 +148,8 @@ tr.click:hover td{background:var(--hl)}
 .axis{fill:var(--dim2);font-size:10px;font-family:var(--sans);font-variant-numeric:tabular-nums}
 
 .empty{color:var(--dim);padding:30px;text-align:center}
+.ins-wrap{position:sticky;left:12px;width:min(1600px,calc(100vw - 90px))}
+@media (max-width:760px){.ins-wrap{width:calc(100vw - 50px)}}
 .help td{text-align:left;white-space:normal}
 @media(max-width:600px){.clock{display:none}.dhead .s,.dhead .p{font-size:19px}}
 .help td:first-child{color:var(--amber);width:170px}
@@ -1207,12 +1209,35 @@ function fondsView(){
       <td class="l dim">${esc(f.kag)}</td><td class="l dim">${esc(f.kat)}</td><td class="${cls(f.ytd)}">${f.px?pct(f.ytd,1):"–"}</td><td class="${cls(f.y1)}">${f.px?pct(f.y1,1):"–"}</td><td class="${cls(f.y3)}">${f.y3!=null?pct(f.y3,1):"–"}</td><td>${feeTxt(fondsFee(f))}</td><td>${rep?`${fmt(rep.aktien,0)} %`:'<span class="dim">–</span>'}</td>
       <td class="l" style="max-width:220px;overflow:hidden;text-overflow:ellipsis">${rep?`<span class="sent positive" title="Vermögensaufstellung">BESTAND</span> <span class="dim">${esc(rep.quelle==="Halbjahresbericht"?"HJB":"RB")} ${esc(rep.stichtag||"")}</span>`:`<span class="dim" title="Für diesen Fonds ist noch kein Bericht hinterlegt">kein Bestand</span>`}</td>
       <td>${L?fmt(L.pe,1):"–"}</td><td>${L&&L.dy!=null?fmt(L.dy,2)+" %":"–"}</td><td class="${cls(L&&L.feg)}">${L?pct(L.feg,1):"–"}</td><td class="l dim">${L?top1(L.sek):"–"}</td><td class="l dim">${L?top1(L.land):"–"}</td>
-      <td style="white-space:nowrap">${f.hist1y?`<a href="#" data-cmp="F:${esc(f.name)}" title="Kursverlauf im Vergleich">⊕ CMP</a> `:""}<a href="#" data-kzv="F:${esc(f.name)}" title="In den Kennzahlenvergleich">⊕ KZV</a> ${rep?`<a href="#" data-fo="${i}">${fondsOpen===f.name?"▾":"▸"} Einblick</a>`:""}</td></tr>
-      ${fondsOpen===f.name&&rep?`<tr><td colspan="15" style="background:var(--panel2);text-align:left;white-space:normal;padding:12px">${rep
-        ? `<div class="dim" style="font-size:11.5px;margin-bottom:8px">Bestand laut ${esc(rep.quelle)} per <b>${esc(rep.stichtag||"")}</b>: Aktien ${fmt(rep.aktien,1)} %${rep.anleihen?` · Anleihen ${fmt(rep.anleihen,1)} %`:""}${rep.fonds?` · Fonds ${fmt(rep.fonds,1)} %`:""} · Rest Liquidität/Derivate. <a href="${esc(rep.url)}" target="_blank" rel="noopener">Bericht öffnen ↗</a></div>${rep.n?etfInsight({isin:"F:"+f.name}):'<div class="dim">Keine Aktienpositionen im Bestand.</div>'}`
-        : ""}</td></tr>`:""}`).join("")}
+      <td style="white-space:nowrap">${f.hist1y?`<a href="#" data-cmp="F:${esc(f.name)}" title="Kursverlauf im Vergleich">⊕ CMP</a> `:""}<a href="#" data-kzv="F:${esc(f.name)}" title="In den Kennzahlenvergleich">⊕ KZV</a> ${rep||f.hist1y?`<a href="#" data-fo="${i}">${fondsOpen===f.name?"▾":"▸"} Einblick</a>`:""}</td></tr>
+      ${fondsOpen===f.name&&(rep||f.hist1y)?`<tr><td colspan="15" style="background:var(--panel2);text-align:left;white-space:normal;padding:14px"><div class="ins-wrap">${fondsInsight(f,rep)}</div></td></tr>`:""}`).join("")}
     </tbody></table></div>
     <p class="dim" style="font-size:11px;margin-top:8px">Stammdaten der Publikumsfonds von Raiffeisen Capital Management (Raiffeisen KAG) und KEPLER-FONDS KAG. <b>BESTAND</b> (${nRep} Fonds): Positionen und Aktienquote aus der Vermögensaufstellung des letzten Halbjahres- bzw. Rechenschaftsberichts (öffentliche PDF der Raiffeisen KAG, wird wöchentlich auf neue Berichte geprüft) – exakt zum Stichtag, danach können sich die Gewichte durch Umschichtungen verschieben. <b>kein Bestand</b>: Für diesen Fonds ist noch kein Bericht automatisch abrufbar (u. a. KEPLER) – es werden bewusst keine Annahmen getroffen, Aktienquote und Kennzahlen bleiben leer. <b>Wertentwicklung</b> (${F.filter(f=>f.px).length} Fonds): Rücknahmepreise (NAV) über Yahoo Finance für die angegebene Tranche, ohne Wiederveranlagung von Ausschüttungen und ohne Ausgabeaufschlag. <b>Verw.-Geb.</b>: effektive Verwaltungsgebühr laut Fondsbericht (nur Raiffeisen KAG; KEPLER-Berichte enthalten sie nicht) – die laufenden Kosten laut KID sind höher. Keine Anlageempfehlung.</p>`);
+}
+/* Fonds-Einblick: Kurs & Kennzahlen, Aufteilung, Währungen, alle größten Positionen (inkl. Anleihen, Subfonds) + Aktien-Durchblick */
+const KIND = {aktie:["Aktie","var(--blue)"], anleihe:["Anleihe","var(--cyan)"], fonds:["Fonds","var(--violet)"]};
+function fondsInsight(f, rep){
+  const fe=fondsFee(f), kpi=(l,v)=>`<div class="tile" style="cursor:default;padding:8px 10px"><div class="t"><span>${l}</span></div><div class="v" style="font-size:17px">${v}</div></div>`;
+  const P=v=>v==null?"–":`<span class="${cls(v)}">${pct(v,1)}</span>`;
+  const tiles=`<div class="tiles" style="grid-template-columns:repeat(auto-fill,minmax(125px,1fr));margin-bottom:10px">
+    ${kpi("Rücknahmepreis",f.px?`${fmt(f.px,2)}<div class="dim" style="font-size:11px;font-weight:400">${f.pxd?new Date(f.pxd).toLocaleDateString("de-AT"):""}</div>`:"–")}${kpi("seit Jahresbeginn",P(f.ytd))}${kpi("1 Jahr",P(f.y1))}${kpi("3 Jahre p.a.",P(f.y3))}
+    ${kpi("Volatilität 1 J.",f.vola!=null?fmt(f.vola,1)+" %":"–")}${kpi("Max. Verlust 1 J.",f.mdd!=null?`<span class="dn">${pct(f.mdd,1)}</span>`:"–")}${kpi("Verwaltungsgeb.",fe?feeTxt(fe):"–")}${kpi("Aktienquote",rep?fmt(rep.aktien,0)+" %":"–")}</div>`;
+  const chart=f.hist1y?`<div class="dim" style="font-size:11px;margin-bottom:4px">RÜCKNAHMEPREIS 1 JAHR <span style="text-transform:none">(${esc(f.nav_isin||"")}, ohne Ausschüttungen)</span></div><div class="fchart" data-fn="${esc(f.name)}" style="margin-bottom:10px"></div>`:"";
+  if(!rep) return tiles+chart+`<div class="dim">Für diesen Fonds ist noch kein Halbjahres-/Rechenschaftsbericht hinterlegt – Positionen und Aufteilung folgen, sobald ein Bericht gefunden wird.</div>
+    <div style="margin-top:8px">${f.hist1y?`<button class="info" data-cmp="F:${esc(f.name)}" style="padding:4px 10px">⊕ Vergleich</button> `:""}<button class="info" data-kzv="F:${esc(f.name)}" style="padding:4px 10px">⊕ Kennzahlenvergleich</button></div>`;
+  const rest=Math.max(0,100-(rep.aktien||0)-(rep.anleihen||0)-(rep.fonds||0));
+  const split=[["Aktien",rep.aktien||0],["Anleihen",rep.anleihen||0],["Fonds (ohne Durchblick)",rep.fonds||0],["Liquidität/Sonstiges",rest]].filter(([,v])=>v>0.05);
+  const F=(D.fonds&&D.fonds.fonds)||[];
+  const posRows=(rep.pos||[]).map(([n,k,w,sub],i)=>{ const kk=KIND[k]||[k,"var(--dim)"]; const inCat=sub&&F.some(x=>x.name===sub);
+    return `<tr><td class="l" style="white-space:normal">${i+1}. ${esc(n)}${sub?` <span class="dim" style="font-size:11px">→ ${inCat?`<a href="#" data-fsub="${esc(sub)}">${esc(sub)}</a>`:esc(sub)}</span>`:""}</td><td class="l"><span class="chip" style="color:${kk[1]}">${kk[0]}</span></td><td>${fmt(w,2)} %</td></tr>`; }).join("");
+  const np=rep.npos||{};
+  return tiles+chart+`<div class="grid g3" style="margin-bottom:10px">
+      <div><div class="dim" style="font-size:11px;margin-bottom:6px">AUFTEILUNG</div>${bars(split,5)}<div class="dim" style="font-size:11px;margin-top:6px">${fmt(np.aktie||0,0)} Aktien · ${fmt(np.anleihe||0,0)} Anleihen · ${fmt(np.fonds||0,0)} Fonds</div></div>
+      <div><div class="dim" style="font-size:11px;margin-bottom:6px">WÄHRUNGEN</div>${rep.cur?bars(rep.cur,6):"–"}</div>
+      <div><div class="dim" style="font-size:11px;margin-bottom:6px">BERICHT</div><div style="font-size:12.5px;line-height:1.7">${esc(rep.quelle)} per <b>${esc(rep.stichtag||"")}</b><br><a href="${esc(rep.url)}" target="_blank" rel="noopener">Bericht öffnen ↗</a><br>
+        ${f.hist1y?`<a href="#" data-cmp="F:${esc(f.name)}">⊕ Vergleich (Chart)</a><br>`:""}<a href="#" data-kzv="F:${esc(f.name)}">⊕ Kennzahlenvergleich</a></div></div></div>
+    ${posRows?`<div class="dim" style="font-size:11px;margin-bottom:6px">GRÖSSTE POSITIONEN – ALLE ANLAGEKLASSEN</div><table style="margin-bottom:12px"><tbody>${posRows}</tbody></table>`:""}
+    ${rep.n?`<div class="dim" style="font-size:11px;margin:4px 0 6px">AKTIEN-DURCHBLICK${rep.fonds||(np.fonds||0)?" (inkl. durchleuchteter Subfonds/ETFs)":""}</div>${etfInsight({isin:"F:"+f.name})}`:`<div class="dim" style="font-size:12px">Keine Aktienpositionen im Bestand.</div>`}`;
 }
 /* Durchblick: Kennzahlen eines ETFs aus seinen (dem Universum zugeordneten) Positionen */
 let etfMode = "perf";
@@ -1279,7 +1304,7 @@ V.ETF = async () => {
     ${rows.map(x=>`<tr><td class="l nm" style="max-width:300px" title="${esc(x.isin)}">${esc(x.name)}<br><span class="dim" style="font-size:11px">${esc(x.isin)} · ${esc(x.ticker||"")}</span></td><td class="l dim">${esc(x.kategorie)}</td>
       <td>${fmt(x.lpe,1)}</td><td>${fmt(x.lfpe,1)}</td><td>${x.ldy!=null?fmt(x.ldy,2)+" %":"–"}</td><td class="${cls(x.lfeg)}">${pct(x.lfeg,1)}</td><td class="${cls(x.leg)}">${pct(x.leg,1)}</td><td class="${cls(x.lup)}">${pct(x.lup,1)}</td><td class="l dim">${esc(x.lsek||"–")}</td><td class="l dim">${esc(x.lland||"–")}</td><td class="dim">${x.lcov!=null?fmt(x.lcov,0)+" %":"–"}</td>
       <td style="white-space:nowrap">${ins(x)}<a href="#" data-cmp="${esc(x.ticker)}" title="in den Vergleichschart">⊕ CMP</a></td></tr>
-      ${etfTopOpen===x.isin?`<tr><td colspan="12" style="background:var(--panel2);text-align:left;white-space:normal;padding:12px">${etfInsight(x)}</td></tr>`:""}`).join("")}
+      ${etfTopOpen===x.isin?`<tr><td colspan="12" style="background:var(--panel2);text-align:left;white-space:normal;padding:12px"><div class="ins-wrap">${etfInsight(x)}</div></td></tr>`:""}`).join("")}
     </tbody></table></div>
     <p class="dim" style="font-size:11px;margin-top:8px">Durchblick: Kennzahlen der Einzeltitel (Yahoo Finance), gewichtet mit ihrem Anteil im Fonds. Grundlage sind die täglichen Positionslisten von Xtrackers und SPDR; für Fonds anderer Anbieter auf denselben Index wird deren Liste verwendet, bei ähnlichen Indizes als Näherung, sonst die Indexmitglieder nach Marktkapitalisierung. „Abdeckung“ = Anteil des Fondsvermögens, der Titeln im Universum zugeordnet werden konnte. Anleihen-, Geldmarkt-, Faktor- und Themenfonds ohne Liste bleiben leer.</p>`,
     `<small>Meldefonds geprüft am ${e.geprueft?new Date(e.geprueft).toLocaleDateString("de-AT"):"–"}</small>`);
@@ -1289,7 +1314,7 @@ V.ETF = async () => {
       <td class="l">${x.meldefonds===true?`<span class="sent positive" title="Steuerlicher Vertreter: ${esc(x.vertreter)} · ${esc(x.letzteMeldung||"")}">JA</span>`:x.meldefonds===false?`<span class="sent negative">NEIN</span>`:`<span class="sent neutral" title="Noch nicht bei der OeKB geprüft">OFFEN</span>`}</td><td class="l dim">${esc(x.ertrag||"")}</td>
       <td>${fmt(x.ter,2)}</td><td>${big(x.aum)}</td><td>${fmt(x.px)} <span class="dim">${esc(x.cur||"")}</span></td><td class="${cls(x.m1)}">${pct(x.m1,1)}</td><td class="${cls(x.ytd)}">${pct(x.ytd,1)}</td><td class="${cls(x.y1)}">${pct(x.y1,1)}</td><td class="${cls(x.y3)}">${pct(x.y3,1)}</td><td class="${cls(x.y5)}">${pct(x.y5,1)}</td><td>${fmt(x.vola,1)}</td><td class="dn">${pct(x.mdd,1,false)}</td>
       <td style="white-space:nowrap">${ins(x)}<a href="#" data-cmp="${esc(x.ticker)}" title="in den Vergleichschart">⊕ CMP</a></td></tr>
-      ${etfTopOpen===x.isin?`<tr><td colspan="15" style="background:var(--panel2);text-align:left;white-space:normal;padding:12px">${etfInsight(x)}</td></tr>`:""}`).join("")}
+      ${etfTopOpen===x.isin?`<tr><td colspan="15" style="background:var(--panel2);text-align:left;white-space:normal;padding:12px"><div class="ins-wrap">${etfInsight(x)}</div></td></tr>`:""}`).join("")}
     </tbody></table></div>
     <p class="dim" style="font-size:11px;margin-top:8px">${esc(e.hinweis||"")} Kurse in Handelswährung (Xetra), Performance ohne Kosten der Bank. TER und Volumen laut Yahoo Finance, können vom Factsheet abweichen. Keine Anlageempfehlung.</p>`,
     `<small>Meldefonds geprüft am ${e.geprueft?new Date(e.geprueft).toLocaleDateString("de-AT"):"–"}</small>`);
@@ -1297,6 +1322,8 @@ V.ETF = async () => {
 V.ETF.after = el => {
   el.querySelectorAll("#fk button").forEach(b=>b.onclick=()=>{ fondsKag=b.dataset.k; render(); });
   el.querySelectorAll("#fc button").forEach(b=>b.onclick=()=>{ fondsKat=b.dataset.c; render(); });
+  el.querySelectorAll(".fchart").forEach(c=>{ const f=((D.fonds&&D.fonds.fonds)||[]).find(x=>x.name===c.dataset.fn); if(f&&f.hist1y) lineChart(c, f.hist1y, {base:true, h:170, unit:"EUR"}); });
+  el.querySelectorAll("[data-fsub]").forEach(a=>a.onclick=ev=>{ ev.preventDefault(); fondsKag=""; fondsKat=""; fondsOpen=a.dataset.fsub; render(); setTimeout(()=>{ const r=[...document.querySelectorAll("[data-fo]")].find(x=>x.textContent.includes("▾")); if(r) r.scrollIntoView({block:"center"}); },60); });
   el.querySelectorAll("[data-fo]").forEach(a=>a.onclick=ev=>{ ev.preventDefault(); const F=((D.fonds&&D.fonds.fonds)||[]).filter(f=>(!fondsKag||f.kag===fondsKag)&&(!fondsKat||f.kat===fondsKat)); const f=F[+a.dataset.fo]; fondsOpen = fondsOpen===f.name?null:f.name; render(); });
   el.querySelectorAll("[data-etfprint]").forEach(b=>b.onclick=()=>{ const x=((D.etfs&&D.etfs.etfs)||[]).find(e=>e.isin===b.dataset.etfprint); if(!x) return;
     const info=document.createElement("div"); info.className="panel"; info.innerHTML=`<div class="ph"><h2>Stammdaten & Wertentwicklung</h2></div><div class="pb"><div class="kv">

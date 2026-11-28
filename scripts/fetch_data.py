@@ -2278,7 +2278,15 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
         for s, w in agg.items():
             by_sym.setdefault(s, []).append([key, rnd(w, 3)])
         tops[key] = [[n, rnd(w, 2)] for n, w, _ in sorted(pos.values(), key=lambda x: -x[1])[:10]]
+        its = r.get("items") or []
+        allpos = [[nice_name(it["name"]), pos_kind(it), rnd(it["w"], 2), by_isin.get(it["isin"]) if pos_kind(it) == "fonds" else None]
+                  for it in sorted(its, key=lambda x: -x["w"])[:15]]
+        curs: dict[str, float] = {}
+        for it in its:
+            curs[it.get("cur") or "?"] = curs.get(it.get("cur") or "?", 0) + it["w"]
+        npos = {k_: sum(1 for it in its if pos_kind(it) == k_) for k_ in ("aktie", "anleihe", "fonds")}
         meta[key] = {"art": "bericht", "quelle": r["typ"], "stichtag": r["stichtag"], "url": r["url"], "n": len(pos), "hit": hit,
+                     "pos": allpos, "cur": [[c, rnd(w, 1)] for c, w in sorted(curs.items(), key=lambda x: -x[1])[:6]], "npos": npos,
                      "wsum": rnd(sum(agg.values()), 1), "wall": rnd(art["aktie"], 1), "aktien": rnd(art["aktie"], 1),
                      "anleihen": rnd(art["anleihe"], 1), "fonds": rnd(max(art["fonds"], 0), 1), "tranchen": r.get("tranchen") or []}
         nf += 1
