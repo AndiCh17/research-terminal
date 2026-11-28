@@ -1978,7 +1978,7 @@ def load_fund_reports() -> dict:
             try:
                 raw = (ROOT / "manual" / "berichte" / u[5:]).read_bytes() if u.startswith("file:") else HTTP.get(u, timeout=90).content
                 rp = parse_any_report(raw)
-                pcache[u] = {k: rp.get(k) for k in ("stichtag", "items", "tranchen", "typ")}
+                pcache[u] = {k: rp.get(k) for k in ("stichtag", "items", "tranchen", "typ", "gebuehr")}
             except Exception as ex:
                 log(f"  Bericht {u.rsplit('/', 1)[-1]}: nicht lesbar ({ex})")
                 pcache[u] = {"items": []}
@@ -1997,7 +1997,8 @@ def load_fund_reports() -> dict:
         if not cur.get("items") or d_(best["stichtag"]) >= d_(cur.get("stichtag")):
             f = next(x for x in fonds if x["name"] == fname)
             cache[fname] = {"url": best["url"], "typ": best.get("typ") or "Bericht", "stichtag": best["stichtag"], "items": best["items"],
-                            "tranchen": sorted(set((best.get("tranchen") or []) + (f.get("isins") or []))), "checked": NOW.isoformat()}
+                            "tranchen": sorted(set((best.get("tranchen") or []) + (f.get("isins") or []))),
+                            "gebuehr": best.get("gebuehr") or {}, "checked": NOW.isoformat()}
     save(DATA / "report_pdfs.json", pcache, quiet=True)
     save(DATA / "fund_reports.json", cache, quiet=True)
     n = sum(1 for v in cache.values() if v.get("items"))
@@ -2425,6 +2426,83 @@ def parse_irl_report(pages: list[str], fonds: str) -> dict:
     return {"stichtag": stichtag, "items": [i for i in items if i["isin"] != "N:"]} if items else {}
 
 
+VG_BASE = "https://fund-docs.vanguard.com/"
+_VG_POS = re.compile(r"^(.*?\D)\s+([\d,]{1,15})\s+\(?[\d,]+\)?\s+(-?\d{1,3}\.\d{2})%$")
+
+
+def parse_vg_report(pages: list[str], fonds: str) -> dict:
+    """Statement of Investments eines Vanguard-Funds-plc-Berichts (Aktienpositionen eines Teilfonds)."""
+    sel, stichtag = [], None
+    for t in pages:
+        head = t[:300].split("\n")
+        hs = [h.strip() for h in head[:7]]
+        if fonds not in hs or not ("Statement of Investments" in t[:120] or ".." in hs[:4]):
+            continue
+        sel.append(t)
+        if not stichtag:
+            m = re.search(r"Statement of Investments\n(\d{1,2}) (\w+) (\d{4})", t)
+            if m and m.group(2).lower() in _MON_EN:
+                stichtag = f"{int(m.group(1)):02d}.{_MON_EN[m.group(2).lower()]:02d}.{m.group(3)}"
+    items, buf, eq, country = [], "", False, None
+    for ln in "\n".join(sel).splitlines():
+        ln = ln.strip()
+        if not ln or ln in ("..", fonds) or ln.startswith(("Financial Statements", "Statement of Investments", "Number of", "Shares", "Fair Value",
+                                                            "% of Total", "Net Assets", "US Dollars", "Euro (", "Pound")):
+            continue
+        if re.match(r"^Equities \d", ln):
+            eq = True
+            buf = ""
+            continue
+        if re.match(r"^(Total Equities|Total Transferable|Total Investments|Total Net Assets)", ln) or (
+                re.match(r"^(Financial Derivative|Futures|Forward|Investment Funds|Collective Investment|Rights|Warrants|Cash|Other Assets)", ln)
+                and re.search(r"\(\d{1,2} \w+ \d{4}:", ln)):
+            eq = False
+            buf = ""
+            continue
+        if not eq:
+            continue
+        mc = re.match(r"^(.+?) \d{1,3}\.\d{2}% \(\d{1,2} \w+ \d{4}: -?[\d\.]+%\)$", ln)
+        if mc:
+            country, buf = mc.group(1), ""
+            continue
+        mp = _VG_POS.match((buf + " " + ln).strip() if buf else ln)
+        if mp:
+            name = re.sub(r"\s+", " ", mp.group(1)).strip()
+            items.append({"isin": "N:" + name_key(name), "name": name, "tick": "", "code": "", "cur": "",
+                          "w": float(mp.group(3)), "grp": "Aktien", "land": country})
+            buf = ""
+        elif re.match(r"^\d{1,3}$", ln):
+            continue
+        else:
+            buf = (buf + " " + ln).strip()[-160:]
+    return {"stichtag": stichtag, "items": [i for i in items if i["isin"] != "N:"]} if items else {}
+
+
+def vg_report(src: dict, cache: dict) -> dict | None:
+    """Vanguard-ETFs: Jahres- und Halbjahresbericht unter festen Adressen; der neuere Stichtag gewinnt (wöchentlich geprüft)."""
+    key = "vg:" + src["fonds"]
+    old = cache.get(key) or {}
+    if old.get("checked") and (NOW - datetime.fromisoformat(old["checked"])).days < 6 and old.get("items"):
+        return old
+    best = old if old.get("items") else None
+    d = lambda s_: datetime.strptime(s_, "%d.%m.%Y")  # noqa: E731
+    for url in (VG_BASE + "etf-annual-report.pdf", VG_BASE + "etf-semiannual-report.pdf"):
+        try:
+            rep = parse_vg_report(ish_pages(url), src["fonds"])
+        except Exception as ex:
+            log(f"  Vanguard-Bericht {url.rsplit('/', 1)[-1]}: {ex}")
+            continue
+        if not rep.get("items") or sum(i["w"] for i in rep["items"]) < 50 or not rep.get("stichtag"):
+            continue
+        if not best or d(rep["stichtag"]) > d(best["stichtag"]) or best.get("url") == url:
+            if not best or d(rep["stichtag"]) >= d(best["stichtag"]):
+                best = {**rep, "url": url, "typ": "Halbjahresbericht" if "semiannual" in url else "Jahresbericht"}
+    if best:
+        best["checked"] = NOW.isoformat()
+        cache[key] = best
+    return best
+
+
 def ish_report(src: dict, cache: dict) -> dict | None:
     key = src.get("slug") or (f"{src.get('plc') or 'invag'}:" + src.get("fonds", ""))
     old = cache.get(key) or {}
@@ -2467,7 +2545,7 @@ def add_ish_reports(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: dict
         src = (e.get("holdings") or {}).get("bericht")
         if not src:
             continue
-        rep = safe(lambda: ish_report(src, cache), None, f"iShares-Bericht {e.get('ticker')}")
+        rep = safe(lambda: vg_report(src, cache) if src.get("vanguard") else ish_report(src, cache), None, f"Bericht {e.get('ticker')}")
         if not rep:
             continue
         symmap = resolve_positions(rep["items"], keys, first, isin_map, min_w=0.04)

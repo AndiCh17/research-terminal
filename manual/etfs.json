@@ -29,7 +29,11 @@
    "holdings": {
     "anbieter": "spdr",
     "ticker": "SPYI",
-    "quelle": "Näherung über SPDR MSCI ACWI IMI (FTSE All-World ≈ ACWI)"
+    "quelle": "Näherung über SPDR MSCI ACWI IMI (FTSE All-World ≈ ACWI)",
+    "bericht": {
+     "vanguard": true,
+     "fonds": "Vanguard FTSE All-World UCITS ETF"
+    }
    }
   },
   {
@@ -258,7 +262,11 @@
    "holdings": {
     "anbieter": "xtrackers",
     "isin": "LU0274209237",
-    "quelle": "Näherung über Xtrackers MSCI Europe (FTSE Dev. Europe ≈ MSCI Europe)"
+    "quelle": "Näherung über Xtrackers MSCI Europe (FTSE Dev. Europe ≈ MSCI Europe)",
+    "bericht": {
+     "vanguard": true,
+     "fonds": "Vanguard FTSE Developed Europe UCITS ETF"
+    }
    }
   },
   {
@@ -335,7 +343,11 @@
    "holdings": {
     "anbieter": "xtrackers",
     "isin": "IE00BTJRMP35",
-    "quelle": "Näherung über Xtrackers MSCI Emerging Markets (FTSE EM ≈ MSCI EM)"
+    "quelle": "Näherung über Xtrackers MSCI Emerging Markets (FTSE EM ≈ MSCI EM)",
+    "bericht": {
+     "vanguard": true,
+     "fonds": "Vanguard FTSE Emerging Markets UCITS ETF"
+    }
    }
   },
   {
@@ -687,7 +699,11 @@
      ],
      "min_mcap": 2000000000.0
     },
-    "quelle": "Index-Näherung: Titel mit überdurchschnittlicher Dividendenrendite (ohne Immobilien), nach Marktwert gewichtet – Grundregel des FTSE All-World High Dividend Yield"
+    "quelle": "Index-Näherung: Titel mit überdurchschnittlicher Dividendenrendite (ohne Immobilien), nach Marktwert gewichtet – Grundregel des FTSE All-World High Dividend Yield",
+    "bericht": {
+     "vanguard": true,
+     "fonds": "Vanguard FTSE All-World High Dividend Yield UCITS ETF"
+    }
    }
   },
   {
