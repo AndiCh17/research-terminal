@@ -2428,10 +2428,11 @@ def parse_irl_report(pages: list[str], fonds: str) -> dict:
 def ish_report(src: dict, cache: dict) -> dict | None:
     key = src.get("slug") or (f"{src.get('plc') or 'invag'}:" + src.get("fonds", ""))
     old = cache.get(key) or {}
-    if old.get("rv") == 2 and old.get("checked") and (NOW - datetime.fromisoformat(old["checked"])).days < 6 and old.get("items"):
+    if old.get("rv") == 3 and old.get("checked") and (NOW - datetime.fromisoformat(old["checked"])).days < 6 and old.get("items"):
         return old
     best = old if old.get("items") else None
     seen = set(old.get("seen") or [])
+    n_dated = 0
     for url in ish_candidates(src):
         try:
             if url in seen or (best and best.get("url") == url):
@@ -2448,11 +2449,13 @@ def ish_report(src: dict, cache: dict) -> dict | None:
         d = lambda s: datetime.strptime(s, "%d.%m.%Y")  # noqa: E731
         if not best or d(rep["stichtag"]) > d(best["stichtag"]):
             best = {**rep, "url": url, "typ": "Halbjahresbericht" if "interim" in url else "Jahresbericht"}
-        if "-report-en-" in url:  # datierte Namen sind absteigend sortiert: der erste lesbare ist der neueste
-            break
+        if "-report-en-" in url:  # datierte Namen: das Datum im Namen stimmt nicht immer mit dem Stichtag überein -> zwei lesbare prüfen
+            n_dated += 1
+            if n_dated >= 2:
+                break
     if best:
         best["checked"] = NOW.isoformat()
-        best["rv"] = 2  # datierte Umbrella-Berichte berücksichtigt
+        best["rv"] = 3  # datierte Umbrella-Berichte berücksichtigt
         best["seen"] = sorted(seen)
         cache[key] = best
     return best
@@ -2924,6 +2927,7 @@ def main():
     _need = {e["isin"] for e in json.loads((ROOT / "manual" / "etfs.json").read_text(encoding="utf-8")).get("etfs", []) if e.get("holdings")}
     if MODE == "nightly" or "meta" not in _h or "isin" not in _h or _h.get("v") != 6 or not _need <= set(_h.get("meta", {})):
         safe(lambda: build_holdings(uni_list, fund), None, "ETF-Positionen")
+        safe(build_funds, None, "Fonds (Gebühren aus neuen Berichten)")
 
     # --- News + Stimmung
     log("News + Stimmung …")
