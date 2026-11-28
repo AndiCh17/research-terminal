@@ -1762,7 +1762,7 @@ V.DEP = async () => {
       ${panel("Anleihen nach Emittent", bars(A.emit.map(([k,v])=>[k,v/A.bTot*100]),8))}
       ${panel("Anleihen im Depot", `<table><thead><tr><th class="l">Anleihe</th><th>Kupon</th><th>fällig</th><th>€</th></tr></thead><tbody>${A.bonds.sort((a,b)=>(a.faellig||"").localeCompare(b.faellig||"")).map(b=>`<tr><td class="l nm" style="max-width:200px">${esc(b.name||b.emittent||b.isin)}${b.geschaetzt?' <span class="dim" title="'+esc(b.quelle)+'">*</span>':""}</td><td>${b.kupon!=null?fmt(b.kupon,2)+" %":"–"}</td><td>${b.faellig?(b.geschaetzt?b.faellig.slice(0,4):new Date(b.faellig).toLocaleDateString("de-AT")):"–"}</td><td>${fmt(b.amt,0)}</td></tr>`).join("")}</tbody></table>`)}
     </div>`:""}
-    ${A.zerts.length?`<div style="margin-top:10px">${panel("Zertifikate im Depot", `<div class="scroll"><table><thead><tr><th class="l">Zertifikat</th><th class="l">Typ</th><th class="l">Basiswert</th><th>fällig</th><th>Kap.-Schutz</th><th>Abst. Barriere</th><th>Kupon</th><th>€</th></tr></thead><tbody>${A.zerts.map(z=>`<tr><td class="l nm">${esc(z.n)}<br><span class="dim" style="font-size:11px">${esc(z.isin)}</span></td><td class="l dim">${esc(z.typ)}</td><td class="l dim" style="white-space:normal">${esc(z.basis||"–")}</td><td>${esc(z.faellig||"–")}</td><td>${z.schutz!=null?fmt(z.schutz,0)+" %":"–"}</td><td class="${z.abst!=null&&z.abst<15?"dn":""}">${z.abst!=null?fmt(z.abst,1)+" %":"–"}</td><td>${z.kupon!=null?fmt(z.kupon,2)+" %":"–"}</td><td>${fmt(z.amt,0)}</td></tr>`).join("")}</tbody></table></div><p class="dim" style="font-size:11px;margin-top:6px">Zertifikate werden nicht in den Aktien-Durchblick eingerechnet; das Risiko hängt vom Basiswert und der Barriere ab. Eckdaten laut raiffeisenzertifikate.at.</p>`)}</div>`:""}
+    ${A.zerts.length?`<div style="margin-top:10px">${panel("Zertifikate im Depot", `<div class="scroll"><table><thead><tr><th class="l">Zertifikat</th><th class="l">Typ</th><th class="l">Basiswert</th><th>fällig</th><th>Kap.-Schutz</th><th>Abst. Barriere</th><th>Kupon</th><th>max. Rend. p.a.</th><th>min. Rend. p.a.</th><th>€</th><th class="l">Unterlagen</th></tr></thead><tbody>${A.zerts.map(z=>`<tr><td class="l nm">${esc(z.n)}<br><span class="dim" style="font-size:11px">${esc(z.isin)}</span></td><td class="l dim">${esc(z.typ)}</td><td class="l dim" style="white-space:normal">${esc(z.basis||"–")}</td><td>${esc(z.faellig||"–")}</td><td>${z.schutz!=null?fmt(z.schutz,0)+" %":"–"}</td><td class="${z.abst!=null&&z.abst<15?"dn":""}">${z.abst!=null?fmt(z.abst,1)+" %":"–"}</td><td>${z.kupon!=null?fmt(z.kupon,2)+" %":"–"}</td><td>${z.maxp!=null?fmt(z.maxp,2)+" %":"–"}</td><td>${(()=>{const m=zertMin(z);return m!=null?"≈ "+fmt(m,2)+" %":'<span class="dim" title="kein Kapitalschutz – Verlust möglich">–</span>';})()}</td><td>${fmt(z.amt,0)}</td><td class="l" style="white-space:nowrap">${z.pdf?`<a href="${esc(z.pdf)}" target="_blank" rel="noopener">Datenblatt ↗</a>`:z.url?`<a href="${esc(z.url)}" target="_blank" rel="noopener">Produktseite ↗</a>`:""}</td></tr>`).join("")}</tbody></table></div><p class="dim" style="font-size:11px;margin-top:6px">Zertifikate werden nicht in den Aktien-Durchblick eingerechnet; das Risiko hängt vom Basiswert und der Barriere ab. Eckdaten laut raiffeisenzertifikate.at; max. Rendite laut Emittent zum Briefkurs, min. Rendite nur bei Kapitalschutz als Näherung.</p>`)}</div>`:""}
     <p class="dim" style="font-size:11px;margin-top:8px">${B?"Die Bereiche unter dem Vergleich zeigen das Depot <b>vorher</b>. ":""}Durchblick: ETFs über Positionslisten bzw. Berichte der Anbieter, Fonds ausschließlich über die Vermögensaufstellung des letzten Halbjahres-/Rechenschaftsberichts (Stichtag je Fonds); Fonds ohne veröffentlichten Bestand werden nicht durchleuchtet. Kosten: TER bzw. effektive Verwaltungsgebühr laut Fondsbericht. Kennzahlen laut Yahoo Finance. Keine Anlageempfehlung.</p>` : "";
   return panel("Depotanalyse", `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
       <span class="chip" style="color:var(--amber);border-color:var(--amber);padding:5px 12px;font-size:12.5px">📋 Screenshot kopieren und hier <b>Strg+V</b> drücken</span>
@@ -1820,26 +1820,56 @@ function bondFromName(name){ // „3,00 % RLB Tirol Anleihe 2026-2032" → Kupon
   if(!k||!y) return null; const e=+y[2]<100?2000+ +y[2]:+y[2];
   return {name:n, kupon:parseFloat(k[1].replace(",",".")), faellig:`${e}-12-31`, art:/wohnbau/i.test(n)?"Wohnbauanleihe":"Anleihe", wohnbau:/wohnbau/i.test(n), geschaetzt:true, quelle:"aus der Bezeichnung (Fälligkeit nur Jahr)"};
 }
-let zertTyp="", zertQ="", zertSort={k:"faellig",d:1};
+let zertTyp="", zertQ="", zertSort={k:"faellig",d:1}, zf={basis:"", lz:"", minR:"", schutz:"", minAbst:"", markt:"", neu:false, pai:false};
+/* Mindestrendite nur bei Kapitalschutz: (Schutzbetrag + ausstehende Fixkupons) ÷ Briefkurs, auf Restlaufzeit annualisiert (Näherung, Emittentenrisiko) */
+function zertMin(z){
+  if(z.schutz==null||z.schutz<90) return null; const T=yrsTo(z.faellig), px=z.brief||z.geld; if(!T||T<=0.05||!px) return null;
+  const n=z.kupon?Math.max(0,Math.ceil(T-0.02)):0, tot=(z.schutz+(z.kupon||0)*n)/px;
+  return (Math.pow(tot,1/T)-1)*100;
+}
 V.ZERT = async () => {
   const z = await lazy("zertifikate"); if(!z||!z.rows) return panel("Zertifikate", noData("Zertifikatsdaten (erscheinen nach dem nächsten Lauf)"));
   const typs=[...new Set(z.rows.map(r=>r.typ))].sort(), q=zertQ.trim().toUpperCase();
-  const rows=z.rows.filter(r=>(!zertTyp||r.typ===zertTyp)&&(!q||r.isin.includes(q)||(r.n||"").toUpperCase().includes(q)||(r.basis||"").toUpperCase().includes(q)))
+  const bases=[...new Set(z.rows.map(r=>r.basis).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const today=new Date();
+  const rows0=z.rows.map(r=>({...r, rlz:yrsTo(r.faellig), minp:zertMin(r), neu:(dmyD(r.emission)||0)>today}));
+  const lzOk=r=>{ const t=r.rlz; if(!zf.lz) return true; if(t==null) return false; return zf.lz==="<1"?t<1:zf.lz==="1-3"?t>=1&&t<3:zf.lz==="3-5"?t>=3&&t<5:t>=5; };
+  const rows=rows0.filter(r=>(!zertTyp||r.typ===zertTyp)&&(!q||r.isin.includes(q)||(r.n||"").toUpperCase().includes(q)||(r.basis||"").toUpperCase().includes(q))
+      &&(!zf.basis||(r.basis||"").toUpperCase().replace(/®/g,"").includes(zf.basis.toUpperCase().replace(/®/g,"")))&&lzOk(r)&&(zf.minR===""||(r.maxp!=null&&r.maxp>=+zf.minR))
+      &&(!zf.schutz||(zf.schutz==="ja"?(r.schutz!=null&&r.schutz>=90):!(r.schutz!=null&&r.schutz>=90)))
+      &&(zf.minAbst===""||(r.abst!=null&&r.abst>=+zf.minAbst))&&(!zf.markt||(r.markt||"").includes(zf.markt))&&(!zf.neu||r.neu)&&(!zf.pai||r.pai))
     .sort((a,b)=>{ const k=zertSort.k; let x=a[k], y=b[k]; if(k==="faellig"){ x=dmyD(x); y=dmyD(y); } if(x==null) return 1; if(y==null) return -1; return (typeof x==="string"?x.localeCompare(y):x-y)*zertSort.d; });
-  const h=(k,l,c="")=>`<th class="${c}" data-zk="${k}" style="cursor:pointer">${l}${zertSort.k===k?(zertSort.d>0?" ▲":" ▼"):""}</th>`;
-  return panel(`Zertifikate <span class="dim">· Raiffeisen Zertifikate · ${z.rows.length} Anlageprodukte</span>`, `<div class="fbar"><input id="zq" value="${esc(zertQ)}" placeholder="ISIN, Name oder Basiswert" style="min-width:220px">
-    <div class="btns" id="zt"><button data-t="" class="${zertTyp?"":"on"}">Alle</button>${typs.map(t=>`<button data-t="${esc(t)}" class="${t===zertTyp?"on":""}">${esc(t.replace("-Zertifikat",""))}</button>`).join("")}</div></div>
-    <div class="scroll"><table><thead><tr>${h("n","Produkt","l")}${h("typ","Typ","l")}${h("basis","Basiswert","l")}${h("faellig","fällig")}${h("geld","Geld")}${h("kupon","Kupon p.a.")}${h("schutz","Kap.-Schutz")}${h("abst","Abst. Barriere")}${h("maxp","max. Rend. p.a.")}<th></th></tr></thead><tbody>
-    ${rows.slice(0,400).map(r=>`<tr><td class="l nm" style="max-width:300px">${esc(r.n)}<br><span class="dim" style="font-size:11px">${esc(r.isin)}</span></td><td class="l dim">${esc(r.typ)}</td><td class="l dim" style="max-width:220px;white-space:normal">${esc(r.basis||"–")}</td>
-      <td>${esc(r.faellig||"–")}</td><td>${r.geld!=null?fmt(r.geld,2)+" %":"–"}</td><td>${r.kupon!=null?fmt(r.kupon,2)+" %":"–"}</td><td>${r.schutz!=null?fmt(r.schutz,0)+" %":"–"}</td>
-      <td class="${r.abst!=null?(r.abst<10?"dn":r.abst<20?"":"up"):""}">${r.abst!=null?fmt(r.abst,1)+" %":"–"}${r.verletzt==="ja"?' <span class="dn">verletzt</span>':""}</td><td>${r.maxp!=null?fmt(r.maxp,1)+" %":"–"}</td>
-      <td><a href="${esc(r.url)}" target="_blank" rel="noopener">Details ↗</a></td></tr>`).join("")}</tbody></table></div>
-    <p class="dim" style="font-size:11px;margin-top:8px">${rows.length>400?`${rows.length} Treffer, die ersten 400 angezeigt – bitte filtern. `:""}Quelle: raiffeisenzertifikate.at (Produktliste täglich nachts, Eckdaten je Produkt alle 30 Tage). Geldkurse indikativ, Stand des Abrufs. Barriereabstand zum Zeitpunkt des Abrufs. Maßgeblich sind die Endgültigen Bedingungen und das Basisinformationsblatt. Keine Anlageempfehlung.</p>`);
+  const h=(k,l,c="",t="")=>`<th class="${c}" data-zk="${k}" style="cursor:pointer" title="${t}">${l}${zertSort.k===k?(zertSort.d>0?" ▲":" ▼"):""}</th>`;
+  const P=v=>v==null?"–":fmt(v,2)+" %", sel=(id,v,opts)=>`<select id="${id}">${opts.map(([k,l])=>`<option value="${k}"${String(v)===String(k)?" selected":""}>${l}</option>`).join("")}</select>`;
+  const nf=["basis","lz","minR","schutz","minAbst","markt"].filter(k=>zf[k]!=="").length+(zf.neu?1:0)+(zf.pai?1:0)+(zertTyp?1:0);
+  return panel(`Zertifikate <span class="dim">· Raiffeisen Zertifikate · ${rows.length} von ${z.rows.length} Anlageprodukten</span>`, `
+    <div class="fbar"><input id="zq" value="${esc(zertQ)}" placeholder="ISIN, Name oder Basiswert" style="min-width:200px">
+      <div class="btns" id="zt"><button data-t="" class="${zertTyp?"":"on"}">Alle</button>${typs.map(t=>`<button data-t="${esc(t)}" class="${t===zertTyp?"on":""}">${esc(t.replace("-Zertifikat",""))}</button>`).join("")}</div></div>
+    <div class="fbar" id="zfbar">
+      <label>Basiswert <input id="zb" list="zbl" value="${esc(zf.basis)}" placeholder="alle" style="width:190px"><datalist id="zbl">${bases.map(b=>`<option value="${esc(b)}">`).join("")}</datalist></label>
+      <label>Restlaufzeit ${sel("zlz",zf.lz,[["","alle"],["<1","unter 1 Jahr"],["1-3","1–3 Jahre"],["3-5","3–5 Jahre"],[">5","über 5 Jahre"]])}</label>
+      <label>max. Rendite p.a. ab ${sel("zr",zf.minR,[["","egal"],["3","3 %"],["5","5 %"],["7","7 %"],["10","10 %"]])}</label>
+      <label>Kapitalschutz ${sel("zs",zf.schutz,[["","egal"],["ja","mit"],["nein","ohne"]])}</label>
+      <label>Abstand Barriere ab ${sel("za",zf.minAbst,[["","egal"],["10","10 %"],["20","20 %"],["30","30 %"],["40","40 %"]])}</label>
+      <label>Markterwartung ${sel("zm",zf.markt,[["","egal"],["steigend","steigend"],["seitwärts","seitwärts"],["fallend","fallend"]])}</label>
+      <label><input type="checkbox" id="zn"${zf.neu?" checked":""}> in Zeichnung</label>
+      <label><input type="checkbox" id="zp"${zf.pai?" checked":""}> Nachhaltigkeit (PAI)</label>
+      ${nf?`<button class="info" id="zreset" style="padding:3px 10px">Filter zurücksetzen (${nf})</button>`:""}</div>
+    <div class="scroll"><table><thead><tr>${h("n","Produkt","l")}${h("typ","Typ","l")}${h("basis","Basiswert","l")}${h("rlz","Restlaufzeit","","fällig am")}${h("brief","Brief")}${h("kupon","Kupon p.a.")}${h("schutz","Kap.-Schutz")}${h("abst","Abst. Barriere")}${h("maxp","max. Rend. p.a.","","laut Emittent, zum Abrufzeitpunkt (Stand je Produkt im Tooltip)")}${h("maxr","max. Rend. ges.","","bis Laufzeitende bzw. bis zum nächsten Bewertungstag (Express)")}${h("minp","min. Rend. p.a.","","nur Kapitalschutz: Schutzbetrag + ausstehende Fixkupons zum Briefkurs, annualisiert – Näherung, Emittentenrisiko")}<th class="l">Unterlagen</th></tr></thead><tbody>
+    ${rows.slice(0,400).map(r=>`<tr><td class="l nm" style="max-width:280px">${esc(r.n)}${r.neu?' <span class="chip" style="color:var(--amber2)">Zeichnung</span>':""}<br><span class="dim" style="font-size:11px">${esc(r.isin)}</span></td><td class="l dim">${esc(r.typ)}</td><td class="l dim" style="min-width:150px;max-width:230px;white-space:normal;line-height:1.3">${esc(r.basis||"–")}</td>
+      <td>${r.rlz!=null?fmt(Math.max(0,r.rlz),1)+" J.":"–"}<br><span class="dim" style="font-size:11px">${esc(r.faellig||"")}</span></td><td>${r.brief!=null?fmt(r.brief,2)+" %":r.geld!=null?fmt(r.geld,2)+" %":"–"}</td><td>${P(r.kupon)}</td><td>${r.schutz!=null?fmt(r.schutz,0)+" %":"–"}</td>
+      <td class="${r.abst!=null?(r.abst<10?"dn":r.abst<20?"":"up"):""}">${r.abst!=null?fmt(r.abst,1)+" %":"–"}${r.verletzt==="ja"?' <span class="dn">verletzt</span>':""}</td>
+      <td title="${r.dstand?"Stand "+esc(r.dstand):""}">${P(r.maxp)}</td><td title="${r.maxnext?"bis zum nächsten Bewertungstag":"bis Laufzeitende"}">${P(r.maxr)}${r.maxnext?' <span class="dim" style="font-size:10px">nächst. BT</span>':""}</td><td>${r.minp!=null?"≈ "+P(r.minp):'<span class="dim" title="kein Kapitalschutz – Verlust möglich">–</span>'}</td>
+      <td class="l" style="white-space:nowrap">${r.pdf?`<a href="${esc(r.pdf)}" target="_blank" rel="noopener">Datenblatt ↗</a><br>`:""}<a href="${esc(r.url)}" target="_blank" rel="noopener" class="dim">Produktseite ↗</a></td></tr>`).join("")||`<tr><td class="l dim" colspan="12" style="padding:14px 8px">Keine Treffer – Filter lockern oder zurücksetzen.${z.rows.filter(r=>r.detail).length<z.rows.length*0.9?" Eckdaten (Basiswert, Renditen, Barriere) liegen erst für "+z.rows.filter(r=>r.detail).length+" von "+z.rows.length+" Produkten vor und werden laufend ergänzt.":""}</td></tr>`}</tbody></table></div>
+    <p class="dim" style="font-size:11px;margin-top:8px">${rows.length>400?`${rows.length} Treffer, die ersten 400 angezeigt – bitte filtern. `:""}Quelle: raiffeisenzertifikate.at – Produktliste und Kurse täglich, Eckdaten und maximale Renditen je Produkt wöchentlich (Stand im Tooltip). <b>Max. Rendite</b> laut Emittent bei Kauf zum Briefkurs; <b>min. Rendite</b> nur bei Kapitalschutz als Näherung (Schutzbetrag plus ausstehende Fixkupons, Emittentenrisiko) – ohne Kapitalschutz ist ein Verlust bis zum Totalverlust möglich. Maßgeblich sind Endgültige Bedingungen und Basisinformationsblatt. Keine Anlageempfehlung.</p>`);
 };
 V.ZERT.after = el => {
   el.querySelectorAll("#zt button").forEach(b=>b.onclick=()=>{ zertTyp=b.dataset.t; render(); });
-  el.querySelectorAll("[data-zk]").forEach(t=>t.onclick=()=>{ const k=t.dataset.zk; zertSort = zertSort.k===k?{k,d:-zertSort.d}:{k,d:1}; render(); });
+  el.querySelectorAll("[data-zk]").forEach(t=>t.onclick=()=>{ const k=t.dataset.zk; zertSort = zertSort.k===k?{k,d:-zertSort.d}:{k,d:(k==="maxp"||k==="maxr"||k==="minp"||k==="abst"||k==="kupon")?-1:1}; render(); });
   const q=el.querySelector("#zq"); q.onchange=()=>{ zertQ=q.value; render(); };
+  const bind=(id,k,tr=v=>v)=>{ const x=el.querySelector("#"+id); if(x) x.onchange=()=>{ zf[k]=tr(x.type==="checkbox"?x.checked:x.value); render(); }; };
+  bind("zb","basis",v=>v.trim()); bind("zlz","lz"); bind("zr","minR"); bind("zs","schutz"); bind("za","minAbst"); bind("zm","markt"); bind("zn","neu"); bind("zp","pai");
+  const r=el.querySelector("#zreset"); if(r) r.onclick=()=>{ zf={basis:"", lz:"", minR:"", schutz:"", minAbst:"", markt:"", neu:false, pai:false}; zertTyp=""; render(); };
 };
 let bankEm="", bankQ="";
 V.BANK = async () => {

@@ -1073,7 +1073,9 @@ RZ_LABELS = ["Basiswert", "Kapitalschutzbetrag", "Partizipationsfaktor", "Cap", 
              "Startwert", "Basispreis", "Barriere", "Abstand zur Barriere", "Barriere verletzt", "Beobachtung Barriere", "Bonuslevel",
              "Bonusbetrag", "Erster Bewertungstag", "Emissionstag", "Letzter Bewertungstag", "Rückzahlungstermin", "Produkt-Klassifikation",
              "Wertpapier-Typ (Eusipa-Nr.)", "Land / Region Basiswert", "Geeignete Markterwartung", "Währung Produkt", "Rückzahlungsart",
-             "Max. Rendite p.a.", "Max. Rendite p.a. bis zum nächsten Bewertungstag", "Emissionspreis"]
+             "Max. Rendite p.a.", "Max. Rendite p.a. bis zum nächsten Bewertungstag", "Emissionspreis", "Max. Rendite Restlaufzeit (%)",
+             "Max. Rendite bis zum nächsten Bewertungstag", "Discount (%)", "Nachhaltigkeitspräferenz", "Abstand zum Basispreis",
+             "Abstand zum nächsten Auszahlungslevel"]
 
 
 def _html_lines(page: str) -> list[str]:
@@ -1128,7 +1130,9 @@ def build_certificates():
                     continue
                 tds = [re.sub(r"\s+", " ", _h.unescape(re.sub(r"<[^>]+>", " ", x))).strip() for x in re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)]
                 pct = re.findall(r"(\d[\d\.]*,\d+)\s*%", tds[4] if len(tds) > 4 else "")
+                mpdf = re.search(r'href="(/pdf/[^"]+)"', tr)
                 rows[mi.group(2)] = {"isin": mi.group(2), "url": RZ_BASE + mi.group(1), "n": tds[1] if len(tds) > 1 else "",
+                                     "pdf": RZ_BASE + _h.unescape(mpdf.group(1)) if mpdf else None,
                                      "typ": tds[2] if len(tds) > 2 else "", "faellig": tds[3] if len(tds) > 3 else "",
                                      "geld": float(pct[0].replace(".", "").replace(",", ".")) if pct else None,
                                      "brief": float(pct[1].replace(".", "").replace(",", ".")) if len(pct) > 1 else None,
@@ -1140,7 +1144,7 @@ def build_certificates():
     left = 300 if MODE == "nightly" else 25
     for isin in sorted(rows, key=lambda x: det.get(x, {}).get("_d", "")):
         d = det.get(isin) or {}
-        if d.get("_d") and (NOW - datetime.fromisoformat(d["_d"])).days < 30:
+        if d.get("_d") and (NOW - datetime.fromisoformat(d["_d"])).days < 7:  # Renditen ändern sich mit dem Kurs: wöchentlich auffrischen
             continue
         if left <= 0:
             break
@@ -1161,6 +1165,10 @@ def build_certificates():
                     "cap": d.get("Cap"), "beob": d.get("Beobachtung Barriere"), "rueck": d.get("Rückzahlungsart"),
                     "eusipa": d.get("Wertpapier-Typ (Eusipa-Nr.)"), "markt": d.get("Geeignete Markterwartung"),
                     "maxp": num(d.get("Max. Rendite p.a.") or d.get("Max. Rendite p.a. bis zum nächsten Bewertungstag")),
+                    "maxr": num(d.get("Max. Rendite Restlaufzeit (%)") or d.get("Max. Rendite bis zum nächsten Bewertungstag")),
+                    "maxnext": bool(d.get("Max. Rendite bis zum nächsten Bewertungstag") and not d.get("Max. Rendite Restlaufzeit (%)")),
+                    "disc": num(d.get("Discount (%)")), "pai": bool(d.get("Nachhaltigkeitspräferenz")),
+                    "dstand": (d.get("_d") or "")[:10] or None,
                     "emission": d.get("Emissionstag"), "detail": bool(d)})
     save(DATA / "rz_details.json", det, quiet=True)
     save(DATA / "zertifikate.json", {"updated": NOW.isoformat(), "quelle": "raiffeisenzertifikate.at", "rows": out})
