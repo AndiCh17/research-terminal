@@ -1229,7 +1229,7 @@ function fondsInsight(f, rep){
   const split=[["Aktien",rep.aktien||0],["Anleihen",rep.anleihen||0],["Fonds (ohne Durchblick)",rep.fonds||0],["Liquidität/Sonstiges",rest]].filter(([,v])=>v>0.05);
   const F=(D.fonds&&D.fonds.fonds)||[];
   const posRows=(rep.pos||[]).map(([n,k,w,sub,lab],i)=>{ const kk=KIND[k]||[k,"var(--dim)"]; const inCat=sub&&F.some(x=>x.name===sub);
-    const dl=k==="fonds"&&!sub?` <span style="font-size:11px" class="${lab?(lab.startsWith("≈")?"":"up"):"dim"}" title="${lab?(lab.startsWith("≈")?"Zerlegt über ein ETF mit gleichem Index (Näherung)":"Zerlegt mit dem Bestand dieses ETFs"):"Nicht zerlegt – keine passenden Bestandsdaten"}">${lab?"→ "+esc(lab):"· nicht zerlegt"}</span>`:"";
+    const dl=k==="fonds"&&!sub?` <span style="font-size:11px" class="${lab?(lab.startsWith("≈")?"":"up"):"dim"}" title="${lab?(lab.startsWith("≈")?"Zerlegt über ein ETF mit gleichem Index (Näherung)":"Zerlegt mit dem tatsächlichen Bestand dieses ETFs"):"Nicht zerlegt – keine Bestandsdaten verfügbar"}">${lab?(lab.startsWith("≈")?"→ "+esc(lab):"✓ "+esc(lab)):"· nicht zerlegt"}</span>`:"";
     return `<tr><td class="l" style="white-space:normal">${i+1}. ${esc(n)}${sub?` <span class="dim" style="font-size:11px">→ ${inCat?`<a href="#" data-fsub="${esc(sub)}">${esc(sub)}</a>`:esc(sub)}</span>`:""}${dl}</td><td class="l"><span class="chip" style="color:${kk[1]}">${kk[0]}</span></td><td>${fmt(w,2)} %</td></tr>`; }).join("");
   const np=rep.npos||{};
   return tiles+chart+`<div class="grid g3" style="margin-bottom:10px">

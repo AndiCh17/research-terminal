@@ -1671,6 +1671,9 @@ def build_holdings(uni_rows: list[dict], fund: dict):
     tops = {}
     meta: dict[str, dict] = {}
     isin_map: dict[str, str] = {}
+    reps = safe(load_fund_reports, {}, "Fondsberichte") or {}
+    auto = safe(lambda: auto_etfs(reps, cfg), [], "ETFs aus Dachfonds") or []
+    cfg["etfs"] = cfg.get("etfs", []) + auto
     for e in cfg.get("etfs", []):
         src = e.get("holdings") or {}
         if src.get("index"):
@@ -1748,8 +1751,9 @@ def build_holdings(uni_rows: list[dict], fund: dict):
         log(f"  Positionen {e.get('ticker') or e['isin']}: {len(rows)} Titel, {hit} im Universum zugeordnet")
     save(DATA / "fund_symbols.json", _SYMC, quiet=True)
     extra: set[str] = set(_EXTRA)
-    safe(lambda: add_report_holdings(cfg, keys, first, by_sym, tops, meta, isin_map, extra, uni_rows, fund), None, "Fondsberichte/Factsheets")
+    safe(lambda: add_factsheets(cfg, keys, by_sym, tops, meta, extra, uni_rows, fund), None, "Factsheets")
     safe(lambda: add_ish_reports(cfg, keys, first, by_sym, tops, meta, isin_map, extra), None, "iShares-Berichte")
+    safe(lambda: add_report_holdings(cfg, keys, first, by_sym, tops, meta, isin_map, extra, uni_rows, fund, reps), None, "Fondsberichte")
     xrows = safe(lambda: extra_rows(extra, {r["s"] for r in uni_rows}), [], "Zusatztitel") or []
     log(f"  ISIN-Zuordnung Aktien: {len(isin_map)}")
     save(DATA / "holdings.json", {"updated": NOW.isoformat(), "bySymbol": by_sym, "top": tops, "meta": meta, "isin": isin_map,
@@ -2266,37 +2270,103 @@ def search_symbol(name: str, cache: dict) -> str | None:
     return sym
 
 
-# Index-Gleichheit: (Muster im ETF-Namen, ETF mit bekanntem Bestand, Ausschnitt, Beschriftung) – erste passende Regel gilt
+# Index-Gleichheit: (Muster im ETF-Namen, Kandidaten [(ETF mit bekanntem Bestand, Ausschnitt)], Beschriftung) – erste passende Regel
+# gilt; innerhalb der Regel der erste Kandidat mit Daten (zuerst ETFs mit genau diesem Index, zuletzt Ausschnitt aus dem MSCI World)
 _W = "IE00B4L5Y983"  # iShares Core MSCI World
+_WS = lambda sec, x: [(x, None), (_W, {"sec": sec})]  # noqa: E731
 ETF_PROXY = [
-    (r"MSCI WORLD.*QUALITY", "IE00BP3QZ601", None, ""), (r"MSCI WORLD.*VALUE", "IE00BP3QZB59", None, ""),
-    (r"MSCI WORLD.*MOMENTUM", "IE00BP3QZ825", None, ""), (r"MSCI WORLD.*MIN.*VOL", "IE00B8FHGS14", None, ""),
-    (r"MSCI WORLD.*(INFORMATION TECH|IT\b)", _W, {"sec": "Technologie"}, "Sektor Technologie"),
-    (r"MSCI WORLD.*FINANCIAL", _W, {"sec": "Finanzen"}, "Sektor Finanzen"),
-    (r"MSCI WORLD.*HEALTH", _W, {"sec": "Gesundheit"}, "Sektor Gesundheit"),
-    (r"MSCI WORLD.*CONSUMER DISCR", _W, {"sec": "Zyklischer Konsum"}, "Sektor zyklischer Konsum"),
-    (r"MSCI WORLD.*CONSUMER STAP", _W, {"sec": "Basiskonsum"}, "Sektor Basiskonsum"),
-    (r"MSCI WORLD.*UTILIT", _W, {"sec": "Versorger"}, "Sektor Versorger"),
-    (r"MSCI WORLD.*ENERGY", _W, {"sec": "Energie"}, "Sektor Energie"),
-    (r"MSCI WORLD.*INDUSTRIAL", _W, {"sec": "Industrie"}, "Sektor Industrie"),
-    (r"MSCI WORLD.*MATERIAL", _W, {"sec": "Rohstoffe"}, "Sektor Rohstoffe"),
-    (r"MSCI WORLD.*COMMUNICATION", _W, {"sec": "Kommunikation"}, "Sektor Kommunikation"),
-    (r"MSCI WORLD.*REAL ESTATE", _W, {"sec": "Immobilien"}, "Sektor Immobilien"),
-    (r"MSCI ACWI|MSCI ALL COUNTRY|MSCI AC WORLD", "IE00B6R52259", None, ""),
-    (r"MSCI WORLD", _W, None, ""),
-    (r"MSCI USA|MSCI US\b|MSCI NORTH AMERICA", _W, {"c": {"United States"}}, "USA-Anteil"),
-    (r"S&P 500", "IE00B5BMR087", None, ""),
-    (r"MSCI EUROPE|MSCI EUR\b", "IE00B1YZSC51", None, ""),
-    (r"STOXX EUROPE 600", "DE0002635307", None, ""), (r"EURO STOXX 50", "IE00B53L3W79", None, ""),
-    (r"MSCI EM\b|MSCI EMERGING|EMERGING MARKETS", "IE00BTJRMP35", None, ""),
-    (r"MSCI JAPAN", _W, {"c": {"Japan"}}, "Japan-Anteil"),
-    (r"MSCI CANADA", _W, {"c": {"Canada"}}, "Kanada-Anteil"),
-    (r"PACIFIC EX.?JAPAN", _W, {"c": {"Australia", "Hong Kong", "Singapore", "New Zealand"}}, "Pazifik ohne Japan"),
+    (r"MSCI WORLD.*QUALITY", [("IE00BP3QZ601", None), ("IE00BL25JL35", None)], ""),
+    (r"MSCI WORLD.*VALUE", [("IE00BP3QZB59", None)], ""),
+    (r"MSCI WORLD.*MOMENTUM", [("IE00BP3QZ825", None)], ""), (r"MSCI WORLD.*MIN.*VOL", [("IE00B8FHGS14", None)], ""),
+    (r"MSCI WORLD.*(INFORMATION TECH|\bIT\b)", _WS("Technologie", "IE00BM67HT60"), "Sektor Technologie"),
+    (r"MSCI WORLD.*FINANCIAL", _WS("Finanzen", "IE00BM67HL84"), "Sektor Finanzen"),
+    (r"MSCI WORLD.*HEALTH", _WS("Gesundheit", "IE00BM67HK77"), "Sektor Gesundheit"),
+    (r"MSCI WORLD.*CONSUMER DISCR", _WS("Zyklischer Konsum", "IE00BM67HP23"), "Sektor zyklischer Konsum"),
+    (r"MSCI WORLD.*CONSUMER STAP", _WS("Basiskonsum", "IE00BM67HN09"), "Sektor Basiskonsum"),
+    (r"MSCI WORLD.*UTILIT", _WS("Versorger", "IE00BM67HQ30"), "Sektor Versorger"),
+    (r"MSCI WORLD.*ENERGY", _WS("Energie", "IE00BM67HM91"), "Sektor Energie"),
+    (r"MSCI WORLD.*INDUSTRIAL", _WS("Industrie", "IE00BM67HV82"), "Sektor Industrie"),
+    (r"MSCI WORLD.*MATERIAL", _WS("Rohstoffe", "IE00BM67HS53"), "Sektor Rohstoffe"),
+    (r"MSCI WORLD.*COMMUNICATION", _WS("Kommunikation", "IE00BM67HR47"), "Sektor Kommunikation"),
+    (r"MSCI WORLD.*REAL ESTATE", [(_W, {"sec": "Immobilien"})], "Sektor Immobilien"),
+    (r"MSCI ACWI|MSCI ALL COUNTRY|MSCI AC WORLD", [("IE00B6R52259", None), ("IE00B44Z5B48", None)], ""),
+    (r"MSCI WORLD", [(_W, None), ("IE00BJ0KDQ92", None), ("IE00BFY0GT14", None)], ""),
+    (r"MSCI USA|MSCI US\b|MSCI NORTH AMERICA", [("IE00B52SFT06", None), ("IE00BJ0KDR00", None), (_W, {"c": {"United States"}})], ""),
+    (r"S&P 500", [("IE00B5BMR087", None)], ""),
+    (r"MSCI EUROPE|MSCI EUR\b", [("IE00B4K48X80", None), ("IE00B1YZSC51", None)], ""),
+    (r"STOXX EUROPE 600", [("DE0002635307", None)], ""), (r"EURO STOXX 50", [("IE00B53L3W79", None)], ""),
+    (r"MSCI EM\b|MSCI EMERGING|EMERGING MARKETS", [("IE00B0M63177", None), ("IE00BTJRMP35", None)], ""),
+    (r"MSCI JAPAN", [("LU0274209740", None), (_W, {"c": {"Japan"}})], ""),
+    (r"MSCI CANADA", [(_W, {"c": {"Canada"}})], "Kanada-Anteil"),
+    (r"PACIFIC EX.?JAPAN", [("IE00B52MJY50", None), (_W, {"c": {"Australia", "Hong Kong", "Singapore", "New Zealand"}})], ""),
 ]
 _SUF_C = {".TO": "Canada", ".T": "Japan", ".AX": "Australia", ".HK": "Hong Kong", ".SI": "Singapore", ".NZ": "New Zealand",
           ".L": "United Kingdom", ".SW": "Switzerland", ".DE": "Germany", ".PA": "France", ".AS": "Netherlands"}
 _C_ALIAS = {"USA": "United States", "US": "United States", "Vereinigte Staaten": "United States", "Japan": "Japan",
             "Kanada": "Canada", "Australien": "Australia", "Singapur": "Singapore", "Neuseeland": "New Zealand", "Hongkong": "Hong Kong"}
+
+
+_BOND_RX = re.compile(r"BOND|GOVT|GOVERNMENT|TREASUR|CORP|AGGREGATE|ANLEIHE|RENTEN|HIGH YIELD|MONEY|GELDMARKT|INFLATION|\bOVERNIGHT|\bSOVEREIGN", re.I)
+_ROMAN = {"II", "III", "IV", "V", "VI", "VII", "VIII"}
+# iShares-ETFs ohne Umbrella im Namen: wahrscheinliche Umbrellas (werden der Reihe nach geprüft)
+ISH_PLC_TRY = ["iv", "ii", "iii", "i"]
+
+
+def auto_etfs(reps: dict, cfg: dict) -> list[dict]:
+    """Aktien-ETFs aus den Vermögensaufstellungen der Fonds, die nicht selbst konfiguriert sind, mit eigener Bestandsquelle
+    (Xtrackers- und SPDR-Positionslisten, iShares-Sammelberichte). Nur für den Fonds-Durchblick, nicht in der ETF-Liste."""
+    have = {e["isin"] for e in cfg.get("etfs", [])}
+    tr = {i for r in reps.values() for i in (r.get("tranchen") or [])}
+    cand: dict[str, str] = {}
+    for r in reps.values():
+        for it in r.get("items") or []:
+            i = it["isin"]
+            if pos_kind(it) != "fonds" or i in have or i in tr or i in cand or not i.startswith(("IE", "LU", "DE")):
+                continue
+            nm = f"{it.get('name') or ''} {it.get('tick') or ''}".upper()
+            if not re.search(r"\bETF\b|UCITS|XTRACKERS|ISHARES|SPDR", nm) or _BOND_RX.search(nm):
+                continue
+            cand[i] = nm
+    figi = load(DATA / "etf_figi.json") or {}
+    spdr = [i for i, nm in cand.items() if re.search(r"SPDR|SSGA", nm) and not (figi.get(i) and (NOW - datetime.fromisoformat(figi[i]["_d"])).days < 90)]
+    for k in range(0, len(spdr), 10):
+        chunk = spdr[k:k + 10]
+        try:
+            res = HTTP.post("https://api.openfigi.com/v3/mapping", json=[{"idType": "ID_ISIN", "idValue": i} for i in chunk], timeout=40).json()
+        except Exception as ex:
+            log(f"  OpenFIGI ETF: {ex}")
+            break
+        for i, x in zip(chunk, res):
+            de = [d for d in (x.get("data") or []) if d.get("exchCode") in ("GR", "GY", "GS", "GT", "GF", "GD", "GH", "GM", "GI")]
+            figi[i] = {"ticker": de[0]["ticker"] if de else None, "_d": NOW.isoformat()}
+        time.sleep(2.6)
+    save(DATA / "etf_figi.json", figi, quiet=True)
+    out = []
+    for i, nm in cand.items():
+        e = {"isin": i, "name": etf_name(nm.split(" ETF ")[0] + (" ETF" if " ETF" in nm else "")), "ticker": None, "auto": True}
+        if re.search(r"XTRACKERS|X-TRACKERS", nm):
+            e["holdings"] = {"anbieter": "xtrackers", "quelle": "Positionsliste Xtrackers"}
+        elif re.search(r"SPDR|SSGA", nm):
+            t = (figi.get(i) or {}).get("ticker")
+            if not t:
+                continue
+            e["holdings"] = {"anbieter": "spdr", "ticker": t, "quelle": "Positionsliste SPDR"}
+        elif re.search(r"I?SHARES", nm):
+            m = re.match(r"^I?SHARES(?:\s+([IVX]+))?\s+PLC\s+-\s+(.+)$", nm.strip())
+            rest = m.group(2) if m else nm.strip()
+            plc = (m.group(1) or "i").lower() if m and (not m.group(1) or m.group(1) in _ROMAN) else None
+            ucits = rest.find("UCITS")
+            fonds = (rest[:ucits] if ucits > 0 else rest).strip() + " UCITS ETF"
+            fonds = re.sub(r"^I?SHARES\s+", "", fonds)
+            fonds = "iShares " + fonds
+            e["holdings"] = {"bericht": {"plc": plc, "fonds": fonds} if plc else {"plc_try": ISH_PLC_TRY, "fonds": fonds},
+                             "quelle": "iShares-Sammelbericht"}
+        else:
+            continue
+        out.append(e)
+    if out:
+        log(f"  ETFs aus Dachfonds automatisch ergänzt: {len(out)} (" + ", ".join(sorted({(e['holdings'].get('anbieter') or 'ishares') for e in out})) + ")")
+    return out
 
 
 def sym_match(sym: str, d: dict, flt: dict) -> bool:
@@ -2333,9 +2403,9 @@ def npos_f(its: list[dict]) -> int:
     return sum(1 for it in its if pos_kind(it) == "fonds")
 
 
-def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: dict, meta: dict, isin_map: dict, extra: set,
-                        uni_rows: list | None = None, fund: dict | None = None):
-    """Echte Bestände: Factsheet-Top-10 (iShares) und Vermögensaufstellungen der Halbjahres-/Rechenschaftsberichte."""
+def add_factsheets(cfg: dict, keys: dict, by_sym: dict, tops: dict, meta: dict, extra: set,
+                   uni_rows: list | None = None, fund: dict | None = None):
+    """Factsheet-Top-10 (iShares), Rest ggf. über Index-Näherung."""
     symc = load(DATA / "fund_symbols.json") or {}
     for e in cfg.get("etfs", []):
         src = e.get("holdings") or {}
@@ -2372,7 +2442,11 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
         log(f"  Factsheet {e.get('ticker')}: Top {len(top)} ({sum(w for _, w in top):.1f} %), Stand {stand}")
     save(DATA / "fund_symbols.json", symc, quiet=True)
 
-    reps = load_fund_reports()
+
+def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: dict, meta: dict, isin_map: dict, extra: set,
+                        uni_rows: list | None = None, fund: dict | None = None, reps: dict | None = None):
+    """Echte Bestände der Fonds aus den Vermögensaufstellungen der Halbjahres-/Rechenschaftsberichte (inkl. Durchblick durch Subfonds/ETFs)."""
+    reps = reps if reps is not None else load_fund_reports()
     by_isin = {}  # Tranchen-ISIN → Fondsname (für Dachfonds)
     for name, r in reps.items():
         for i in r.get("tranchen") or []:
@@ -2400,16 +2474,21 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
         if re.search(r"BOND|GOVT|GOVERNMENT|TREASUR|CORP|AGGREGATE|ANLEIHE|RENTEN|HIGH YIELD|MONEY|GELDMARKT|INFLATION|\bEUR HEDG.*\bBD\b", nm):
             proxy_cache[it["isin"]] = None
             return None
-        for rx, base, flt, lab in ETF_PROXY:
+        for rx, cands, lab in ETF_PROXY:
             if not re.search(rx, nm):
                 continue
-            bw = etf_w.get(base)  # erste passende Regel entscheidet – kein Rückfall auf eine allgemeinere
-            if bw and flt:
-                sel = {s_: w for s_, w in bw.items() if sym_match(s_, info.get(s_) or {}, flt)}
-                tot = sum(sel.values())
-                bw = {s_: w / tot * 100 for s_, w in sel.items()} if tot > 0 else None
-            if bw:
-                res = (bw, f"≈ {etf_names.get(base, base)}" + (f" · {lab}" if lab else ""))
+            for base, flt in cands:  # erste passende Regel entscheidet – kein Rückfall auf eine allgemeinere
+                if base == it["isin"]:
+                    continue
+                bw = etf_w.get(base)
+                if bw and flt:
+                    sel = {s_: w for s_, w in bw.items() if sym_match(s_, info.get(s_) or {}, flt)}
+                    tot = sum(sel.values())
+                    bw = {s_: w / tot * 100 for s_, w in sel.items()} if tot > 0 else None
+                if bw:
+                    cut = lab or ("Länder-/Sektorausschnitt" if flt else "")
+                    res = (bw, f"≈ {etf_names.get(base, base)}" + (f" · {cut}" if cut else ""))
+                    break
             break
         proxy_cache[it["isin"]] = res
         return res
@@ -2474,7 +2553,11 @@ def add_report_holdings(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: 
             if pos_kind(it) != "fonds" or by_isin.get(it["isin"]):
                 return None
             if it["isin"] in etf_w:
-                return "Bestand des ETF"
+                m_ = meta.get(it["isin"]) or {}
+                q_ = m_.get("quelle") or ""
+                q_ = "Positionsliste des Anbieters" if q_.startswith("Positionsliste") and "gleicher Index" not in q_ else q_
+                st = m_.get("stichtag") or m_.get("rest_stichtag")
+                return "Bestand: " + (q_ or "Anbieter") + (f" per {st}" if st else "")
             px = proxy(it)
             return px[1] if px else None
         allpos = [[etf_name(it["name"]) if pos_kind(it) == "fonds" else nice_name(it["name"]), pos_kind(it), rnd(it["w"], 2), by_isin.get(it["isin"]) if pos_kind(it) == "fonds" else None, plab(it)]
@@ -2507,10 +2590,14 @@ _MON_ABBR = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct
 
 def ish_dated(plc: str) -> list[str]:
     fy = ISH_FY.get(plc)
-    if not fy:
-        return []
     n = f"ishares-{plc}-plc" if plc != "i" else "ishares-plc"
     out = []
+    if not fy:  # Geschäftsjahr unbekannt: alle Monatsenden der letzten 15 Monate prüfen
+        for k in range(15):
+            end = (pd.Timestamp(NOW.replace(tzinfo=None)) - pd.offsets.MonthEnd(k + 1)).to_pydatetime()
+            for kind in ("annual", "interim"):
+                out.append((end, f"{ISH_BASE}{kind}-report/{n}-{kind}-report-en-{end.day:02d}-{_MON_ABBR[end.month - 1]}-{end.year % 100:02d}.pdf"))
+        return [u for _, u in sorted(out, reverse=True)]
     for y in (NOW.year, NOW.year - 1, NOW.year - 2):
         for kind, mon in (("annual", fy), ("interim", (fy + 5) % 12 + 1)):
             yy = y if kind == "annual" or mon > fy else y + 1
@@ -2592,6 +2679,15 @@ def parse_irl_report(pages: list[str], fonds: str) -> dict:
     norm = lambda x: re.sub(r"[^A-Z0-9&$€%]", "", x.upper().replace("(CONTINUED)", ""))  # noqa: E731
     want = norm(fonds)
     sel, stichtag = [], None
+    heads = {}
+    for t in pages:
+        m = re.search(r"SCHEDULE OF INVESTMENTS(?: \(UNAUDITED\))?(?: \(continued\))?\n(.+?)\nAs at (\d{1,2}) (\w+) (\d{4})", t)
+        if m:
+            heads.setdefault(norm(m.group(1)), 0)
+    if want not in heads:  # Name leicht abweichend (gekürzt/umbenannt): eindeutigen Teilfonds mit gleichem Namensanfang nehmen
+        near = [h for h in heads if len(want) >= 18 and (h.startswith(want) or want.startswith(h))]
+        if len(near) == 1:
+            want = near[0]
     for t in pages:
         m = re.search(r"SCHEDULE OF INVESTMENTS(?: \(UNAUDITED\))?(?: \(continued\))?\n(.+?)\nAs at (\d{1,2}) (\w+) (\d{4})", t)
         if m and norm(m.group(1)) == want:
@@ -2715,6 +2811,8 @@ def ish_report(src: dict, cache: dict) -> dict | None:
     old = cache.get(key) or {}
     if old.get("rv") == 3 and old.get("checked") and (NOW - datetime.fromisoformat(old["checked"])).days < 6 and old.get("items"):
         return old
+    if old.get("miss") and (NOW - datetime.fromisoformat(old["checked"])).days < 6:
+        return None  # Teilfonds in diesem Umbrella zuletzt nicht gefunden
     best = old if old.get("items") else None
     seen = set(old.get("seen") or [])
     n_dated = 0
@@ -2729,6 +2827,10 @@ def ish_report(src: dict, cache: dict) -> dict | None:
         except Exception as ex:
             log(f"  iShares-Bericht {url.rsplit('/', 1)[-1]}: {ex}")
             continue
+        if "-report-en-" in url and not rep.get("items"):
+            n_dated += 1  # lesbar, Teilfonds aber nicht enthalten
+            if n_dated >= 2:
+                break
         if not rep.get("items") or sum(i["w"] for i in rep["items"]) < 50:
             continue
         d = lambda s: datetime.strptime(s, "%d.%m.%Y")  # noqa: E731
@@ -2743,6 +2845,8 @@ def ish_report(src: dict, cache: dict) -> dict | None:
         best["rv"] = 3  # datierte Umbrella-Berichte berücksichtigt
         best["seen"] = sorted(seen)
         cache[key] = best
+    else:
+        cache[key] = {"rv": 3, "miss": True, "checked": NOW.isoformat(), "seen": sorted(seen)}
     return best
 
 
@@ -2752,7 +2856,16 @@ def add_ish_reports(cfg: dict, keys: dict, first: dict, by_sym: dict, tops: dict
         src = (e.get("holdings") or {}).get("bericht")
         if not src:
             continue
-        rep = safe(lambda: vg_report(src, cache) if src.get("vanguard") else ish_report(src, cache), None, f"Bericht {e.get('ticker')}")
+        if src.get("plc_try"):
+            hint = (cache.get("plc:" + e["isin"]) or {}).get("plc")
+            rep = None
+            for p_ in ([hint] if hint else []) + [x for x in src["plc_try"] if x != hint]:
+                rep = safe(lambda: ish_report({**src, "plc": p_}, cache), None, f"Bericht {e['isin']}")
+                if rep:
+                    cache["plc:" + e["isin"]] = {"plc": p_}
+                    break
+        else:
+            rep = safe(lambda: vg_report(src, cache) if src.get("vanguard") else ish_report(src, cache), None, f"Bericht {e.get('ticker') or e['isin']}")
         if not rep:
             continue
         symmap = resolve_positions(rep["items"], keys, first, isin_map, min_w=0.04)
