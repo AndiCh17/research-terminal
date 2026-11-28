@@ -1,0 +1,318 @@
+{
+ "updated": "2026-11-28T17:43:27.365599+00:00",
+ "hinweis": "Öffentliche Marktdaten aus dem Research-Terminal (Yahoo Finance u. a.), verzögert.",
+ "indices": [
+  {
+   "sym": "^GSPC",
+   "name": "S&P 500",
+   "price": 7297.4902,
+   "chgPct": 1.597,
+   "ytd": 6.6,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "^NDX",
+   "name": "Nasdaq 100",
+   "price": 26726.3906,
+   "chgPct": 2.609,
+   "ytd": 5.85,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "^DJI",
+   "name": "Dow Jones",
+   "price": 50774.9414,
+   "chgPct": 1.18,
+   "ytd": 5.64,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "^STOXX50E",
+   "name": "Euro Stoxx 50",
+   "price": 6089.2002,
+   "chgPct": 1.238,
+   "ytd": 5.05,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "^GDAXI",
+   "name": "DAX",
+   "price": 25441.2402,
+   "chgPct": 0.895,
+   "ytd": 3.88,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "^ATX",
+   "name": "ATX",
+   "price": 6225.96,
+   "chgPct": 1.972,
+   "ytd": 16.89,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "^SSMI",
+   "name": "SMI",
+   "price": 14879.9697,
+   "chgPct": 0.42,
+   "ytd": 12.15,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "^FTSE",
+   "name": "FTSE 100",
+   "price": 10698.7998,
+   "chgPct": 0.844,
+   "ytd": 7.73,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "^N225",
+   "name": "Nikkei 225",
+   "price": 58711.1094,
+   "chgPct": 2.108,
+   "ytd": 16.63,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "^HSI",
+   "name": "Hang Seng",
+   "price": 22694.7695,
+   "chgPct": 2.105,
+   "ytd": -11.45,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "^VIX",
+   "name": "VIX",
+   "price": 23.81,
+   "chgPct": -11.157,
+   "ytd": 59.26,
+   "date": "2026-11-27"
+  }
+ ],
+ "markets": [
+  {
+   "sym": "EURUSD=X",
+   "name": "EUR/USD",
+   "price": 1.0972,
+   "chgPct": 0.019,
+   "ytd": -6.6,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "EURCHF=X",
+   "name": "EUR/CHF",
+   "price": 0.9155,
+   "chgPct": 0.405,
+   "ytd": -1.57,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "EURGBP=X",
+   "name": "EUR/GBP",
+   "price": 0.8369,
+   "chgPct": 0.029,
+   "ytd": -4.05,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "USDJPY=X",
+   "name": "USD/JPY",
+   "price": 159.515,
+   "chgPct": 0.147,
+   "ytd": 1.98,
+   "date": "2026-11-28"
+  },
+  {
+   "sym": "GC=F",
+   "name": "Gold",
+   "price": 3639.6001,
+   "chgPct": 2.936,
+   "ytd": -16.16,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "SI=F",
+   "name": "Silber",
+   "price": 43.167,
+   "chgPct": 7.777,
+   "ytd": -38.45,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "BZ=F",
+   "name": "Brent",
+   "price": 95.44,
+   "chgPct": 0.877,
+   "ytd": 56.84,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "CL=F",
+   "name": "WTI",
+   "price": 83.08,
+   "chgPct": -0.717,
+   "ytd": 44.69,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "HG=F",
+   "name": "Kupfer",
+   "price": 5.517,
+   "chgPct": 3.46,
+   "ytd": -2.01,
+   "date": "2026-11-27"
+  },
+  {
+   "sym": "BTC-USD",
+   "name": "Bitcoin",
+   "price": 59426.1016,
+   "chgPct": -0.735,
+   "ytd": -32.09,
+   "date": "2026-11-28"
+  }
+ ],
+ "movers": [
+  {
+   "s": "688256.SS",
+   "n": "Cambricon Technologies Corporation Limited",
+   "chg": 18.68,
+   "dir": "up",
+   "news": [
+    {
+     "title": "3 AI Infrastructure Stocks Retail Investors Are Watching After The Anthropic IPO",
+     "source": "Simply Wall St.",
+     "link": "https://finance.yahoo.com/technology/ai/articles/3-ai-infrastructure-stocks-retail-090959093.html"
+    },
+    {
+     "title": "Will China’s AI Industry Benefit From the Nvidia Turmoil?",
+     "source": "The Wall Street Journal",
+     "link": "https://www.wsj.com/livecoverage/stock-market-today-dow-sp-500-nasdaq-11-13-2026/card/will-china-s-ai-industry-benefit-from-the-nvidia-turmoil--lI4pc9O4AOOU9fbY4dT0?siteid=yhoof2&yptr=yahoo"
+    },
+    {
+     "title": "Why Jensen Huang’s Exit Is Bad News for Alibaba and China",
+     "source": "Barrons.com",
+     "link": "https://www.barrons.com/articles/nvidia-alibaba-tencent-china-stocks-462175ef?siteid=yhoof2&yptr=yahoo"
+    }
+   ]
+  },
+  {
+   "s": "XP",
+   "n": "XP Inc.",
+   "chg": 18.07,
+   "dir": "up",
+   "news": [
+    {
+     "title": "XP (XP) Stock Still Looks Undervalued Despite A 33% Five Year Fall",
+     "source": "Simply Wall St.",
+     "link": "https://finance.yahoo.com/markets/stocks/articles/xp-xp-stock-still-looks-011038040.html"
+    },
+    {
+     "title": "XP: 3 Key Takeaways for Long-Term Investors",
+     "source": "Motley Fool",
+     "link": "https://www.fool.com/earnings/takeaways/2026/11/27/xp-3-key-takeaways-for-long-term-investors/"
+    },
+    {
+     "title": "XP (XP) Stock Jumps 19.5% Premarket Without Company News",
+     "source": "GuruFocus.com",
+     "link": "https://finance.yahoo.com/markets/stocks/articles/xp-xp-stock-jumps-19-120021545.html"
+    }
+   ]
+  },
+  {
+   "s": "688041.SS",
+   "n": "Hygon Information Technology Co., Ltd.",
+   "chg": 18.05,
+   "dir": "up",
+   "news": [
+    {
+     "title": "Nvidia China Chip Halt Puts AI Infrastructure Stocks In Focus",
+     "source": "Simply Wall St.",
+     "link": "https://finance.yahoo.com/technology/ai/articles/nvidia-china-chip-halt-puts-110801083.html"
+    },
+    {
+     "title": "China optical stocks rally as Microsoft challenges proposed U.S. import curbs",
+     "source": "Investing.com",
+     "link": "https://finance.yahoo.com/markets/stocks/articles/china-optical-stocks-rally-microsoft-063031256.html"
+    },
+    {
+     "title": "3 AI Chip Stocks for Data Center Growth as Borrowing Costs Rise",
+     "source": "Simply Wall St.",
+     "link": "https://finance.yahoo.com/technology/ai/articles/3-ai-chip-stocks-data-051351405.html"
+    }
+   ]
+  },
+  {
+   "s": "2368.TW",
+   "n": "Gold Circuit Electronics Ltd.",
+   "chg": -6.63,
+   "dir": "down",
+   "news": [
+    {
+     "title": "Asian Growth Companies With High Insider Ownership And 23% Revenue Growth",
+     "source": "Simply Wall St.",
+     "link": "https://finance.yahoo.com/markets/stocks/articles/asian-growth-companies-high-insider-223843990.html"
+    },
+    {
+     "title": "Asian Growth Companies With High Insider Ownership Expecting Up To 87% Earnings Growth",
+     "source": "Simply Wall St.",
+     "link": "https://finance.yahoo.com/markets/stocks/articles/asian-growth-companies-high-insider-223802067.html"
+    },
+    {
+     "title": "High Growth Tech Stocks In Asia For June 2026",
+     "source": "Simply Wall St.",
+     "link": "https://finance.yahoo.com/sectors/technology/articles/high-growth-tech-stocks-asia-223612004.html"
+    }
+   ]
+  },
+  {
+   "s": "3665.TW",
+   "n": "BizLink Holding Inc.",
+   "chg": -6.15,
+   "dir": "down",
+   "news": [
+    {
+     "title": "Quanta Computer Stock And AI Infrastructure Names Facing The Next Spending Test",
+     "source": "Simply Wall St.",
+     "link": "https://finance.yahoo.com/technology/ai/articles/quanta-computer-stock-ai-infrastructure-231850788.html"
+    },
+    {
+     "title": "What Is Behind ams-OSRAM (SWX:AMS) Stock Dropping Today?",
+     "source": "Simply Wall St.",
+     "link": "https://finance.yahoo.com/markets/stocks/articles/behind-ams-osram-swx-ams-050843330.html"
+    },
+    {
+     "title": "Credo Technology Group vs. Marvell Technology: Which Technology Stock Is a Better Buy in 2026?",
+     "source": "Motley Fool",
+     "link": "https://www.fool.com/coverage/better-buy/2026/07/07/credo-technology-group-vs-marvell-technology-which-technology-stock-is-a-better-buy-in-2026/"
+    }
+   ]
+  },
+  {
+   "s": "3443.TW",
+   "n": "Global Unichip Corp.",
+   "chg": -5.57,
+   "dir": "down",
+   "news": [
+    {
+     "title": "Cadence Design Systems (CDNS) Deepens Agentic AI Push in Chip Design Workflows But What Really Changes?",
+     "source": "Simply Wall St.",
+     "link": "https://finance.yahoo.com/technology/ai/articles/cadence-design-systems-cdns-deepens-020448869.html"
+    },
+    {
+     "title": "Why Did Cadence Design Systems (CDNS) Stock Climb Today?",
+     "source": "Simply Wall St.",
+     "link": "https://finance.yahoo.com/markets/stocks/articles/why-did-cadence-design-systems-201823533.html"
+    },
+    {
+     "title": "Marvell Stock Rises With Broadcom on Hopes for Microsoft's AI Chip",
+     "source": "GuruFocus.com",
+     "link": "https://finance.yahoo.com/news/marvell-stock-rises-broadcom-hopes-174950288.html"
+    }
+   ]
+  }
+ ],
+ "termine": [],
+ "analysten": []
+}
