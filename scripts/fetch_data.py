@@ -1141,6 +1141,18 @@ def build_certificates():
         log(f"  Zertifikate: {len(rows)} Anlageprodukte aus {len(seen)} Listenseiten")
     if not rows:
         rows = {r["isin"]: r for r in old.get("rows", [])}
+    # Fällige Produkte entfernen (falls die Liste sie noch kurz führt); Eckdaten nicht mehr gelisteter Produkte verwerfen
+    def _matured(r):
+        m = re.match(r"(\d\d)\.(\d\d)\.(\d{4})$", r.get("faellig") or "")
+        return bool(m) and datetime(int(m[3]), int(m[2]), int(m[1]), tzinfo=NOW.tzinfo) < NOW.replace(hour=0, minute=0, second=0, microsecond=0)
+    n0 = len(rows)
+    rows = {k: r for k, r in rows.items() if not _matured(r)}
+    det = {k: v for k, v in det.items() if k in rows}
+    first = {r["isin"]: r.get("seit") for r in old.get("rows", [])}
+    for k, r in rows.items():
+        r["seit"] = first[k] if k in first else (NOW.date().isoformat() if old.get("rows") else None)  # None = schon vor Einführung gelistet
+    if n0 != len(rows):
+        log(f"  Zertifikate: {n0 - len(rows)} fällige entfernt")
     left = 300 if MODE == "nightly" else 25
     for isin in sorted(rows, key=lambda x: det.get(x, {}).get("_d", "")):
         d = det.get(isin) or {}
