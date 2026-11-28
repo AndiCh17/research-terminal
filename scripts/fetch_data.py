@@ -2013,6 +2013,70 @@ def tt_report_links(fonds: list[dict]) -> dict[str, list[str]]:
     return out
 
 
+KEP_DOC = "https://services.kepler.at/public/services/download/{typ}/{isin}/{d}"
+
+
+def kepler_report_links(fonds: list[dict], reps: dict) -> dict[str, list[str]]:
+    """KEPLER-Fonds ohne aktuellen Bericht (älter als 7 Monate): öffentliche Download-Links der KAG
+    ({midYearReports|accountabilityReports}/{ISIN}/{TTMMJJJJ}) für die letzten Monatsenden prüfen.
+    Fehlende Berichte liefern eine leere Antwort; je Lauf begrenzt, Treffer werden gemerkt."""
+    cache = load(DATA / "report_kepler.json") or {}
+    left = [400 if MODE == "nightly" else 30]
+    start = left[0]
+    d_ = lambda x: datetime.strptime(x, "%d.%m.%Y") if x else datetime(1900, 1, 1)  # noqa: E731
+
+    def probe(url: str) -> bool:
+        left[0] -= 1
+        try:
+            with HTTP.get(url, timeout=40, stream=True) as r:
+                if r.status_code != 200:
+                    return False
+                buf = b""
+                for ch in r.iter_content(64):
+                    buf += ch
+                    if len(buf) >= 4:
+                        break
+                return buf.startswith(b"%PDF")
+        except Exception:
+            return False
+
+    for f in fonds:
+        if f.get("kag") != "KEPLER-FONDS KAG" or not f.get("isins"):
+            continue
+        cur = reps.get(f["name"]) or {}
+        c = cache.get(f["name"]) or {}
+        if cur.get("stichtag") and (NOW.replace(tzinfo=None) - d_(cur["stichtag"])).days < 213:
+            continue
+        if c.get("checked") and (NOW - datetime.fromisoformat(c["checked"])).days < 7:
+            continue
+        if left[0] <= 0:
+            break
+        since = c.get("d") or ""
+        hit = None
+        for d in month_ends(14):  # JJJJMMTT, neueste zuerst -> erster Treffer ist der aktuellste Bericht
+            if d <= since or left[0] <= 0:
+                break
+            for typ in ("midYearReports", "accountabilityReports"):
+                for isin in f["isins"][:6]:  # nicht für jede Tranche hinterlegt
+                    url = KEP_DOC.format(typ=typ, isin=isin, d=d[6:] + d[4:6] + d[:4])
+                    if probe(url):
+                        hit = (url, d)
+                        break
+                    time.sleep(0.1)
+                if hit:
+                    break
+            if hit:
+                break
+        if hit:
+            cache[f["name"]] = {"url": hit[0], "d": hit[1], "checked": NOW.isoformat()}
+        elif left[0] > 0:
+            cache[f["name"]] = {**c, "checked": NOW.isoformat()}
+    save(DATA / "report_kepler.json", cache, quiet=True)
+    out = {n: [v["url"]] for n, v in cache.items() if v.get("url")}
+    log(f"  KEPLER-Berichtslinks: {len(out)} Fonds ({start - left[0]} Abfragen)")
+    return out
+
+
 def load_fund_reports() -> dict:
     """Berichte aller Fonds mit ISIN laden (Cache: nur neue Berichte werden geladen und gelesen)."""
     from concurrent.futures import ThreadPoolExecutor
@@ -2053,6 +2117,7 @@ def load_fund_reports() -> dict:
     cand: dict[str, list[dict]] = {}
     srcs = [(f["name"], u) for f in fonds for u in (f.get("berichte") or [])]
     srcs += [(n, u) for n, us in tt_report_links(fonds).items() for u in us]
+    srcs += [(n, u) for n, us in kepler_report_links(fonds, cache).items() for u in us]
     for p_ in sorted((ROOT / "manual" / "berichte").glob("*.pdf")) if (ROOT / "manual" / "berichte").exists() else []:
         srcs.append((None, "file:" + p_.name))
     for fname, u in srcs:
